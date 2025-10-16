@@ -17,21 +17,19 @@ export default function Cards({ foto, nombre, precioMayor, precioDetal, onPress 
 }
 
 const styles = StyleSheet.create({
-	card: {
-		backgroundColor: '#fff',
-		borderRadius: 18,
-		margin: 10,
-		alignItems: 'center',
-		elevation: 7,
-		flexBasis: '45%',
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.18,
-		shadowRadius: 8,
-		overflow: 'hidden',
-		minWidth: 150,
-		maxWidth: 200,
-	},
+		card: {
+			backgroundColor: '#fff',
+			borderRadius: 18,
+			margin: 10,
+			alignItems: 'center',
+			elevation: 7,
+			width: 160,
+			shadowColor: '#000',
+			shadowOffset: { width: 0, height: 4 },
+			shadowOpacity: 0.18,
+			shadowRadius: 8,
+			overflow: 'hidden',
+		},
 	imageContainer: {
 		width: '100%',
 		height: 120,
