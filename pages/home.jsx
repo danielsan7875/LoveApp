@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   StyleSheet,
-  Image,
   Dimensions,
   Text,
   ScrollView,
@@ -11,6 +10,7 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import Cards from '../componentes/cards';
+import Banner from '../componentes/Banner';
 import ModalProducto from '../componentes/Modal';
 import {productos} from '../informacion/productos';
 import {promoBanners} from '../informacion/banners';
@@ -27,16 +27,12 @@ const BodyHome = () => {
   };
   // --- RENDERIZADO DE ITEMS ---
   const renderBanner = ({ item }) => (
-    <View style={styles.bannerCard}>
-      <Image source={{ uri: item.image }} style={styles.bannerImage} resizeMode="contain" />
-      <View style={styles.bannerTextContainer}>
-        <Text style={styles.bannerTitle}>{item.title}</Text>
-        <Text style={styles.bannerDiscount}>
-          <Text style={{ fontSize: 16 }}>HASTA</Text> {item.discount}
-        </Text>
-        <Text style={styles.bannerTagline}>{item.tagline}</Text>
-      </View>
-    </View>
+    <Banner
+      title={item.title}
+      discount={item.discount}
+      tagline={item.tagline}
+      image={item.image}
+    />
   );
         return (
         <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
@@ -116,49 +112,6 @@ scrollViewContent: {
   bannerTagline: {
       color: 'white',
       fontSize: 12
-  },
-  // Category Grid
-  row: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-  },
-  categoryCard: {
-    width: '48%',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 10,
-    marginBottom: 15,
-    elevation: 2,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  discountBadge: {
-    backgroundColor: '#FFF8E1',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  discountText: {
-    color: '#F9A825',
-    fontWeight: 'bold',
-    fontSize: 11,
-  },
-  arrowButton: {},
-  categoryTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 8,
-    minHeight: 35,
-  },
-  categoryImage: {
-    width: '100%',
-    height: 100,
-    alignSelf: 'center',
-    marginTop: 10,
   },
    text: {
     fontSize: 24,
