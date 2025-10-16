@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Image,
@@ -6,67 +6,51 @@ import {
   Text,
   ScrollView,
   FlatList,
-  TouchableOpacity,
   View
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
+import Cards from '../componentes/Cards';
+import ModalProducto from '../componentes/Modal';
+import {productos} from '../informacion/productos';
+import {promoBanners} from '../informacion/banners';
 
 const { width } = Dimensions.get('window');
 
 // --- DATOS DE MUESTRA ---
-const promoBanners = [
-  {
-    id: '1',
-    title: 'EXCLUSIVO PRIMERA COMPRA',
-    discount: '15%',
-    tagline: 'SOLO DELIVERY',
-    image: 'https://placehold.co/400x200/FFC0CB/333333?text=Producto+1',
-  },
-  {
-    id: '2',
-    title: 'EXCLUSIVO PRIMERA COMPRA',
-    discount: '15%',
-    tagline: 'SOLO DELIVERY',
-    image: 'https://placehold.co/400x200/FFB6C1/333333?text=Producto+2',
-  },
-  {
-    id: '3',
-    title: 'OFERTAS DE LA SEMANA',
-    discount: '20%',
-    tagline: 'EN SELECCIONADOS',
-    image: 'https://placehold.co/400x200/FF69B4/FFFFFF?text=Producto+3',
-  },
-];
+// const promoBanners = [
+//   {
+//     id: '1',
+//     title: 'EXCLUSIVO PRIMERA COMPRA',
+//     discount: '15%',
+//     tagline: 'SOLO DELIVERY',
+//     image: '',
+//   },
+//   {
+//     id: '2',
+//     title: 'EXCLUSIVO PRIMERA COMPRA',
+//     discount: '15%',
+//     tagline: 'SOLO DELIVERY',
+//     image: 'https://placehold.co/400x200/FFB6C1/333333?text=Producto+2',
+//   },
+//   {
+//     id: '3',
+//     title: 'OFERTAS DE LA SEMANA',
+//     discount: '20%',
+//     tagline: 'EN SELECCIONADOS',
+//     image: 'https://placehold.co/400x200/FF69B4/FFFFFF?text=Producto+3',
+//   },
+// ];
 
-const categories = [
-  {
-    id: '1',
-    title: 'Hasta 20% Dcto. en Dulces y Snacks',
-    discount: '20%',
-    image: 'https://placehold.co/200x200/FFC0CB/333333?text=Snacks',
-  },
-  {
-    id: '2',
-    title: 'Cesta de Bienestar Genven a men...',
-    discount: null,
-    image: 'https://placehold.co/200x200/FFB6C1/333333?text=Bienestar',
-  },
-  {
-    id: '3',
-    title: 'Hasta 25% Dcto. Cuidado del Cabello',
-    discount: '25%',
-    image: 'https://placehold.co/200x200/FF69B4/FFFFFF?text=Cabello',
-  },
-  {
-    id: '4',
-    title: 'Hasta 30% Dcto. Cuidado Facial',
-    discount: '30%',
-    image: 'https://placehold.co/200x200/DB7093/FFFFFF?text=Facial',
-  },
-];
 
 const BodyHome = () => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [productoActivo, setProductoActivo] = useState(null);
+
+  const handleCardPress = (producto) => {
+    setProductoActivo(producto);
+    setModalVisible(true);
+  };
   // --- RENDERIZADO DE ITEMS ---
   const renderBanner = ({ item }) => (
     <View style={styles.bannerCard}>
@@ -80,25 +64,6 @@ const BodyHome = () => {
       </View>
     </View>
   );
-
-  const renderCategory = ({ item }) => (
-    <View style={styles.categoryCard}>
-      <View style={styles.categoryHeader}>
-        {item.discount && (
-          <View style={styles.discountBadge}>
-            <Text style={styles.discountText}>Hasta {item.discount}</Text>
-          </View>
-        )}
-        <TouchableOpacity style={styles.arrowButton}>
-          <Ionicons name="chevron-forward-outline" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.categoryTitle}>{item.title}</Text>
-      <Image source={{ uri: item.image }} style={styles.categoryImage} resizeMode="contain" />
-    </View>
-  );
-  
-        
         return (
         <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
                     {/* --- BANNERS PROMOCIONALES --- */}
@@ -110,16 +75,27 @@ const BodyHome = () => {
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.bannerList}
                     />
-        
-                    {/* --- GRID DE CATEGORÍAS --- */}
-                    <FlatList
-                    data={categories}
-                    renderItem={renderCategory}
-                    keyExtractor={(item) => item.id}
-                    numColumns={2}
-                    scrollEnabled={false} // Desactivamos el scroll de esta lista interna
-                    columnWrapperStyle={styles.row}
-                    />
+
+                     <View>
+        <Text style={styles.text}>Productos mas vendidos</Text>
+      </View>
+      <View style={styles.cardsContainer}>
+        {productos.map((prod, idx) => (
+          <Cards
+            key={idx}
+            foto={prod.foto}
+            nombre={prod.nombre}
+            precioMayor={prod.precioMayor}
+            precioDetal={prod.precioDetal}
+            onPress={() => handleCardPress(prod)}
+          />
+        ))}
+      </View>
+      <ModalProducto
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        producto={productoActivo}
+      />
                 </ScrollView>
         );
 };
@@ -209,7 +185,17 @@ scrollViewContent: {
     height: 100,
     alignSelf: 'center',
     marginTop: 10,
-  }
+  },
+   text: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    margin: 16,
+  },
+  cardsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
 });
 
 

@@ -1,10 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import {
-  SafeAreaView,
   StyleSheet,
   View
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 /*Componenetes*/
 import  NavBarra  from './componentes/nav.jsx';
@@ -16,26 +16,21 @@ import BodyHome from './pages/home.jsx';
 
 const App = () => {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
-      
-      <View style={styles.container}>
-
-        {/* --- CABECERA --- */}
-        <HearBarra />
-
-        {/* --- BARRA DE BÚSQUEDA Y LOGIN --- */}
-        <LoginBarra />
-
-       
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
+        <View style={styles.container}>
+          {/* --- CABECERA --- */}
+          <HearBarra />
+          {/* --- BARRA DE BÚSQUEDA Y LOGIN --- */}
+          <LoginBarra />
           {/* --- BANNERS PROMOCIONALES --- */}
-        <BodyHome />
-      </View>
-      
-      {/* --- BARRA DE NAVEGACIÓN INFERIOR --- */}
-      <NavBarra />
-
-    </SafeAreaView>
+          <BodyHome />
+        </View>
+        {/* --- BARRA DE NAVEGACIÓN INFERIOR --- */}
+        <NavBarra />
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 
