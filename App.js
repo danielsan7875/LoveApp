@@ -6,10 +6,11 @@ import {
   View
 } from 'react-native';
 
-/* Pagina + Componenetes*/
+/*Componenetes*/
 import  NavBarra  from './componentes/nav.jsx';
 import HearBarra from './componentes/hear.jsx';
 import LoginBarra from './componentes/loginbarra.jsx';
+/*Pages - body*/
 import BodyHome from './pages/home.jsx';
  
 
