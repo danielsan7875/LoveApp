@@ -8,14 +8,20 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-  
+import { useNavigation } from "@react-navigation/native";
+
 const HearBarra = () => {
+    const navigation = useNavigation();
+  
+    const handleCarritoPress = () => {
+      navigation.navigate("Carrito");
+    };
   return (
       <View style={styles.header}>
             <Text style={styles.logoText}>LoveMakeup C.A</Text>
-         <TouchableOpacity style={styles.cartButton}>
-            <Ionicons name="cart-outline" size={28} color="#D81B60" />
-        </TouchableOpacity>
+              <TouchableOpacity onPress={handleCarritoPress} style={styles.cartButton}>
+                  <Ionicons name="cart-outline" size={28} color="#D81B60" />
+              </TouchableOpacity>
         </View>
   );
 };

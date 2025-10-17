@@ -23,7 +23,7 @@ const Inicio = () => {
           <BodyLogin />
         </View>
         {/* --- BARRA DE NAVEGACIÓN INFERIOR --- */}
-    
+
       </SafeAreaView>
     </SafeAreaProvider>
   );

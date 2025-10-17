@@ -9,18 +9,28 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from "@react-navigation/native";
   
 const LoginBarra = () => {
+  const navigation = useNavigation();
+
+  const handleLoginPress = () => {
+    navigation.navigate("Login");
+  };
   return (
     <View style={styles.searchSection}>
                 <View style={styles.searchInputContainer}>
                      <Ionicons name="search-outline" size={20} color="#999" style={{marginLeft: 10}} />
                     <TextInput placeholder="Busca aquí tus productos" style={styles.searchInput} />
                 </View>
+                
                 <View style={styles.loginRow}>
-                    <TouchableOpacity>
-                        <Text style={styles.loginText}><Ionicons name="person-circle" size={14} color="#D81B60" /> Inicia sesión o regístrate  </Text>
+                    <TouchableOpacity onPress={handleLoginPress}>
+                      <Text style={styles.loginText}>
+                        <Ionicons name="person-circle" size={14} color="#D81B60" /> Inicia sesión o regístrate
+                      </Text>
                     </TouchableOpacity>
+
                     <View style={styles.priceBadge}>
                         <Text style={styles.priceText}>Tasa del Día: 201.47 Bs </Text>
                     </View>

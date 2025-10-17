@@ -37,7 +37,7 @@ const Login = () => {
               </View>
               <Text style={styles.brandName}>LoveMakeup C.A</Text>
             </View>
-
+              
             <FormLogin />
           </ScrollView>
         </KeyboardAvoidingView>
@@ -106,7 +106,19 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
-  }
+  },
+  backButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginTop: 10,
+  marginLeft: 20,
+},
+backText: {
+  marginLeft: 8,
+  fontSize: 16,
+  color: '#FFFFFF',
+  fontWeight: '500',
+}
 });
 
 export default Login;

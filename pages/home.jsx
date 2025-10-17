@@ -8,7 +8,6 @@ import {
   View
 } from 'react-native';
 
-import { Ionicons } from '@expo/vector-icons';
 import Cards from '../componentes/Cards';
 import Banner from '../componentes/Banner';
 import ModalProducto from '../componentes/Modal';

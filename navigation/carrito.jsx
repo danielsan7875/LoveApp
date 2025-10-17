@@ -11,10 +11,10 @@ import HearBarra from '../componentes/hear.jsx';
 import LoginBarra from '../componentes/loginbarra.jsx';
 
 /*Pages - body*/
-import BodyOpciones from '../pages/opciones.jsx';
 
 
-const Opciones = () => {
+
+const Carrito = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
@@ -24,10 +24,14 @@ const Opciones = () => {
           <HearBarra />
           {/* --- BARRA DE BÚSQUEDA Y LOGIN --- */}
           <LoginBarra />
-          <BodyOpciones />
+
+
+
+          {/* --- BODY--- */}
+          <Text style={styles.logoText}>Carrito</Text>
         </View>
-       
-    
+     
+
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -50,5 +54,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Opciones;
+export default Carrito;
 
