@@ -36,10 +36,8 @@ export default function Opciones() {
       <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
      
         <View style={styles.profileSection}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/150?u=madisonlee' }} 
-            style={styles.profileImage}
-          />
+          
+              <Ionicons name="person" size={90} color="#050404ff" style={styles.profileImage} />
           <Text style={styles.profileName}>Nombre y Apellido</Text>
         </View>
 
