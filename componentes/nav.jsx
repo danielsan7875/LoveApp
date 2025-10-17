@@ -10,30 +10,41 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Ionicons } from '@expo/vector-icons';
   
-const NavBarra = () => {
+const NavBarra = ({ state, navigation }) => {
+  const icons = {
+    Inicio: "home-outline",
+    Producto: "bag-handle",
+    Ubicacion: "storefront",
+    Contacto: "chatbox-ellipses-outline",
+    "Más Opciones": "reorder-four",
+  };
+
   return (
     <SafeAreaView edges={["bottom"]} style={styles.safeAreaBottom}>
       <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="home-outline" size={24} color="#D81B60" />
-          <Text style={styles.navText}>Inicio</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="bag-handle" size={24} color="#666" />
-          <Text style={styles.navText}>Producto</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="storefront" size={24} color="#666" />
-          <Text style={styles.navText}>Ubicacion</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="chatbox-ellipses-outline" size={24} color="#666" />
-          <Text style={styles.navText}>Contacto</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="reorder-four" size={24} color="#666" />
-          <Text style={styles.navText}>Más Opciones</Text>
-        </TouchableOpacity>
+        {state.routes.map((route, index) => {
+          const label = route.name;
+          const isFocused = state.index === index;
+
+          const onPress = () => {
+            if (!isFocused) {
+              navigation.navigate(label);
+            }
+          };
+
+          return (
+            <TouchableOpacity key={label} style={styles.navItem} onPress={onPress}>
+              <Ionicons
+                name={icons[label]}
+                size={24}
+                color={isFocused ? "#D81B60" : "#666"}
+              />
+              <Text style={[styles.navText, isFocused && { color: "#D81B60" }]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </SafeAreaView>
   );

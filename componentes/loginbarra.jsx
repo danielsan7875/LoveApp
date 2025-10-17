@@ -19,7 +19,7 @@ const LoginBarra = () => {
                 </View>
                 <View style={styles.loginRow}>
                     <TouchableOpacity>
-                        <Text style={styles.loginText}>Inicia sesión o regístrate <Ionicons name="person-circle" size={14} color="#D81B60" /> </Text>
+                        <Text style={styles.loginText}><Ionicons name="person-circle" size={14} color="#D81B60" /> Inicia sesión o regístrate  </Text>
                     </TouchableOpacity>
                     <View style={styles.priceBadge}>
                         <Text style={styles.priceText}>Tasa del Día: 201.47 Bs </Text>
@@ -64,13 +64,13 @@ const styles = StyleSheet.create({
   priceBadge: {
     backgroundColor: '#333333',
     borderRadius: 25,
-    paddingHorizontal: 15,
+    paddingHorizontal: 12,
     paddingVertical: 8,
   },
   priceText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 12,
   },
 });
 
