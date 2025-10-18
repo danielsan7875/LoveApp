@@ -10,8 +10,10 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
+import TasaOficial from '../informacion/dolar';
   
 const LoginBarra = () => {
+  const tasa = TasaOficial();
   const navigation = useNavigation();
 
   const handleLoginPress = () => {
@@ -32,7 +34,7 @@ const LoginBarra = () => {
                     </TouchableOpacity>
 
                     <View style={styles.priceBadge}>
-                        <Text style={styles.priceText}>Tasa del Día: 201.47 Bs </Text>
+                        <Text style={styles.priceText}>Tasa del Día: {tasa ? `${tasa} Bs` : 'Cargando...'} </Text>
                     </View>
                 </View>
     </View>
