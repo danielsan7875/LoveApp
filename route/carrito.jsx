@@ -19,19 +19,16 @@ const Carrito = () => {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
-        <View style={styles.container}>
-          {/* --- CABECERA --- */}
-          <HearBarra />
-          {/* --- BARRA DE BÚSQUEDA Y LOGIN --- */}
-          <LoginBarra />
+          <View style={styles.container}>
+      
+            
 
 
 
-          {/* --- BODY--- */}
-          <Text style={styles.logoText}>Carrito</Text>
-        </View>
+             {/* --- BODY--- */}
+             <Text style={styles.logoText}>Carrito</Text>
+          </View>
      
-
       </SafeAreaView>
     </SafeAreaProvider>
   );

@@ -1,35 +1,44 @@
 import React from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-const MenuItem = ({ iconName, text }) => (
-  <TouchableOpacity style={styles.menuItem}>
-    <Ionicons name={iconName} size={24} color="#FF69B4" style={styles.icon} />
-    <Text style={styles.menuText}>{text}</Text>
-    <Ionicons name="chevron-forward" size={20} color="#ccc" />
-  </TouchableOpacity>
-);
+const MenuItem = ({ iconName, text, route }) => {
+  const navigation = useNavigation();
+
+  return (
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={() => route && navigation.navigate(route)}
+    >
+      <Ionicons name={iconName} size={24} color="#FF69B4" style={styles.icon} />
+      <Text style={styles.menuText}>{text}</Text>
+      <Ionicons name="chevron-forward" size={20} color="#ccc" />
+    </TouchableOpacity>
+  );
+};
 
 export default function Opciones() {
 
   const menuItems1 = [
-    { iconName: 'heart', text: 'Mi Lista Deseos' },
-    { iconName: 'megaphone', text: 'Consejos' },
+    { iconName: 'heart', text: 'Mi Lista Deseos', route: 'MisDeseos' },
+    { iconName: 'bag-handle', text: 'Mis Pedidos', route: 'MisPedido' },
   ];
 
   const menuItems2 = [
-    { iconName: 'person-circle', text: 'Mis Datos' },
-    { iconName: 'lock-open', text: 'Seguridad' },
-    { iconName: 'bag-handle', text: 'Mis Pedidos' },
+    { iconName: 'megaphone', text: 'Consejos', route: 'Consejos' },
+    { iconName: 'person-circle', text: 'Mis Datos', route: 'MisDatos' },
+    { iconName: 'lock-open', text: 'Seguridad', route: 'Seguridad'},
 
   ];
 
    const menuItems3 = [
-    { iconName: 'log-out', text: 'Cerrar Session' },
+    { iconName: 'log-out', text: 'Cerrar Session', route: 'home' },
   ];
 
 
   return (
+   
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
@@ -42,42 +51,42 @@ export default function Opciones() {
         </View>
 
 
-        {/* Primera Tarjeta de Menú */}
-        <View style={styles.card}>
-          {menuItems1.map((item, index) => (
-            <React.Fragment key={index}>
-              <MenuItem iconName={item.iconName} text={item.text} />
-              {index < menuItems1.length - 1 && <View style={styles.divider} />}
-            </React.Fragment>
-          ))}
+        {/*|||||||||||||| Primera Tarjeta de Menú |||||||||||||||||||*/}
+         <View style={styles.card}>
+            {menuItems1.map((item, index) => (
+              <React.Fragment key={index}>
+                <MenuItem iconName={item.iconName} text={item.text} route={item.route} />
+                {index < menuItems1.length - 1 && <View style={styles.divider} />}
+              </React.Fragment>
+            ))}
         </View>
 
-        {/* Segunda Tarjeta de Menú */}
-        <View style={styles.card}>
-           {menuItems2.map((item, index) => (
-            <React.Fragment key={index}>
-              <MenuItem iconName={item.iconName} text={item.text} />
-              {index < menuItems2.length - 1 && <View style={styles.divider} />}
-            </React.Fragment>
-          ))}
+        {/*|||||||||||||||||||| Segunda Tarjeta de Menú |||||||||||||||||| */}
+       <View style={styles.card}>
+            {menuItems2.map((item, index) => (
+              <React.Fragment key={index}>
+                <MenuItem iconName={item.iconName} text={item.text} route={item.route} />
+                {index < menuItems2.length - 1 && <View style={styles.divider} />}
+              </React.Fragment>
+            ))}
         </View>
 
         
-        {/* Segunda Tarjeta de Menú */}
+        {/*|||||||||||||||||| Tercero Tarjeta de Menú |||||||||||||||*/}
         <View style={styles.card}>
-           {menuItems3.map((item, index) => (
-            <React.Fragment key={index}>
-              <MenuItem iconName={item.iconName} text={item.text} />
-              {index < menuItems3.length - 1 && <View style={styles.divider} />}
-            </React.Fragment>
-          ))}
+            {menuItems3.map((item, index) => (
+              <React.Fragment key={index}>
+                <MenuItem iconName={item.iconName} text={item.text} route={item.route} />
+                {index < menuItems3.length - 1 && <View style={styles.divider} />}
+              </React.Fragment>
+            ))}
         </View>
       </ScrollView>
     </View>
   );
 }
 
-// --- Hoja de Estilos ---
+// |||||||||||||||||||||||| Hoja de Estilos ||||||||||||||||||||||||||
 const styles = StyleSheet.create({
     scrollViewContent: {
     paddingBottom: 80, // Espacio para el nav inferior
