@@ -20,7 +20,7 @@ const Login = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <ImageBackground
-        source={{ uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQl8LKtFX0roYinZB_V5kg6TDzFzpdRr49LiA&s' }}
+        source={{ uri: 'https://img.freepik.com/foto-gratis/coleccion-productos-maquillaje-belleza_23-2148620012.jpg?semt=ais_hybrid&w=740&q=80' }}
         style={styles.backgroundImage}
         resizeMode="cover"
       >

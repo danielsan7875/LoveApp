@@ -14,7 +14,7 @@ export default function OpcionesNavigator() {
       <Stack.Screen
         name="OpcionesHome"
         component={Opciones}
-        options={{ headerShown: false }}
+        options={{ headerShown: false,  title: 'Mas Opciones'  }}
       />
       <Stack.Screen
         name="MisDeseos"

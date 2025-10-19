@@ -8,7 +8,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 
 /*Pages - body*/
-
+import BodyMisDatos from '../pages/MisDatos';
 
 
 const Ubicacion = () => {
@@ -23,7 +23,7 @@ const Ubicacion = () => {
 
 
           {/* --- BODY--- */}
-          <Text style={styles.logoText}>Mis DAtos</Text>
+        <BodyMisDatos />
         </View>
        
     

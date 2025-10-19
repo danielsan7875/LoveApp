@@ -1,22 +1,8 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { StyleSheet, Text, View, Image, ScrollView, StatusBar } from 'react-native';
 
-const MenuItem = ({ iconName, text, route }) => {
-  const navigation = useNavigation();
+import MenuItem from '../componentes/MenuOpciones';
 
-  return (
-    <TouchableOpacity
-      style={styles.menuItem}
-      onPress={() => route && navigation.navigate(route)}
-    >
-      <Ionicons name={iconName} size={24} color="#FF69B4" style={styles.icon} />
-      <Text style={styles.menuText}>{text}</Text>
-      <Ionicons name="chevron-forward" size={20} color="#ccc" />
-    </TouchableOpacity>
-  );
-};
 
 export default function Opciones() {
 
@@ -45,8 +31,11 @@ export default function Opciones() {
       <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
      
         <View style={styles.profileSection}>
-          
-              <Ionicons name="person" size={90} color="#050404ff" style={styles.profileImage} />
+              <Image
+                      source={require('../assets/logo.png')} // Asegúrate que el logo esté en assets
+                      style={styles.profileImage}
+                      resizeMode="contain"
+                    />
           <Text style={styles.profileName}>Nombre y Apellido</Text>
         </View>
 
@@ -136,20 +125,7 @@ const styles = StyleSheet.create({
     // Sombra para Android
     elevation: 5,
   },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-  },
-  icon: {
-    marginRight: 20,
-  },
-  menuText: {
-    fontSize: 16,
-    color: '#080808ff',
-    flex: 1, // Ocupa el espacio disponible para empujar la flecha al final
-  },
+  
   divider: {
     height: 1,
     backgroundColor: '#f0f0f0',

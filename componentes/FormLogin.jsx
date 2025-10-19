@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
   
 const FormLogin = () => {
       // Estado para controlar la visibilidad de la contraseña
-      const [isPasswordVisible, setPasswordVisible] = useState(false);
+      const [isClaveVisible, setClaveVisible] = useState(false);
   return (
             <View style={styles.formContainer}>
               <Text style={styles.title}>Iniciar Sesión</Text>
@@ -36,11 +36,11 @@ const FormLogin = () => {
                   placeholder="Constraseña"
                   placeholderTextColor="#8A8A8A"
                   style={styles.textInput}
-                  secureTextEntry={!isPasswordVisible}
+                  secureTextEntry={!isClaveVisible}
                 />
-                <TouchableOpacity onPress={() => setPasswordVisible(!isPasswordVisible)}>
+                <TouchableOpacity onPress={() => setClaveVisible(!isClaveVisible)}>
                   <Ionicons
-                    name={isPasswordVisible ? 'eye-off' : 'eye'}
+                    name={isClaveVisible ? 'eye-off' : 'eye'}
                     size={20}
                     color="#EE82EE"
                   />
