@@ -5,6 +5,7 @@ import MisPedido from '../route/MisPedido';
 import Consejos from '../route/Consejos';
 import MisDatos from '../route/MisDatos';
 import Seguridad from '../route/Seguridad';
+import Cerrar from '../route/home';
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +41,11 @@ export default function OpcionesNavigator() {
         name="Seguridad"
         component={Seguridad}
         options={{ headerShown: true, title: 'Seguridad' }}
+      />
+       <Stack.Screen
+        name="cerrar"
+        component={Cerrar}
+        options={{ headerShown: false}}
       />
     </Stack.Navigator>
   );

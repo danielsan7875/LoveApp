@@ -33,7 +33,7 @@ export default function Opciones() {
   ];
 
    const menuItems3 = [
-    { iconName: 'log-out', text: 'Cerrar Session', route: 'home' },
+    { iconName: 'log-out', text: 'Cerrar Session', route: 'Cerrar' },
   ];
 
 

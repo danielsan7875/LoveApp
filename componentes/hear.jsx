@@ -8,18 +8,29 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from "@react-navigation/native";
+import { CommonActions, useNavigation } from "@react-navigation/native";
 
 const HearBarra = () => {
     const navigation = useNavigation();
   
-    const handleCarritoPress = () => {
+    const CarritoPress = () => {
       navigation.navigate("Carrito");
     };
+
+     const ResetApp = () => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' }], // o 'Login' si quieres ir al login
+      })
+    );
+  };
   return (
       <View style={styles.header}>
+        <TouchableOpacity onPress={ResetApp}>
             <Text style={styles.logoText}>LoveMakeup C.A</Text>
-              <TouchableOpacity onPress={handleCarritoPress} style={styles.cartButton}>
+        </TouchableOpacity>
+              <TouchableOpacity onPress={CarritoPress} style={styles.cartButton}>
                   <Ionicons name="cart-outline" size={28} color="#D81B60" />
               </TouchableOpacity>
         </View>

@@ -82,7 +82,7 @@ const BodySeguridad = () => {
 
       {/* SECCIÓN ESTADO DE LA CUENTA */}
       <View style={styles.statusSection}>
-        <Text style={styles.headerTitlePink}>Estado de la Cuenta</Text>
+        <Text style={styles.Subtitle}>Estado de la Cuenta</Text>
 
         <View style={styles.deleteAccountBlock}>
           <View style={styles.deleteTextWrapper}>
@@ -164,7 +164,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   deleteAccountBlock: {
-    marginTop: 15,
     borderWidth: 1,
     borderColor: '#eee',
     borderRadius: 15,

@@ -11,7 +11,7 @@ export default function MainNavigator() {
   return (
     <Stack.Navigator>
       <Stack.Screen name="MainTabs" component={TabNavigator}  options={{ headerShown: false }} />
-      <Stack.Screen name="Login" component={LoginForm}  options={{ headerShown: true, title: 'Iniciar Session / Registrarte'  }} />
+      <Stack.Screen name="Login" component={LoginForm}  options={{ headerShown: true, title: 'Iniciar Sessión / Regístrate'  }} />
       <Stack.Screen name="Carrito" component={BodyCarrito} options={{ headerShown: true, title: 'Carrito de compra'  }}/>
     </Stack.Navigator>
   );

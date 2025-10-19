@@ -99,10 +99,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFF1F2',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   scrollContainer: {
-    padding: 30,
+    padding: 20,
     alignItems: 'center',
     paddingBottom: 100,
   },
@@ -115,7 +114,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#E91E63',
-    marginBottom: 5,
     borderLeftWidth: 4,
     borderLeftColor: '#E91E63',
     paddingLeft: 10,
