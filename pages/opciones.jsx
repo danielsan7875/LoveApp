@@ -1,8 +1,22 @@
 import React from 'react';
-import { StyleSheet, Text, View, Image, ScrollView, StatusBar } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalado @expo/vector-icons
 
-import MenuItem from '../componentes/MenuOpciones';
+const MenuItem = ({ iconName, text, route }) => {
+  const navigation = useNavigation();
 
+  return (
+    <TouchableOpacity
+      style={styles.menuItem}
+      onPress={() => route && navigation.navigate(route)}
+    >
+      <Ionicons name={iconName} size={24} color="#FF69B4" style={styles.icon} />
+      <Text style={styles.menuText}>{text}</Text>
+      <Ionicons name="chevron-forward" size={20} color="#ccc" />
+    </TouchableOpacity>
+  );
+};
 
 export default function Opciones() {
 
@@ -107,6 +121,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#888',
     marginTop: 4,
+  },
+   menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  icon: {
+    marginRight: 20,
+  },
+  menuText: {
+    fontSize: 16,
+    color: '#080808ff',
+    flex: 1, // Ocupa el espacio disponible para empujar la flecha al final
   },
   card: {
     backgroundColor: '#ffffff',
