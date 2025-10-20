@@ -49,9 +49,9 @@ const BodyHome = () => {
         <Text style={styles.text}>Productos mas vendidos</Text>
       </View>
       <View style={styles.cardsContainer}>
-        {productos.map((prod, idx) => (
+        {productos.map((prod) => (
           <Cards
-            key={idx}
+            key={prod.id}
             foto={prod.foto}
             nombre={prod.nombre}
             precioMayor={prod.precioMayor}

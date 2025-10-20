@@ -1,5 +1,6 @@
 const productos = [
   {
+    id: 'p1',
     foto: require('../assets/img/Imgproductos/Base de gotero Salome.webp'),
     nombre: 'Producto 1',
     precioMayor: '100',
@@ -10,6 +11,7 @@ const productos = [
     cantidadMayor: 6,
   },
   {
+    id: 'p2',
     foto: require('../assets/img/Imgproductos/Bálsamo premium Salomé.webp'),
     nombre: 'Producto 2',
     precioMayor: '200',
@@ -20,6 +22,43 @@ const productos = [
     cantidadMayor: 12,
   },
   {
+    id: 'p3',
+    foto: require('../assets/img/Imgproductos/Lipgloss kis me ushas.webp'),
+    nombre: 'Producto 3',
+    precioMayor: '150',
+    precioDetal: '180',
+    marca: 'Ushas',
+    stock: 30,
+    descripcion: 'Lipgloss de larga duración con acabado brillante.',
+    cantidadMayor: 10,
+  },
+];
+
+const productos2 = [
+{ 
+    id: 'p2-1',
+    foto: require('../assets/img/Imgproductos/Base de gotero Salome.webp'),
+    nombre: 'Producto 1',
+    precioMayor: '100',
+    precioDetal: '120',
+    marca: 'Salome',
+    stock: 20,
+    descripcion: 'Base de gotero hidratante para todo tipo de piel.',
+    cantidadMayor: 6,
+  },
+  {
+    id: 'p2-2',
+    foto: require('../assets/img/Imgproductos/Bálsamo premium Salomé.webp'),
+    nombre: 'Producto 2',
+    precioMayor: '200',
+    precioDetal: '240',
+    marca: 'Salomé',
+    stock: 15,
+    descripcion: 'Bálsamo labial premium con ingredientes naturales.',
+    cantidadMayor: 12,
+  },
+  {
+    id: 'p2-3',
     foto: require('../assets/img/Imgproductos/Lipgloss kis me ushas.webp'),
     nombre: 'Producto 3',
     precioMayor: '150',
@@ -30,7 +69,8 @@ const productos = [
     cantidadMayor: 10,
   },
   {
-    foto: require('../assets/img/Imgproductos/Lipgloss kis me ushas.webp'),
+    id: 'p2-4',
+    foto: require('../assets/img/Imgproductos/Contorno de ojos kojic acid.webp'),
     nombre: 'Producto 4',
     precioMayor: '150',
     precioDetal: '180',
@@ -39,18 +79,27 @@ const productos = [
     descripcion: 'Lipgloss de larga duración con acabado brillante.',
     cantidadMayor: 10,
   },
-];
-
-const productos2 = [
-{
-    foto: require('../assets/img/Imgproductos/Base de gotero Salome.webp'),
-    nombre: 'Producto 1',
-    precioMayor: '100',
-    precioDetal: '120',
-    marca: 'Salome',
-    stock: 20,
-    descripcion: 'Base de gotero hidratante para todo tipo de piel.',
-    cantidadMayor: 6,
+  {
+    id: 'p2-5',
+    foto: require('../assets/img/Imgproductos/Polvo suelto premium Salomé.webp'),
+    nombre: 'Producto 5',
+    precioMayor: '150',
+    precioDetal: '180',
+    marca: 'Ushas',
+    stock: 25,
+    descripcion: 'Lipgloss de larga duración con acabado brillante.',
+    cantidadMayor: 10,
+  },
+  {
+    id: 'p2-6',
+    foto: require('../assets/img/Imgproductos/Labial+lapiz ushas.webp'),
+    nombre: 'Producto 6',
+    precioMayor: '150',
+    precioDetal: '180',
+    marca: 'Ushas',
+    stock: 25,
+    descripcion: 'Lipgloss de larga duración con acabado brillante.',
+    cantidadMayor: 10,
   },
 ];
 export { productos, productos2 };
