@@ -232,7 +232,7 @@ export default function Consejos({ navigation }) {
                     onPress={() => {
                       closeModal();
                       if (navigation && navigation.navigate) {
-                        navigation.navigate('CatalogoProducto');
+                        navigation.navigate('Producto.jsx');
                       }
                     }}
                     style={styles.btnPrim}
