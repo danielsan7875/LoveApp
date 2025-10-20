@@ -8,6 +8,7 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  ScrollView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -51,6 +52,7 @@ const Consejos = () => {
 ];
 
   return (
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
     <View style={styles.bodyContainer}>
       <Text style={styles.title}>Consejos de Belleza</Text>
 
@@ -75,10 +77,14 @@ const Consejos = () => {
         <Text style={styles.buttonText}>Ver productos</Text>
       </TouchableOpacity>
     </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
+   scrollContainer: {
+    paddingBottom: 100,
+  },
   bodyContainer: {
     flex: 1,
     backgroundColor: '#FFF1F2',
