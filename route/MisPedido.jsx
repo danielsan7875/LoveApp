@@ -9,10 +9,6 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-// Componentes
-import HearBarra from '../componentes/hear.jsx';
-import LoginBarra from '../componentes/loginbarra.jsx';
-
 const MisPedido = () => {
   // Datos de ejemplo para pedidos
   const pedidos = [
@@ -60,11 +56,7 @@ const MisPedido = () => {
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
         <View style={styles.container}>
-          {/* --- CABECERA --- */}
-          <HearBarra />
           
-          {/* --- BARRA DE BÚSQUEDA Y LOGIN --- */}
-          <LoginBarra />
           
           {/* --- BODY--- */}
           <Text style={styles.logoText}>Mis Pedidos</Text>
