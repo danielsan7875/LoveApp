@@ -1,11 +1,11 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Opciones from '../route/opciones';
-import MisDeseos from '../route/MisDeseos';
-import MisPedido from '../route/MisPedido';
-import Consejos from '../route/Consejos';
-import MisDatos from '../route/MisDatos';
-import Seguridad from '../route/Seguridad';
-import Cerrar from '../route/home';
+import Opciones from '../screens/opciones';
+import MisDeseos from '../screens/MisDeseos';
+import MisPedido from '../screens/MisPedido';
+import Consejos from '../screens/Consejos';
+import MisDatos from '../screens/MisDatos';
+import Seguridad from '../screens/Seguridad';
+import Cerrar from '../screens/home';
 
 const Stack = createNativeStackNavigator();
 

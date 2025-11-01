@@ -2,8 +2,8 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import TabNavigator from "./TabNavigator";
-import LoginForm from "../route/login"; // Ajusta la ruta si es diferente
-import BodyCarrito from "../route/carrito";
+import LoginForm from "../screens/login"; // Ajusta la ruta si es diferente
+import BodyCarrito from "../screens/carrito";
 
 const Stack = createNativeStackNavigator();
 

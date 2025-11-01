@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import MainNavigator from "./navigation/MainNavigator";
+import MainNavigator from "./route/MainNavigator";
 import Loader from './componentes/Loader';
 
 const App = () => {

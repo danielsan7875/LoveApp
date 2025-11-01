@@ -1,10 +1,10 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import OpcionesNavigator from "./OpcNavigator";
-import BodyHome from "../route/home";
-import BodyProducto from "../route/producto";
-import BodyUbicacion from "../route/ubicacion";
-import BodyContacto from "../route/contacto";
+import BodyHome from "../screens/home";
+import BodyProducto from "../screens/producto";
+import BodyUbicacion from "../screens/ubicacion";
+import BodyContacto from "../screens/contacto";
 
 import NavBarra from "../componentes/nav";
 const Tab = createBottomTabNavigator();
