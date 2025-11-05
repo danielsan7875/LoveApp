@@ -9,6 +9,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 /*Componenetes*/
 import HearBarraAdmin from '../../componentes/HearAdmin'; 
 
+import BodyAdminHome from '../../pages/AdminHome'; 
 
 const AdminHome  = () => {
   return (
@@ -19,12 +20,9 @@ const AdminHome  = () => {
           {/* --- CABECERA --- */}
           <HearBarraAdmin />
          
-
-  <Text style={styles.title}>HOME</Text>
-         
+          {/* --- BODY --- */}
+          <BodyAdminHome />
         </View>
-
-    
       </SafeAreaView>
     </SafeAreaProvider>
   );

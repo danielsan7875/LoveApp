@@ -5,7 +5,7 @@ import MisPedido from '../screens/MisPedido';
 import Consejos from '../screens/Consejos';
 import MisDatos from '../screens/MisDatos';
 import Seguridad from '../screens/Seguridad';
-import Cerrar from '../screens/home';
+import Cerrar from '../screens/login';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,7 +43,7 @@ export default function OpcionesNavigator() {
         options={{ headerShown: true, title: 'Seguridad' }}
       />
        <Stack.Screen
-        name="cerrar"
+        name="Cerrar"
         component={Cerrar}
         options={{ headerShown: false}}
       />

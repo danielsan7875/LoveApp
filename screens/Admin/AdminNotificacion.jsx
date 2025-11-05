@@ -7,21 +7,23 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 /*Componenetes*/
-import HearBarra from '../../componentes/HearAdmin'; // si estás en /screens/admin/gestion/AdminHome.jsx
+ 
 
-import BodyAdminProducto from '../../pages/AdminProducto'; 
 
-const AdminHome  = () => {
+const AdminReporte  = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
         <View style={styles.container}>
           {/* --- CABECERA --- */}
-          <HearBarra />
+          
          
-          {/* --- CABECERA --- */}
-          <BodyAdminProducto />
+
+       <Text style={styles.title}>
+        NOTIFICACIONES
+       </Text>
+         
         </View>
 
     
@@ -41,12 +43,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
     title: {
-    fontSize: 20,
-    color: '#000000ff',
+    fontSize: 50,
+    color: '#1f1f1fff',
     fontWeight: 'bold',
+    padding:20,
   },
 });
-export default AdminHome;
+export default AdminReporte;
 
 
 

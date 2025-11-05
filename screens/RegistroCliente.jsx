@@ -2,28 +2,30 @@ import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
   View,
-  Text,
+  Text
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-/*Componenetes*/
-import HearBarra from '../../componentes/HearAdmin'; // si estás en /screens/admin/gestion/AdminHome.jsx
 
-import BodyAdminProducto from '../../pages/AdminProducto'; 
+/*Pages - body*/
+import BodyRegistro from '../pages/RegistroCliente';
 
-const AdminHome  = () => {
+
+const Ubicacion = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
         <View style={styles.container}>
-          {/* --- CABECERA --- */}
-          <HearBarra />
-         
-          {/* --- CABECERA --- */}
-          <BodyAdminProducto />
-        </View>
 
+         
+
+
+
+          {/* --- BODY--- */}
+          <BodyRegistro />
+        </View>
+       
     
       </SafeAreaView>
     </SafeAreaProvider>
@@ -40,14 +42,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
-    title: {
-    fontSize: 20,
-    color: '#000000ff',
-    fontWeight: 'bold',
+ logoText: {
+      fontSize: 60,
+      fontWeight: 'bold',
+      color: '#D81B60', // Rosa oscuro
   },
 });
-export default AdminHome;
 
-
-
+export default Ubicacion;
 
