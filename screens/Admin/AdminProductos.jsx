@@ -2,32 +2,30 @@ import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
   View,
-  Text
+  Text,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 /*Componenetes*/
-
-
-/*Pages - body*/
+import HearBarra from '../../componentes/HearAdmin'; // si estás en /screens/admin/gestion/AdminHome.jsx
 
 
 
-const Carrito = () => {
+const AdminHome  = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
-          <View style={styles.container}>
-      
-            
+        <View style={styles.container}>
+          {/* --- CABECERA --- */}
+          <HearBarra />
+         
 
+  <Text style={styles.title}>Bienvenido al Panel Administrativo</Text>
+         <Text style={styles.title}>Producto</Text>
+        </View>
 
-
-             {/* --- BODY--- */}
-             <Text style={styles.logoText}>Carrito</Text>
-          </View>
-     
+    
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -43,12 +41,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
- logoText: {
-      fontSize: 60,
-      fontWeight: 'bold',
-      color: '#D81B60', // Rosa oscuro
+    title: {
+    fontSize: 20,
+    color: '#000000ff',
+    fontWeight: 'bold',
   },
 });
+export default AdminHome;
 
-export default Carrito;
+
+
 

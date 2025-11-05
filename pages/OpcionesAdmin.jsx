@@ -5,9 +5,9 @@ import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalado 
 
 const MenuItem = ({ iconName, text, route }) => {
   const navigation = useNavigation();
-
+ 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.menuItem}
       onPress={() => route && navigation.navigate(route)}
     >
@@ -21,21 +21,28 @@ const MenuItem = ({ iconName, text, route }) => {
 export default function Opciones() {
 
   const menuItems1 = [
-    { iconName: 'heart', text: 'Mi Lista Deseos', route: 'MisDeseos' },
-    { iconName: 'bag-handle', text: 'Mis Pedidos', route: 'MisPedido' },
+    { iconName: 'receipt', text: 'Reportes', route: 'Reporte' },
   ];
 
   const menuItems2 = [
-    { iconName: 'megaphone', text: 'Consejos', route: 'Consejos' },
-    { iconName: 'person-circle', text: 'Mis Datos', route: 'MisDatos' },
-    { iconName: 'lock-open', text: 'Seguridad', route: 'Seguridad'},
+    { iconName: 'reader', text: 'Compra', route: 'Compra' },
+    { iconName: 'document-attach', text: 'Reserva', route: 'Reserva' },
+    { iconName: 'car', text: 'Proveedor', route: 'Proveedor'},
+    { iconName: 'pricetag', text: 'Categoria', route: 'Categoria'},
 
   ];
 
    const menuItems3 = [
-    { iconName: 'log-out', text: 'Cerrar Session', route: 'Cerrar' },
+    { iconName: 'person', text: 'Clientes', route: 'Clientes' },
+       { iconName: 'card', text: 'Metodo Pago', route: 'MetodoPago' },
+          { iconName: 'bicycle', text: 'Metodo Entrega', route: 'MetodoEntrega' },
   ];
 
+   const menuItems4 = [
+    { iconName: 'id-card', text: 'Bitacora', route: 'Bitacora' },
+     { iconName: 'people', text: 'Usuarios', route: 'Usuarios' },
+      { iconName: 'shield-half', text: 'Tipo Usuario', route: 'TipoUsuario' },
+  ];
 
   return (
    
@@ -43,16 +50,10 @@ export default function Opciones() {
       <StatusBar barStyle="dark-content" />
 
       <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-     
-        <View style={styles.profileSection}>
-              <Image
-                      source={require('../assets/logo.png')} // Asegúrate que el logo esté en assets
-                      style={styles.profileImage}
-                      resizeMode="contain"
-                    />
-          <Text style={styles.profileName}>Nombre y Apellido</Text>
-        </View>
-
+      <View style={styles.profileSection}>
+                
+               <Text style={styles.profileName}>Más Opciones</Text>
+             </View>
 
         {/*|||||||||||||| Primera Tarjeta de Menú |||||||||||||||||||*/}
          <View style={styles.card}>
@@ -74,13 +75,22 @@ export default function Opciones() {
             ))}
         </View>
 
-        
         {/*|||||||||||||||||| Tercero Tarjeta de Menú |||||||||||||||*/}
         <View style={styles.card}>
             {menuItems3.map((item, index) => (
               <React.Fragment key={index}>
                 <MenuItem iconName={item.iconName} text={item.text} route={item.route} />
                 {index < menuItems3.length - 1 && <View style={styles.divider} />}
+              </React.Fragment>
+            ))}
+        </View>
+
+        {/*|||||||||||||||||| Tercero Tarjeta de Menú |||||||||||||||*/}
+        <View style={styles.card}>
+            {menuItems4.map((item, index) => (
+              <React.Fragment key={index}>
+                <MenuItem iconName={item.iconName} text={item.text} route={item.route} />
+                {index < menuItems4.length - 1 && <View style={styles.divider} />}
               </React.Fragment>
             ))}
         </View>

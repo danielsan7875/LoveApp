@@ -2,32 +2,31 @@ import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
   View,
-  Text
+  Text,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 /*Componenetes*/
+ 
 
 
-/*Pages - body*/
-
-
-
-const Carrito = () => {
+const AdminReporte  = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
-          <View style={styles.container}>
-      
-            
+        <View style={styles.container}>
+          {/* --- CABECERA --- */}
+          
+         
 
+       <Text style={styles.title}>
+        USURIOS
+       </Text>
+         
+        </View>
 
-
-             {/* --- BODY--- */}
-             <Text style={styles.logoText}>Carrito</Text>
-          </View>
-     
+    
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -43,12 +42,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
- logoText: {
-      fontSize: 60,
-      fontWeight: 'bold',
-      color: '#D81B60', // Rosa oscuro
+    title: {
+    fontSize: 50,
+    color: '#1f1f1fff',
+    fontWeight: 'bold',
+    padding:20,
   },
 });
+export default AdminReporte;
 
-export default Carrito;
+
+
 
