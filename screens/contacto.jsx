@@ -11,7 +11,7 @@ import HearBarra from '../componentes/hear.jsx';
 import LoginBarra from '../componentes/loginbarra.jsx';
 
 /*Pages - body*/
-
+import ContactCards from '../pages/Contacto.jsx';
 
 
 const Contacto = () => {
@@ -25,10 +25,10 @@ const Contacto = () => {
           {/* --- BARRA DE BÚSQUEDA Y LOGIN --- */}
           <LoginBarra />
 
-
+         
 
           {/* --- BODY--- */}
-          <Text style={styles.logoText}>Contacto</Text>
+           <ContactCards />
         </View>
      
     
