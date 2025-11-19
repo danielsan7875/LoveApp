@@ -1,12 +1,29 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, Modal, TouchableOpacity } from 'react-native';
+import { useDispatch } from "react-redux";
+import { addToCart } from "../redux/cartSlice";
 
 export default function ModalProducto({ visible, onClose, producto }) {
-	if (!producto) return null;
-		return (
-			<Modal visible={visible} transparent animationType="slide">
-				<View style={styles.overlay}>
-					<View style={styles.modalContent}>
+  const dispatch = useDispatch();
+  if (!producto) return null;
+
+  const agregar = () => {
+    dispatch(addToCart({
+      id: producto.id,
+      nombre: producto.nombre,
+      precioMayor: producto.precioMayor,
+      precioDetal: producto.precioDetal,
+      foto: producto.foto,
+    }));
+    onClose();
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="slide">
+      <View style={styles.overlay}>
+        
+
+          <View style={styles.modalContent}>
 						<Image source={producto.foto} style={styles.image} />
 						<Text style={styles.nombre}>{producto.nombre}</Text>
 						<Text style={styles.marca}>Marca: <Text style={styles.marcaValue}>{producto.marca}</Text></Text>
@@ -16,17 +33,43 @@ export default function ModalProducto({ visible, onClose, producto }) {
 							<Text style={styles.info}>Mayor: <Text style={styles.infoValue}>{producto.precioMayor}$</Text> <Text style={styles.infoMin}>(min: {producto.cantidadMayor})</Text></Text>
 							<Text style={styles.info}>Detal: <Text style={styles.infoValue}>{producto.precioDetal}$</Text></Text>
 						</View>
+
+               <TouchableOpacity style={styles.agregarBtn} onPress={agregar}>
+            <Text style={styles.cerrarTxt}>Agregar al carrito</Text>
+          </TouchableOpacity>
+
 						<TouchableOpacity onPress={onClose} style={styles.cerrarBtn} activeOpacity={0.85}>
 							<Text style={styles.cerrarTxt}>Cerrar</Text>
 						</TouchableOpacity>
-					</View>
-				</View>
-			</Modal>
-		);
-}
 
+           
+					</View>
+       
+        </View>
+  
+    </Modal>
+  );
+}
+ 
 const styles = StyleSheet.create({
-	overlay: {
+  overlay: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center', alignItems: 'center'
+  },
+  modalContent: {
+    backgroundColor: '#fff', borderRadius: 22, padding: 24, width: 320, alignItems: 'center'
+  },
+  image: { width: 120, height: 120, borderRadius: 60 },
+  nombre: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
+  cerrarBtn: {
+    backgroundColor: '#777', padding: 10, marginTop: 10, borderRadius: 8
+  },
+  agregarBtn: {
+    backgroundColor: '#d81b60', padding: 10, marginTop: 10, borderRadius: 8
+  },
+  cerrarTxt: { color: '#fff', fontWeight: 'bold' },
+
+  overlay: {
 		flex: 1,
 		backgroundColor: 'rgba(0,0,0,0.45)',
 		justifyContent: 'center',
@@ -109,6 +152,8 @@ const styles = StyleSheet.create({
 		color: '#fff',
 		fontWeight: 'bold',
 		fontSize: 17,
-		letterSpacing: 1,
+		letterSpacing: 1,
 	},
+
+
 });
