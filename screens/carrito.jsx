@@ -1,54 +1,85 @@
-import { StatusBar } from 'expo-status-bar';
-import {
-  StyleSheet,
-  View,
-  Text
-} from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import React from 'react';
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
+import { useSelector, useDispatch } from "react-redux";
+import { removeFromCart } from "../redux/cartSlice";
 
-/*Componenetes*/
+export default function Carrito() {
+  const dispatch = useDispatch();
+  const carrito = useSelector(state => state.cart.items);
 
-
-/*Pages - body*/
-
-
-
-const Carrito = () => {
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
-          <View style={styles.container}>
-      
-            
+    <View style={styles.container}>
+      <Text style={styles.title}>Carrito</Text>
 
+      <FlatList
+        data={carrito}
+        keyExtractor={(item, index) =>
+          item?.id ? item.id.toString() : String(index)
+        }
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Image source={item.foto} style={styles.img} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.name}>{item.nombre}</Text>
+              <Text style={styles.price}>
+                {item.cantidad} x {item.precioMayor}$ = {(item.cantidad * item.precioMayor).toFixed(2)}$
+              </Text>
+            </View>
 
-
-             {/* --- BODY--- */}
-             <Text style={styles.logoText}>Carrito</Text>
+            <TouchableOpacity
+              style={styles.removeBtn}
+              onPress={() => dispatch(removeFromCart(item.id))}
+            >
+              <Text style={styles.removeTxt}>X</Text>
+            </TouchableOpacity>
           </View>
-     
-      </SafeAreaView>
-    </SafeAreaProvider>
+        )}
+      />
+    </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
+    backgroundColor: "#FFF1F2",
+    paddingTop: 50,
   },
- logoText: {
-      fontSize: 60,
-      fontWeight: 'bold',
-      color: '#D81B60', // Rosa oscuro
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#D81B60',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  item: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    margin: 8,
+    borderRadius: 12,
+    padding: 10,
+    elevation: 4,
+    alignItems: 'center',
+  },
+  img: {
+    width: 60,
+    height: 60,
+    borderRadius: 10,
+    marginRight: 10,
+  },
+  name: {
+    fontWeight: 'bold',
+  },
+  price: {
+    color: '#555',
+  },
+  removeBtn: {
+    backgroundColor: '#D81B60',
+    padding: 6,
+    borderRadius: 6,
+  },
+  removeTxt: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
-
-export default Carrito;
-
