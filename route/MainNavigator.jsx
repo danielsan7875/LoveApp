@@ -6,6 +6,8 @@ import LoginForm from "../screens/login"; // Ajusta la ruta si es diferente
 import BodyCarrito from "../screens/carrito";
 import BodyRegistro from "../screens/RegistroCliente";
 
+
+
 import AdminNavigator from "./AdminNavigator";
 
 import BodyPerfil from "../screens/Admin/AdminPerfil";
