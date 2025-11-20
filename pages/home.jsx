@@ -52,6 +52,7 @@ const BodyHome = () => {
         {productos.map((prod) => (
           <Cards
             key={prod.id}
+            id={prod.id}
             foto={prod.fotos}
             nombre={prod.nombre}
             precioMayor={prod.precioMayor}

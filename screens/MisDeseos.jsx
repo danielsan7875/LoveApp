@@ -1,32 +1,39 @@
 import { StatusBar } from 'expo-status-bar';
+import { useSelector } from "react-redux";
 import {
   StyleSheet,
-  View,
   Text
+, ScrollView
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import Cards from "../componentes/Cards";
 
 
 /*Pages - body*/
 
-
-
-const Ubicacion = () => {
+const MisDeseos = () => {
+  const wishlist = useSelector((state) => state.wishlist);
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
-        <View style={styles.container}>
-
-         
-
-
-
-          {/* --- BODY--- */}
+        <ScrollView style={styles.container}>
           <Text style={styles.logoText}>Lista de Deseos</Text>
-        </View>
-       
-    
+      {wishlist.length === 0 ? (
+        <Text>No tienes productos en tu lista de deseos</Text>
+      ) : (
+        wishlist.map(item => (
+          <Cards
+            key={item.id}
+            id={item.id}
+            nombre={item.nombre}
+            precioMayor={item.precioMayor}
+            precioDetal={item.precioDetal}
+            foto={item.foto}
+          />
+        ))
+      )}
+    </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -49,5 +56,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Ubicacion;
+export default MisDeseos;
 

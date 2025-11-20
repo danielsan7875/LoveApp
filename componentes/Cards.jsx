@@ -1,14 +1,16 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice";
 import { addToCart } from "../redux/cartSlice";
+import { Ionicons } from '@expo/vector-icons';
 
-export default function Cards({ id, foto, nombre, precioMayor, precioDetal,onPress }) {
+export default function Cards({ id, foto, nombre, precioMayor, precioDetal, onPress }) {
   const dispatch = useDispatch();
 
   const agregarCarrito = () => {
     dispatch(addToCart({
-      id: id ?? nombre + "_" + precioMayor, // si no hay id, se crea uno
+      id: id ?? nombre + "_" + precioMayor,
       nombre,
       precioMayor,
       precioDetal,
@@ -16,21 +18,40 @@ export default function Cards({ id, foto, nombre, precioMayor, precioDetal,onPre
     }));
   };
 
+  const wishlist = useSelector((state) => state.wishlist);
+  const isFav = wishlist.some(item => item.id === id);
+
+  const toggleWishlist = () => {
+    if (isFav) {
+      dispatch(removeFromWishlist(id));
+    } else {
+      dispatch(addToWishlist({ id, nombre, precioMayor, precioDetal, foto }));
+    }
+  };
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}activeOpacity={0.85}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.imageContainer}>
         <Image source={foto[0]} style={styles.image} />
+        <TouchableOpacity onPress={toggleWishlist} style={styles.favIconContainer}>
+          <Ionicons
+            name={isFav ? "heart" : "heart-outline"}
+            size={24}
+            color={isFav ? "#D81B60" : "#fff"}
+          />
+        </TouchableOpacity>
       </View>
       <Text style={styles.nombre}>{nombre}</Text>
-       
+
       <View style={styles.preciocontainer}>
-        <Text style={styles.precioMayor}>M:{precioMayor}$</Text>
-        <Text style={styles.precioDetal}>D:{precioDetal}$</Text>
+        <Text style={styles.precioMayor}>M: {precioMayor}$</Text>
+        <Text style={styles.precioDetal}>D: {precioDetal}$</Text>
       </View>
 
       <TouchableOpacity style={styles.button} onPress={agregarCarrito}>
         <Text style={styles.btnText}>Agregar</Text>
       </TouchableOpacity>
+
     </TouchableOpacity>
   );
 }
@@ -49,42 +70,62 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     overflow: 'hidden',
   },
+
   imageContainer: {
     width: '100%',
     height: 120,
     backgroundColor: '#f8bbd0',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     alignItems: 'center',
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
+    overflow: "hidden",
   },
+
   image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
   },
+
+  /* ❤️ NUEVO */
+  favIconContainer: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    padding: 6,
+    borderRadius: 20,
+    zIndex: 10,
+  },
+
   nombre: {
     fontWeight: 'bold',
     fontSize: 16,
     color: '#d81b60',
     textAlign: 'center',
+    marginTop: 4,
   },
+
   preciocontainer: {
-    marginBottom: 10,
+    marginVertical: 6,
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 10,
   },
+
   precioMayor: {
     color: '#388e3c',
     fontWeight: 'bold',
     fontSize: 15,
   },
+
   precioDetal: {
     color: '#1976d2',
     fontWeight: 'bold',
     fontSize: 15,
   },
+
   button: {
     backgroundColor: '#d81b60',
     borderRadius: 8,
@@ -92,6 +133,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     marginBottom: 10,
   },
+
   btnText: {
     color: '#fff',
     fontWeight: 'bold',
