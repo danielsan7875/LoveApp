@@ -11,7 +11,7 @@ import HearBarra from '../componentes/hear.jsx';
 import LoginBarra from '../componentes/loginbarra.jsx';
 
 /*Pages - body*/
-
+import LocationCard from '../pages/Ubicacion.jsx';
 
 
 const Ubicacion = () => {
@@ -28,7 +28,7 @@ const Ubicacion = () => {
 
 
           {/* --- BODY--- */}
-          <Text style={styles.logoText}>Ubicacion</Text>
+          <LocationCard />
         </View>
        
     
