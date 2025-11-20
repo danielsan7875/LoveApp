@@ -19,49 +19,77 @@ import ModalProducto from '../componentes/Modal';
 
 
 
-const Producto = () => {
+const Producto = ({ route }) => {
+  const { query } = route?.params || {};
   const [modalVisible, setModalVisible] = useState(false);
-    const [productoActivo, setProductoActivo] = useState(null);
-  
-    const handleCardPress = (producto) => {
-      setProductoActivo(producto);
-      setModalVisible(true);
-    };
+  const [productoActivo, setProductoActivo] = useState(null);
+
+  const [resultados, setResultados] = useState(productos2);
+  React.useEffect(() => {
+    if (!query) {
+      setResultados(productos2);
+      return;
+    }
+
+    const filtrados = productos2.filter((p) =>
+      p.nombre.toLowerCase().includes(query.toLowerCase())
+    );
+
+    setResultados(filtrados);
+  }, [query]);
+
+
+  const handleCardPress = (producto) => {
+    setProductoActivo(producto);
+    setModalVisible(true);
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
         <View style={styles.container}>
-          {/* --- CABECERA --- */}
           <HearBarra />
-          {/* --- BARRA DE BÚSQUEDA Y LOGIN --- */}
           <LoginBarra />
-          {/* --- BODY--- */}
-          <Text style={styles.logoText}>Productos</Text>
-           <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-      <View style={styles.cardsContainer}>
-        {productos2.map((prod) => (
-          <Cards
-            key={prod.id}
-            foto={prod.fotos}
-            nombre={prod.nombre}
-            precioMayor={prod.precioMayor}
-            precioDetal={prod.precioDetal}
-            onPress={() => handleCardPress(prod)}
-          />
-        ))}
-      </View>
-      <ModalProducto
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        producto={productoActivo}
-      />
-                </ScrollView>
+
+          <Text style={styles.logoText}>
+            {query ? `Resultados: ${query}` : "Productos"}
+          </Text>
+
+          <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.cardsContainer}>
+
+              {resultados.length > 0 ? (
+                resultados.map((prod) => (
+                  <Cards
+                    key={prod.id}
+                    foto={prod.fotos}
+                    nombre={prod.nombre}
+                    precioMayor={prod.precioMayor}
+                    precioDetal={prod.precioDetal}
+                    onPress={() => handleCardPress(prod)}
+                  />
+                ))
+              ) : (
+                <Text style={{ textAlign: "center", marginTop: 20, fontSize: 16 }}>
+                  No se encontraron productos
+                </Text>
+              )}
+
+            </View>
+
+            <ModalProducto
+              visible={modalVisible}
+              onClose={() => setModalVisible(false)}
+              producto={productoActivo}
+            />
+          </ScrollView>
         </View>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 };
+
 
 const styles = StyleSheet.create({
   cardsContainer: {
