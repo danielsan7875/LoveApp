@@ -13,7 +13,7 @@ const ContactCards = () => {
     <View style={styles.container}>
 
         <Image
-        source={require('../assets/logo.png')}
+        source={require('../assets/cont.png')}
         style={styles.image}
         resizeMode="contain"
       />
@@ -24,17 +24,17 @@ const ContactCards = () => {
 
       <ContactCard
         platform="Ir a Instagram"
-        url="https://www.instagram.com/tu_usuario"
+        url="https://www.instagram.com/lovemakeupyk/"
         backgroundColor="#E1306C"
       />
       <ContactCard
         platform="Ir a WhatsApp"
-        url="https://wa.me/584123456789"
+        url="https://wa.me/584245115414"
         backgroundColor="#25D366"
       />
       <ContactCard
         platform="ir a Facebook"
-        url="https://www.facebook.com/tu_usuario"
+        url="https://www.facebook.com/lovemakeupyk/"
         backgroundColor="#1877F2"
       />
     </View>
@@ -63,8 +63,8 @@ const styles = StyleSheet.create({
   marginBottom: 20,
 },
  image: {
-    width: 80,
-    height: 80,
+    width: 500,
+    height: 100,
     marginBottom: 10,
      alignSelf: 'center',
   },
