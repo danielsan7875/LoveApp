@@ -19,7 +19,7 @@ export default function Cards({ id, foto, nombre, precioMayor, precioDetal,onPre
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}activeOpacity={0.85}>
       <View style={styles.imageContainer}>
-        <Image source={foto} style={styles.image} />
+        <Image source={foto[0]} style={styles.image} />
       </View>
       <Text style={styles.nombre}>{nombre}</Text>
        
