@@ -18,7 +18,7 @@ export default function Carrito() {
         }
         renderItem={({ item }) => (
           <View style={styles.item}>
-            <Image source={item.foto} style={styles.img} />
+            <Image source={item.foto[0]} style={styles.img} />
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{item.nombre}</Text>
               <Text style={styles.price}>

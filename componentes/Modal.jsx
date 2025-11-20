@@ -41,11 +41,6 @@ export default function ModalProducto({ visible, onClose, producto }) {
             <Text style={styles.info}>Mayor: <Text style={styles.infoValue}>{producto.precioMayor}$</Text> <Text style={styles.infoMin}>(min: {producto.cantidadMayor})</Text></Text>
             <Text style={styles.info}>Detal: <Text style={styles.infoValue}>{producto.precioDetal}$</Text></Text>
           </View>
-
-          <TouchableOpacity style={styles.agregarBtn}>
-            <Text style={styles.cerrarTxt}>Agregar al carrito</Text>
-          </TouchableOpacity>
-
           <TouchableOpacity onPress={onClose} style={styles.cerrarBtn} activeOpacity={0.85}>
             <Text style={styles.cerrarTxt}>Cerrar</Text>
           </TouchableOpacity>
