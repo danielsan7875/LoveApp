@@ -42,7 +42,7 @@ export default function Registro() {
               name="cedula"
               rules={{
                 required: true,
-                pattern: /^[0-9]+$/,
+                pattern: /^\d{7,8}$/
               }}
               render={({ field: { onChange, value } }) => (
                 <TextInput
@@ -54,7 +54,7 @@ export default function Registro() {
                     submitted ? styles.inputValid : null
                   ]}
                   value={value}
-                  onChangeText={(text) => onChange(text.replace(/[^0-9]/g, ''))}
+                  onChangeText={(text) => onChange(text.replace(/[^0-9]{7,9}$/g, ''))}
                 />
               )}
             />
