@@ -9,21 +9,37 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
 import TasaOficial from '../informacion/dolar';
+import { useState } from 'react';
   
 const LoginBarra = () => {
   const tasa = TasaOficial();
   const navigation = useNavigation();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleLoginPress = () => {
     navigation.navigate("Login");
   };
+
+  const handleSearch = () => {
+    if (searchQuery.trim() === "") return;
+
+    navigation.navigate("Producto", {
+      query: searchQuery
+    });
+  };
   return (
     <View style={styles.searchSection}>
-                <View style={styles.searchInputContainer}>
-                     <Ionicons name="search-outline" size={20} color="#999" style={{marginLeft: 10}} />
-                    <TextInput placeholder="Busca aquí tus productos" style={styles.searchInput} />
-                </View>
-                
+                 <View style={styles.searchInputContainer}>
+         <Ionicons name="search-outline" size={20} color="#999" style={{ marginLeft: 10 }} />
+         <TextInput
+            placeholder="Busca aquí tus productos"
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+         />
+      </View>
                 <View style={styles.loginRow}>
                     <TouchableOpacity onPress={handleLoginPress}>
                       <Text style={styles.loginText}>
