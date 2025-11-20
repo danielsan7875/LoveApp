@@ -49,7 +49,7 @@ const RegistrarPress = () => {
 
     setTimeout(() => {
       setModalVisible(false);
-      navigation.navigate('Admin');
+      navigation.navigate('MainTabs');
     }, 2000);
 
   } else {
@@ -424,6 +424,8 @@ modalButtonText: {
   color: '#fff',
   fontWeight: 'bold',
 },
+
+
 
 });
 
