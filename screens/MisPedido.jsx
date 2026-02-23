@@ -5,11 +5,15 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity
+  TouchableOpacity,
+  Dimensions
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 const MisPedido = () => {
+  const screenWidth = Dimensions.get('window').width;
+  const isMobile = screenWidth < 768; // Considerar móvil si el ancho es menor a 768px
+
   // Datos de ejemplo para pedidos
   const pedidos = [
     {
@@ -51,6 +55,68 @@ const MisPedido = () => {
     }
   };
 
+  // Renderizado condicional de fila basado en dispositivo
+  const renderPedidoRow = (pedido) => {
+    if (isMobile) {
+      // Vista móvil: cada pedido como tarjeta vertical
+      return (
+        <View key={pedido.id} style={styles.mobileCard}>
+          <View style={styles.mobileRowHeader}>
+            <Text style={styles.mobileOrderId}>Pedido #{pedido.id}</Text>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>Ver</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.mobileInfoRow}>
+            <Text style={styles.label}>Tipo:</Text>
+            <Text style={styles.value}>{pedido.tipo}</Text>
+          </View>
+          <View style={styles.mobileInfoRow}>
+            <Text style={styles.label}>Fecha:</Text>
+            <Text style={styles.value}>{pedido.fecha}</Text>
+          </View>
+          <View style={styles.mobileInfoRow}>
+            <Text style={styles.label}>Estado:</Text>
+            <Text style={[styles.badge, getBadgeClass(pedido.estado)]}>{pedido.estado}</Text>
+          </View>
+          <View style={styles.mobileInfoRow}>
+            <Text style={styles.label}>Teléfono:</Text>
+            <Text style={styles.value}>{pedido.telefono}</Text>
+          </View>
+          <View style={styles.mobileInfoRow}>
+            <Text style={styles.label}>Método Entrega:</Text>
+            <Text style={styles.value}>{pedido.metodoEntrega}</Text>
+          </View>
+          <View style={styles.mobileInfoRow}>
+            <Text style={styles.label}>Método Pago:</Text>
+            <Text style={styles.value}>{pedido.metodoPago}</Text>
+          </View>
+        </View>
+      );
+    } else {
+      // Vista desktop: tabla tradicional
+      return (
+        <View key={pedido.id} style={styles.tableRow}>
+          <Text style={[styles.tableCell, styles.tipoColumn]}>{pedido.tipo}</Text>
+          <Text style={[styles.tableCell, styles.fechaColumn]}>{pedido.fecha}</Text>
+          <Text style={[styles.tableCell, styles.estadoColumn]}>
+            <Text style={[styles.badge, getBadgeClass(pedido.estado)]}>
+              {pedido.estado}
+            </Text>
+          </Text>
+          <Text style={[styles.tableCell, styles.telefonoColumn]}>{pedido.telefono}</Text>
+          <Text style={[styles.tableCell, styles.entregaColumn]}>{pedido.metodoEntrega}</Text>
+          <Text style={[styles.tableCell, styles.pagoColumn]}>{pedido.metodoPago}</Text>
+          <View style={[styles.tableCell, styles.accionColumn]}>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>Ver</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
@@ -62,37 +128,27 @@ const MisPedido = () => {
           <Text style={styles.logoText}>Mis Pedidos</Text>
           
           <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.tableContainer}>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderText, styles.tipoColumn]}>Tipo</Text>
-                <Text style={[styles.tableHeaderText, styles.fechaColumn]}>Fecha</Text>
-                <Text style={[styles.tableHeaderText, styles.estadoColumn]}>Estado</Text>
-                <Text style={[styles.tableHeaderText, styles.telefonoColumn]}>Teléfono</Text>
-                <Text style={[styles.tableHeaderText, styles.entregaColumn]}>Método Entrega</Text>
-                <Text style={[styles.tableHeaderText, styles.pagoColumn]}>Método Pago</Text>
-                <Text style={[styles.tableHeaderText, styles.accionColumn]}>Acción</Text>
+            {isMobile ? (
+              // Vista móvil: lista de tarjetas
+              <View style={styles.mobileContainer}>
+                {pedidos.map((pedido) => renderPedidoRow(pedido))}
               </View>
-              
-              {pedidos.map((pedido) => (
-                <View key={pedido.id} style={styles.tableRow}>
-                  <Text style={[styles.tableCell, styles.tipoColumn]}>{pedido.tipo}</Text>
-                  <Text style={[styles.tableCell, styles.fechaColumn]}>{pedido.fecha}</Text>
-                  <Text style={[styles.tableCell, styles.estadoColumn]}>
-                    <Text style={[styles.badge, getBadgeClass(pedido.estado)]}>
-                      {pedido.estado}
-                    </Text>
-                  </Text>
-                  <Text style={[styles.tableCell, styles.telefonoColumn]}>{pedido.telefono}</Text>
-                  <Text style={[styles.tableCell, styles.entregaColumn]}>{pedido.metodoEntrega}</Text>
-                  <Text style={[styles.tableCell, styles.pagoColumn]}>{pedido.metodoPago}</Text>
-                  <View style={[styles.tableCell, styles.accionColumn]}>
-                    <TouchableOpacity style={styles.actionButton}>
-                      <Text style={styles.actionButtonText}>Ver</Text>
-                    </TouchableOpacity>
-                  </View>
+            ) : (
+              // Vista desktop: tabla tradicional
+              <View style={styles.tableContainer}>
+                <View style={styles.tableHeader}>
+                  <Text style={[styles.tableHeaderText, styles.tipoColumn]}>Tipo</Text>
+                  <Text style={[styles.tableHeaderText, styles.fechaColumn]}>Fecha</Text>
+                  <Text style={[styles.tableHeaderText, styles.estadoColumn]}>Estado</Text>
+                  <Text style={[styles.tableHeaderText, styles.telefonoColumn]}>Teléfono</Text>
+                  <Text style={[styles.tableHeaderText, styles.entregaColumn]}>Método Entrega</Text>
+                  <Text style={[styles.tableHeaderText, styles.pagoColumn]}>Método Pago</Text>
+                  <Text style={[styles.tableHeaderText, styles.accionColumn]}>Acción</Text>
                 </View>
-              ))}
-            </View>
+                
+                {pedidos.map((pedido) => renderPedidoRow(pedido))}
+              </View>
+            )}
           </ScrollView>
         </View>
       </SafeAreaView>
@@ -204,6 +260,50 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 12,
   },
+  // Estilos para vista móvil
+  mobileContainer: {
+    margin: 10,
+  },
+  mobileCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  mobileRowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  mobileOrderId: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#D81B60',
+  },
+  mobileInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  label: {
+    fontWeight: 'bold',
+    color: '#666',
+    minWidth: 120,
+  },
+  value: {
+    flex: 1,
+    textAlign: 'right',
+    color: '#333',
+  }
 });
 
 export default MisPedido;
