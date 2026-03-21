@@ -63,9 +63,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
  logoText: {
-      fontSize: 60,
+      fontSize:40,
       fontWeight: 'bold',
-      color: '#D81B60', // Rosa oscuro
+      color: '#D81B60', 
+      marginBottom: 20,
+      textAlign: 'center',
   },
   emptyText: {
   textAlign: 'center',
