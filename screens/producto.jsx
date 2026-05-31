@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,36 +8,58 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-/*Componenetes*/
+/* Componentes */
 import HearBarra from '../componentes/hear.jsx';
 import LoginBarra from '../componentes/loginbarra.jsx';
 import Cards from '../componentes/Cards.jsx';
-import {productos2} from '../informacion/productos';
 import ModalProducto from '../componentes/Modal';
-
-/*Pages - body*/
-
-
+import api from '../services/api'; // Importamos tu API centralizada de Axios
 
 const Producto = ({ route }) => {
   const { query } = route?.params || {};
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
 
-  const [resultados, setResultados] = useState(productos2);
-  React.useEffect(() => {
+  // Estados independientes para el listado remoto total y el filtrado en pantalla
+  const [todosLosProductos, setTodosLosProductos] = useState([]);
+  const [resultados, setResultados] = useState([]);
+
+  // 1. Efecto inicial para cargar los productos activos desde el backend
+  useEffect(() => {
+    const cargarProductosRemotos = async () => {
+      try {
+        // Solicitamos los productos activos al nuevo endpoint
+        const data = await api.fetchProductos('activos'); 
+        if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
+          setTodosLosProductos(data.productos);
+          setResultados(data.productos); // Inicialmente mostramos todos
+        } else {
+          setTodosLosProductos([]);
+          setResultados([]);
+        }
+      } catch (error) {
+        console.warn("Error cargando productos remotos en la pantalla de listado:", error);
+        setTodosLosProductos([]);
+        setResultados([]);
+      }
+    };
+
+    cargarProductosRemotos();
+  }, []);
+
+  // 2. Efecto para reaccionar al cambio de la query de búsqueda sobre los datos de la API
+  useEffect(() => {
     if (!query) {
-      setResultados(productos2);
+      setResultados(todosLosProductos);
       return;
     }
 
-    const filtrados = productos2.filter((p) =>
-      p.nombre.toLowerCase().includes(query.toLowerCase())
+    const filtrados = todosLosProductos.filter((p) =>
+      p.nombre && p.nombre.toLowerCase().includes(query.toLowerCase())
     );
 
     setResultados(filtrados);
-  }, [query]);
-
+  }, [query, todosLosProductos]);
 
   const handleCardPress = (producto) => {
     setProductoActivo(producto);
@@ -62,17 +84,17 @@ const Producto = ({ route }) => {
               {resultados.length > 0 ? (
                 resultados.map((prod) => (
                   <Cards
-                    key={prod.id}
-                    id={prod.id}
-                    foto={prod.fotos}
+                    key={prod.id_producto} // Clave remota correcta del backend
+                    id={prod.id_producto}
+                    foto={prod.imagenes} // Array completo de imágenes normalizado en api.js
                     nombre={prod.nombre}
-                    precioMayor={prod.precioMayor}
-                    precioDetal={prod.precioDetal}
+                    precioMayor={prod.precio_mayor} // Atributos con guiones bajos de la BD
+                    precioDetal={prod.precio_detal}
                     onPress={() => handleCardPress(prod)}
                   />
                 ))
               ) : (
-                <Text style={{ textAlign: "center", marginTop: 20, fontSize: 16 }}>
+                <Text style={{ textAlign: "center", marginTop: 40, fontSize: 16, color: '#666' }}>
                   No se encontraron productos
                 </Text>
               )}
@@ -91,7 +113,6 @@ const Producto = ({ route }) => {
   );
 };
 
-
 const styles = StyleSheet.create({
   cardsContainer: {
     flexDirection: 'row',
@@ -109,13 +130,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
- logoText: {
-      fontSize: 40,
-      textAlign: 'center',
-      fontWeight: 'bold',
-      color: '#D81B60', // Rosa oscuro
+  logoText: {
+    fontSize: 40,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#D81B60', // Rosa oscuro
   },
 });
 
 export default Producto;
-

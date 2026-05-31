@@ -29,10 +29,20 @@ export default function Cards({ id, foto, nombre, precioMayor, precioDetal, onPr
     }
   };
 
+  // Obtener la URL de la primera imagen del array remoto de forma segura
+  const obtenerImagenRemota = () => {
+    if (Array.isArray(foto) && foto.length > 0 && foto[0]?.url_imagen) {
+      return { uri: foto[0].url_imagen };
+    }
+    // Imagen por defecto por si un producto remoto viene sin fotos
+    return require('../assets/img/b6.png'); 
+  };
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.imageContainer}>
-        <Image source={foto[0]} style={styles.image} />
+        <Image source={obtenerImagenRemota()} style={styles.image} />
+        
         <TouchableOpacity onPress={toggleWishlist} style={styles.favIconContainer}>
           <Ionicons
             name={isFav ? "heart" : "heart-outline"}
@@ -41,6 +51,7 @@ export default function Cards({ id, foto, nombre, precioMayor, precioDetal, onPr
           />
         </TouchableOpacity>
       </View>
+      
       <Text style={styles.nombre}>{nombre}</Text>
 
       <View style={styles.preciocontainer}>
@@ -51,10 +62,10 @@ export default function Cards({ id, foto, nombre, precioMayor, precioDetal, onPr
       <TouchableOpacity style={styles.button} onPress={agregarCarrito}>
         <Text style={styles.btnText}>Agregar</Text>
       </TouchableOpacity>
-
     </TouchableOpacity>
   );
 }
+
 
 const styles = StyleSheet.create({
   card: {

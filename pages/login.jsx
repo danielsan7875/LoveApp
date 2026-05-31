@@ -18,20 +18,21 @@ import { Controller, useForm } from 'react-hook-form';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
-// --- Componente de la pantalla de Login ---
+// --- Importaciones de la API y Componentes ---
 import AlertModal from '../componentes/ModalAlert'; // ajusta la ruta si es necesario
+import { loginUser } from '../services/api';
 
 const Login = () => {
   const navigation = useNavigation();
   // Estado para controlar la visibilidad de la contraseña
-   const [isClaveVisible, setClaveVisible] = useState(false);
+  const [isClaveVisible, setClaveVisible] = useState(false);
 
-const [modalVisible2, setModalVisible2] = useState(false);
-const [cedulaRecuperar, setCedulaRecuperar] = useState('');
+  const [modalVisible2, setModalVisible2] = useState(false);
+  const [cedulaRecuperar, setCedulaRecuperar] = useState('');
 
-const RegistrarPress = () => {
-          navigation.navigate("registrarcliente");
-};
+  const RegistrarPress = () => {
+    navigation.navigate("registrarcliente");
+  };
     
   const {
     control,
@@ -39,48 +40,54 @@ const RegistrarPress = () => {
     formState: { errors },
   } = useForm();
 
- const onSubmit = data => {
-  const { cedula, clave } = data;
+  // Cambiado: Ahora procesa el login real y asíncrono con el backend
+  const onSubmit = async data => {
+    const { cedula, clave } = data;
 
-  if (cedula === '10200300' && clave === 'love1234') {
-    setModalMessage('Verificación exitosa. ¡Bienvenido!');
-    setModalSuccess(true);
-    setModalVisible(true);
+    // Ejecuta la petición usando la API asimétrica de tu api.js
+    const result = await loginUser(cedula, clave, 'V');
 
-    setTimeout(() => {
-      setModalVisible(false);
-      navigation.navigate('MainTabs');
-    }, 2000);
+    if (result.success) {
+      setModalMessage(`Verificación exitosa. ¡Bienvenido, ${result.user?.nombre || ''}!`);
+      setModalSuccess(true);
+      setModalVisible(true);
 
-  } else {
-    setModalMessage('Cédula y/o contraseña incorrecta.');
-    setModalSuccess(false);
-    setModalVisible(true);
-  }
-};
+      setTimeout(() => {
+        setModalVisible(false);
+        // Redirecciona al MainTabs de tu aplicación
+        navigation.replace('MainTabs');
+      }, 2000);
 
-const [modalVisible, setModalVisible] = useState(false);
-const [modalMessage, setModalMessage] = useState('');
-const [modalSuccess, setModalSuccess] = useState(false);
+    } else {
+      // Muestra el mensaje exacto de error que te mande el backend (ej: datos inválidos o suspendido)
+      setModalMessage(result.mensaje);
+      setModalSuccess(false);
+      setModalVisible(true);
+    }
+  };
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalSuccess, setModalSuccess] = useState(false);
 
   return (
     <SafeAreaProvider>
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
 
-      <ImageBackground
-      source={require('../assets/portada.jpg')}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardAvoidingContainer}
+        <ImageBackground
+          source={require('../assets/portada.jpg')}
+          style={styles.backgroundImage}
+          resizeMode="cover"
         >
-          <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between' }}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingContainer}
+          >
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between' }}>
 
-            {/* Contenedor del logo y nombre de la marca */}
-             <View style={styles.logoContainer}>
+              {/* Contenedor del logo y nombre de la marca */}
+              <View style={styles.logoContainer}>
                 <View style={styles.logoBackground}>
                   <Image
                     source={require('../assets/logo2.png')} // Asegúrate de que la imagen exista en esta ruta
@@ -90,7 +97,7 @@ const [modalSuccess, setModalSuccess] = useState(false);
                 </View>
               </View>
 
-        <View style={styles.formContainer}>
+              <View style={styles.formContainer}>
                 <Text style={styles.title}>Bienvenido</Text>
 
                 {/* Input Cédula */}
@@ -107,26 +114,26 @@ const [modalSuccess, setModalSuccess] = useState(false);
                   <Ionicons name="person" size={20} color="#EE82EE" style={styles.inputIcon} />
                   <Controller
                     control={control}
-                      name="cedula"
-                      rules={{
-                        required: 'La cédula es obligatoria',
-                        pattern: {
-                          value: /^\d{7,8}$/,
-                          message: 'Debe tener entre 7 y 8 dígitos numéricos',
-                        },
-                      }}
-                      render={({ field: { onChange, onBlur, value } }) => (
-                        <TextInput
-                          placeholder="Cédula"
-                          placeholderTextColor="#8A8A8A"
-                          style={styles.textInput}
-                          keyboardType="numeric"
-                          onBlur={onBlur}
-                          onChangeText={(text) => {
-                            const numericText = text.replace(/[^0-9]/g, '');
-                            onChange(numericText);
-                          }}
-                          value={value}
+                    name="cedula"
+                    rules={{
+                      required: 'La cédula es obligatoria',
+                      pattern: {
+                        value: /^\d{7,8}$/,
+                        message: 'Debe tener entre 7 y 8 dígitos numéricos',
+                      },
+                    }}
+                    render={({ field: { onChange, onBlur, value } }) => (
+                      <TextInput
+                        placeholder="Cédula"
+                        placeholderTextColor="#8A8A8A"
+                        style={styles.textInput}
+                        keyboardType="numeric"
+                        onBlur={onBlur}
+                        onChangeText={(text) => {
+                          const numericText = text.replace(/[^0-9]/g, '');
+                          onChange(numericText);
+                        }}
+                        value={value}
                       />
                     )}
                   />
@@ -194,69 +201,69 @@ const [modalSuccess, setModalSuccess] = useState(false);
                   <TouchableOpacity onPress={() => setModalVisible2(true)}>
                     <Text style={styles.footerLink}>¿Olvidaste tu contraseña?</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity   onPress={RegistrarPress}>
-                  <Text style={styles.registerLink}>Registrarse</Text>
+                  <TouchableOpacity onPress={RegistrarPress}>
+                    <Text style={styles.registerLink}>Registrarse</Text>
                   </TouchableOpacity>
                 </View>
               </View>
-          </ScrollView>
+            </ScrollView>
 
-          <Modal
-            visible={modalVisible2}
-            animationType="slide"
-            transparent
-            onRequestClose={() => setModalVisible2(false)}
-          >
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContainer}>
-                <Text style={styles.modalTitle}>Recuperar contraseña</Text>
+            <Modal
+              visible={modalVisible2}
+              animationType="slide"
+              transparent
+              onRequestClose={() => setModalVisible2(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.modalTitle}>Recuperar contraseña</Text>
 
-                <TextInput
-                  placeholder="Cédula"
-                  placeholderTextColor="#8A8A8A"
-                  style={styles.modalInput}
-                  keyboardType="numeric"
-                  value={cedulaRecuperar}
-                  onChangeText={(text) => setCedulaRecuperar(text.replace(/[^0-9]/g, ''))}
-                />
+                  <TextInput
+                    placeholder="Cédula"
+                    placeholderTextColor="#8A8A8A"
+                    style={styles.modalInput}
+                    keyboardType="numeric"
+                    value={cedulaRecuperar}
+                    onChangeText={(text) => setCedulaRecuperar(text.replace(/[^0-9]/g, ''))}
+                  />
 
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: '#ccc' }]}
-                    onPress={() => setModalVisible2(false)}
-                  >
-                    <Text style={styles.modalButtonText}>Cerrar</Text>
-                  </TouchableOpacity>
+                  <View style={styles.modalButtons}>
+                    <TouchableOpacity
+                      style={[styles.modalButton, { backgroundColor: '#ccc' }]}
+                      onPress={() => setModalVisible2(false)}
+                    >
+                      <Text style={styles.modalButtonText}>Cerrar</Text>
+                    </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: '#4e73df' }]}
-                    onPress={() => {
-                      console.log('Enviar cédula:', cedulaRecuperar);
-                      setModalVisible2(false);
-                    }}
-                  >
-                    <Text style={styles.modalButtonText}>Enviar</Text>
-                  </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modalButton, { backgroundColor: '#4e73df' }]}
+                      onPress={() => {
+                        console.log('Enviar cédula:', cedulaRecuperar);
+                        setModalVisible2(false);
+                      }}
+                    >
+                      <Text style={styles.modalButtonText}>Enviar</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </View>
-          </Modal>
+            </Modal>
 
-        </KeyboardAvoidingView>
-      </ImageBackground>
+          </KeyboardAvoidingView>
+        </ImageBackground>
 
-      <AlertModal
+        <AlertModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
           message={modalMessage}
           success={modalSuccess}
         />
-    </SafeAreaView>
+      </SafeAreaView>
     </SafeAreaProvider>
   );
 };
 
-// --- Estilos de la pantalla ---
+// --- Estilos de la pantalla intactos ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -269,7 +276,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-   logoContainer: {
+  logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: Platform.OS === 'ios' ? 40 : 60,
@@ -297,25 +304,24 @@ const styles = StyleSheet.create({
     height: 120,
   },
   backButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginTop: 10,
-  marginLeft: 20,
-},
-backText: {
-  marginLeft: 8,
-  fontSize: 16,
-  color: '#FFFFFF',
-  fontWeight: '500',
-},
-errorText: {
-  color: 'red',
-  fontSize: 12,
-  marginBottom: 8,
-  marginLeft: 10,
-},
-
- formContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginLeft: 20,
+  },
+  backText: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 8,
+    marginLeft: 10,
+  },
+  formContainer: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
@@ -383,51 +389,47 @@ errorText: {
     fontSize: 16,
   },
   modalOverlay: {
-  flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.5)',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-modalContainer: {
-  backgroundColor: '#fff',
-  width: '85%',
-  borderRadius: 12,
-  padding: 20,
-  elevation: 5,
-},
-modalTitle: {
-  fontSize: 18,
-  fontWeight: 'bold',
-  marginBottom: 16,
-  textAlign: 'center',
-},
-modalInput: {
-  borderWidth: 1,
-  borderColor: '#ccc',
-  borderRadius: 8,
-  padding: 10,
-  fontSize: 14,
-  marginBottom: 20,
-},
-modalButtons: {
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-},
-modalButton: {
-  flex: 1,
-  padding: 12,
-  borderRadius: 8,
-  marginHorizontal: 5,
-  alignItems: 'center',
-},
-modalButtonText: {
-  color: '#fff',
-  fontWeight: 'bold',
-},
-
-
-
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    width: '85%',
+    borderRadius: 12,
+    padding: 20,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 5,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
 
 export default Login;
-

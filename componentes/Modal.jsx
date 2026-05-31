@@ -1,46 +1,64 @@
+import React from 'react';
 import { View, Text, Image, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 
 export default function ModalProducto({ visible, onClose, producto }) {
-  const screenWidth = Dimensions.get('window').width * 0.75; // tamaño para el carrusel
+  const screenWidth = Dimensions.get('window').width * 0.75; // Tamaño para el carrusel
 
   if (!producto) return null;
+
+  const imagenesRemotas = Array.isArray(producto.imagenes) ? producto.imagenes : [];
 
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.overlay}>
-
         <View style={styles.modalContent}>
 
-          {/* CARRUSEL DE IMÁGENES */}
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            style={{ width: screenWidth, height: 180 }}
-          >
-            {producto.fotos.map((img, index) => (
-              <Image
-                key={index}
-                source={img}
-                style={{
-                  width: screenWidth,
-                  height: 180,
-                  borderRadius: 12,
-                  resizeMode: 'cover',
-                }}
-              />
-            ))}
-          </ScrollView>
+          {/* CARRUSEL DE IMÁGENES CORREGIDO */}
+          <View style={{ width: screenWidth, height: 180, marginBottom: 12 }}>
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ flexGrow: 1 }}
+            >
+              {imagenesRemotas.length > 0 ? (
+                imagenesRemotas.map((img, index) => (
+                  <Image
+                    key={index}
+                    source={{ uri: img.url_imagen }}
+                    style={{
+                      width: screenWidth, // Cada imagen mide exactamente lo mismo que el carrusel
+                      height: 180,
+                      borderRadius: 12,
+                      resizeMode: 'cover',
+                    }}
+                  />
+                ))
+              ) : (
+                // Imagen de respaldo única si no hay fotos
+                <Image
+                  source={require('../assets/img/b6.png')}
+                  style={{
+                    width: screenWidth,
+                    height: 180,
+                    borderRadius: 12,
+                    resizeMode: 'cover',
+                  }}
+                />
+              )}
+            </ScrollView>
+          </View>
 
-          <Text style={styles.nombre}>{producto.nombre}</Text>
-          <Text style={styles.marca}>Marca: <Text style={styles.marcaValue}>{producto.marca}</Text></Text>
-          <Text style={styles.descripcion}>{producto.descripcion}</Text>
+          <Text style={styles.nombre}>{producto.nombre || ''}</Text>
+          <Text style={styles.marca}>Marca: <Text style={styles.marcaValue}>{producto.nombre_marca || 'Sin marca'}</Text></Text>
+          <Text style={styles.descripcion}>{producto.descripcion || producto.descripcion_corta || 'Sin descripción'}</Text>
 
           <View style={styles.infoBox}>
-            <Text style={styles.info}>Stock: <Text style={styles.infoValue}>{producto.stock}</Text></Text>
-            <Text style={styles.info}>Mayor: <Text style={styles.infoValue}>{producto.precioMayor}$</Text> <Text style={styles.infoMin}>(min: {producto.cantidadMayor})</Text></Text>
-            <Text style={styles.info}>Detal: <Text style={styles.infoValue}>{producto.precioDetal}$</Text></Text>
+            <Text style={styles.info}>Stock: <Text style={styles.infoValue}>{producto.stock_disponible ?? 0}</Text></Text>
+            <Text style={styles.info}>Mayor: <Text style={styles.infoValue}>{producto.precio_mayor || '0'}$</Text> <Text style={styles.infoMin}>(min: {producto.cantidad_mayor || 0})</Text></Text>
+            <Text style={styles.info}>Detal: <Text style={styles.infoValue}>{producto.precio_detal || '0'}$</Text></Text>
           </View>
+          
           <TouchableOpacity onPress={onClose} style={styles.cerrarBtn} activeOpacity={0.85}>
             <Text style={styles.cerrarTxt}>Cerrar</Text>
           </TouchableOpacity>
@@ -50,6 +68,7 @@ export default function ModalProducto({ visible, onClose, producto }) {
     </Modal>
   );
 }
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,

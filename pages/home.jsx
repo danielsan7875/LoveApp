@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Dimensions,
@@ -11,20 +11,49 @@ import {
 import Cards from '../componentes/Cards';
 import Banner from '../componentes/Banner';
 import ModalProducto from '../componentes/Modal';
-import {productos} from '../informacion/productos';
-import {promoBanners} from '../informacion/banners';
+import api from '../services/api';
+import { promoBanners } from '../informacion/banners';
 
 const { width } = Dimensions.get('window');
 
 const BodyHome = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
+  const [remoteProductos, setRemoteProductos] = useState([]);
 
   const handleCardPress = (producto) => {
     setProductoActivo(producto);
     setModalVisible(true);
   };
-  // --- RENDERIZADO DE ITEMS ---
+
+  // Función limpia para cargar los productos desde la API con Axios
+  const loadRemote = async () => {
+  try {
+    // EN EL HOME: Le pasamos 'mas_vendidos'
+    const data = await api.fetchProductos('mas_vendidos'); 
+    console.log('loadRemote Home (Más vendidos) ->', data);
+    
+    if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
+      setRemoteProductos(data.productos);
+    } else {
+      setRemoteProductos([]);
+    }
+  } catch (e) {
+    console.warn('Fetch error en Home', e.message || e);
+    setRemoteProductos([]);
+  }
+};
+
+  // UN SOLO useEffect al montar el Home: Carga productos y ejecuta el debug si hace falta
+  useEffect(() => {
+    loadRemote();
+    
+    api.debugServerHeaders()
+      .then(r => console.log('debugServerHeaders Home', r))
+      .catch(console.error);
+  }, []);
+
+  // --- RENDERIZADO DE BANNERS ---
   const renderBanner = ({ item }) => (
     <Banner
       title={item.title}
@@ -33,90 +62,62 @@ const BodyHome = () => {
       image={item.image}
     />
   );
-        return (
-        <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-                    {/* --- BANNERS PROMOCIONALES --- */}
-                    <FlatList
-                    data={promoBanners}
-                    renderItem={renderBanner}
-                    keyExtractor={(item) => item.id}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.bannerList}
-                    />
 
-                     <View>
+  return (
+    <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
+      {/* --- BANNERS PROMOCIONALES --- */}
+      <FlatList
+        data={promoBanners}
+        renderItem={renderBanner}
+        keyExtractor={(item) => item.id}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.bannerList}
+      />
+
+      <View>
         <Text style={styles.text}>Productos mas vendidos</Text>
       </View>
+      
+      {/* --- LISTADO DE PRODUCTOS TOTALMENTE REMOTOS --- */}
       <View style={styles.cardsContainer}>
-        {productos.map((prod) => (
+        {remoteProductos.map((prod) => (
           <Cards
-            key={prod.id}
-            id={prod.id}
-            foto={prod.fotos}
+            key={prod.id_producto}
+            id={prod.id_producto}
+            foto={prod.imagenes} // Enviamos el array completo de imágenes de la API
             nombre={prod.nombre}
-            precioMayor={prod.precioMayor}
-            precioDetal={prod.precioDetal}
+            precioMayor={prod.precio_mayor} // Mapeado a las variables del backend remoto
+            precioDetal={prod.precio_detal}
             onPress={() => handleCardPress(prod)}
           />
         ))}
       </View>
+
+      {/* --- MODAL CON EL CARRUSEL CORREGIDO --- */}
       <ModalProducto
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         producto={productoActivo}
       />
-                </ScrollView>
-        );
+    </ScrollView>
+  );
 };
 
 const styles = StyleSheet.create({
-scrollViewContent: {
+  scrollViewContent: {
     paddingBottom: 80, // Espacio para el nav inferior
   },  
- // Banners
   bannerList: {
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
-  bannerCard: {
-    width: width * 0.8,
-    height: 150,
-    backgroundColor: '#FF69B4',
-    borderRadius: 15,
-    marginRight: 10,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    elevation: 3,
-  },
-  bannerImage: {
-    width: '45%',
-    height: '100%',
-  },
-  bannerTextContainer: {
-      flex: 1,
-      padding: 10,
-      justifyContent: 'center',
-  },
-  bannerTitle: {
-      color: 'white',
-      fontWeight: 'bold',
-      fontSize: 14
-  },
-  bannerDiscount: {
-      color: 'white',
-      fontWeight: 'bold',
-      fontSize: 32,
-      marginVertical: 5,
-  },
-  bannerTagline: {
-      color: 'white',
-      fontSize: 12
-  },
-   text: {
+  text: {
     fontSize: 24,
     fontWeight: 'bold',
     margin: 16,
+    marginBottom: 4,
+    color: '#333',
   },
   cardsContainer: {
     flexDirection: 'row',
@@ -124,6 +125,5 @@ scrollViewContent: {
     justifyContent: 'center',
   },
 });
-
 
 export default BodyHome;
