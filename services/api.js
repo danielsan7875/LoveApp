@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-// Para pruebas en Android emulator use 10.0.2.2 que apunta al host localhost
+
 const API_BASE = 'https://lovemakeuptienda.com/controlador/api';
 const TOKEN_KEY = 'jwt_token';
 
@@ -27,9 +27,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// =========================================================================
-// NUEVO: Función para iniciar sesión apuntando a tu nueva API asimétrica
-// =========================================================================
+
 export async function loginUser(usuario, clave, tipoDocumento = 'V') {
   try {
     const response = await apiClient.post('/login.php', {
@@ -42,7 +40,6 @@ export async function loginUser(usuario, clave, tipoDocumento = 'V') {
 
     // Si el backend responde con éxito (respuesta 1 o 2 de acuerdo a tus niveles de rol)
     if (json && (json.respuesta === 1 || json.respuesta === 2) && json.token) {
-      // Guardamos el JWT real y fresco en el AsyncStorage
       await saveToken(json.token);
       return { success: true, user: json.usuario, respuesta: json.respuesta };
     }
@@ -72,7 +69,7 @@ export async function saveToken(token) {
   }
 }
 
-// CORREGIDO: Ahora sí lee dinámicamente el token real que guardas al loguearte
+
 export async function getToken() {
   try {
     const stored = await AsyncStorage.getItem(TOKEN_KEY);
@@ -84,7 +81,20 @@ export async function getToken() {
   }
 }
 
-// Tu función fetchProductos se queda exactamente igual...
+export async function logout() {
+  try {
+    await AsyncStorage.removeItem(TOKEN_KEY);
+    if (apiClient && apiClient.defaults && apiClient.defaults.headers) {
+      delete apiClient.defaults.headers.common['Authorization'];
+    }
+    return { success: true };
+  } catch (e) {
+    console.warn('logout error', e);
+    return { success: false, mensaje: 'Error al cerrar sesión' };
+  }
+}
+
+
 export async function fetchProductos(tipo = 'activos') {
   try {
     const response = await apiClient.get('/producto.php', {
@@ -139,4 +149,4 @@ export async function debugServerHeaders() {
   }
 }
 
-export default { loginUser, saveToken, getToken, fetchProductos, debugServerHeaders };
+export default { loginUser, logout, saveToken, getToken, fetchProductos, debugServerHeaders };
