@@ -29,9 +29,7 @@ const BodyHome = () => {
   // Función limpia para cargar los productos desde la API con Axios
   const loadRemote = async () => {
   try {
-    // EN EL HOME: Le pasamos 'mas_vendidos'
     const data = await api.fetchProductos('mas_vendidos'); 
-    console.log('loadRemote Home (Más vendidos) ->', data);
     
     if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
       setRemoteProductos(data.productos);
@@ -43,8 +41,6 @@ const BodyHome = () => {
     setRemoteProductos([]);
   }
 };
-
-  // UN SOLO useEffect al montar el Home: Carga productos y ejecuta el debug si hace falta
   useEffect(() => {
     loadRemote();
     

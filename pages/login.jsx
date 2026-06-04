@@ -18,8 +18,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
-// --- Importaciones de la API y Componentes ---
-import AlertModal from '../componentes/ModalAlert'; // ajusta la ruta si es necesario
+
+import AlertModal from '../componentes/ModalAlert'; 
 import { loginUser } from '../services/api';
 
 const Login = () => {
