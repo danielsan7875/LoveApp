@@ -10,10 +10,13 @@ import { useNavigation } from '@react-navigation/native';
 
 
 import AlertModal from '../componentes/ModalAlert'; 
-import { loginUser } from '../services/api';
+import { loginUser, getToken } from '../services/api';
+import { useDispatch } from 'react-redux';
+import { setToken } from '../redux/authSlice';
 
 const Login = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   // Estado para controlar la visibilidad de la contraseña
   const [isClaveVisible, setClaveVisible] = useState(false);
 
@@ -41,6 +44,14 @@ const Login = () => {
       setModalMessage(`Verificación exitosa. ¡Bienvenido, ${result.user?.nombre || ''}!`);
       setModalSuccess(true);
       setModalVisible(true);
+
+      // Obtener el token guardado y sincronizar el estado global inmediatamente
+      try {
+        const token = await getToken();
+        if (token) dispatch(setToken(token));
+      } catch (e) {
+        console.warn('Error syncing token to redux after login', e);
+      }
 
       setTimeout(() => {
         setModalVisible(false);
