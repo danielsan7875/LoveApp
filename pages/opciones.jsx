@@ -2,14 +2,20 @@ import React from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalado @expo/vector-icons
+import api from '../services/api';
 
-const MenuItem = ({ iconName, text, route }) => {
+const MenuItem = ({ iconName, text, route, onPress }) => {
   const navigation = useNavigation();
+
+  const handlePress = () => {
+    if (onPress) return onPress();
+    if (route) navigation.navigate(route);
+  };
 
   return (
     <TouchableOpacity 
       style={styles.menuItem}
-      onPress={() => route && navigation.navigate(route)}
+      onPress={handlePress}
     >
       <Ionicons name={iconName} size={24} color="#FF69B4" style={styles.icon} />
       <Text style={styles.menuText}>{text}</Text>
@@ -19,6 +25,7 @@ const MenuItem = ({ iconName, text, route }) => {
 };
 
 export default function Opciones() {
+  const navigation = useNavigation();
 
   const menuItems1 = [
     { iconName: 'heart', text: 'Mi Lista Deseos', route: 'MisDeseos' },
@@ -79,7 +86,15 @@ export default function Opciones() {
         <View style={styles.card}>
             {menuItems3.map((item, index) => (
               <React.Fragment key={index}>
-                <MenuItem iconName={item.iconName} text={item.text} route={item.route} />
+                <MenuItem
+                  iconName={item.iconName}
+                  text={item.text}
+                  route={item.route}
+                  onPress={async () => {
+                    await api.logout();
+                    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+                  }}
+                />
                 {index < menuItems3.length - 1 && <View style={styles.divider} />}
               </React.Fragment>
             ))}

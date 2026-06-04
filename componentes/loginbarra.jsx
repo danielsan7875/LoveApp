@@ -7,17 +7,39 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useIsFocused } from "@react-navigation/native";
 import TasaOficial from '../informacion/dolar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
   
 const LoginBarra = () => {
   const tasa = TasaOficial();
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isLogged, setIsLogged] = useState(false);
 
-  const handleLoginPress = () => {
-    navigation.navigate("Login");
+  useEffect(() => {
+    let mounted = true;
+    const checkToken = async () => {
+      try {
+        const token = await api.getToken();
+        if (mounted) setIsLogged(!!token);
+      } catch (e) {
+        if (mounted) setIsLogged(false);
+      }
+    };
+    checkToken();
+    return () => { mounted = false; };
+  }, [isFocused]);
+
+  const handleLoginPress = async () => {
+    if (isLogged) {
+      await api.logout();
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    } else {
+      navigation.navigate("Login");
+    }
   };
 
   const handleSearch = () => {
@@ -43,7 +65,7 @@ const LoginBarra = () => {
                 <View style={styles.loginRow}>
                     <TouchableOpacity onPress={handleLoginPress}>
                       <Text style={styles.loginText}>
-                        <Ionicons name="person-circle" size={14} color="#D81B60" /> Inicia sesión o regístrate
+                        <Ionicons name="person-circle" size={14} color="#D81B60" /> {isLogged ? 'Cerrar sesión' : 'Inicia sesión o regístrate'}
                       </Text>
                     </TouchableOpacity>
 
