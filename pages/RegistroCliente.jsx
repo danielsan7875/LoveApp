@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Ionicons } from '@expo/vector-icons';
+import AlertModal from '../componentes/ModalAlert'; 
+
 
 export default function Registro() {
   const {
@@ -21,12 +23,48 @@ export default function Registro() {
     mode: 'onTouched', // Valida cuando el usuario interactúa con el campo
   });
 
+const [modalVisible, setModalVisible] = useState(false);
+const [modalMessage, setModalMessage] = useState('');
+const [modalSuccess, setModalSuccess] = useState(false);
+const [loading, setLoading] = useState(false); // Para el estado del botón
+
   // Observamos el valor de la clave para compararla con la confirmación
   const clave = watch('clave');
 
-  const onSubmit = (data) => {
-    console.log('Datos válidos:', data);
-  };
+// 
+  const onSubmit = async (data) => {
+  setLoading(true);
+
+  // Llamada a la API (api.js)
+  const result = await registrarcliente(data);
+
+  setLoading(false);
+
+  if (result.success) {
+    // Caso de éxito
+    setModalMessage("¡Registro exitoso! Ahora puedes iniciar sesión.");
+    setModalSuccess(true);
+    setModalVisible(true);
+
+    // Esperamos 2 segundos y redirigimos al Login
+    setTimeout(() => {
+      setModalVisible(false);
+      navigation.navigate('Login'); // Asegúrate de que 'Login' sea el nombre en tu Stack
+    }, 2000);
+
+  } else {
+    // Caso de error (Cédula duplicada, error de red, etc.)
+    setModalMessage(result.mensaje);
+    setModalSuccess(false);
+    setModalVisible(true);
+    
+    // El modal de error usualmente no se cierra solo para que el usuario lea
+  }
+};
+
+
+  const [ocultarClave, setOcultarClave] = React.useState(true);
+  const [ocultarConfirmarClave, setOcultarConfirmarClave] = React.useState(true);
 
   return (
     <ImageBackground
@@ -58,7 +96,7 @@ export default function Registro() {
                 }}
                 render={({ field: { onChange, value } }) => (
                   <TextInput
-                    placeholder="Cédula"
+                    placeholder="Cédula (Ej: 12333444)"
                     keyboardType="numeric"
                     style={styles.textInput}
                     value={value}
@@ -91,7 +129,7 @@ export default function Registro() {
                 }}
                 render={({ field: { onChange, value } }) => (
                   <TextInput
-                    placeholder="Nombre"
+                    placeholder="Nombre (Ej: Jose)"
                     style={styles.textInput}
                     value={value}
                     onChangeText={onChange}
@@ -122,7 +160,7 @@ export default function Registro() {
                 }}
                 render={({ field: { onChange, value } }) => (
                   <TextInput
-                    placeholder="Apellido"
+                    placeholder="Apellido (Ej: Perez)"
                     style={styles.textInput}
                     value={value}
                     onChangeText={onChange}
@@ -213,64 +251,80 @@ export default function Registro() {
             {errors.correo && <Text style={styles.errorText}>{errors.correo.message}</Text>}
           </View>
 
-          {/* Campo Contraseña */}
-          <View style={styles.fieldContainer}>
-            <View style={[
-              styles.inputWrapper,
-              isSubmitted && errors.clave ? styles.inputError :
-              isSubmitted && !errors.clave ? styles.inputValid : null
-            ]}>
-              <Ionicons name="lock-closed" size={20} color="#EE82EE" style={styles.inputIcon} />
-              <Controller
-                control={control}
-                name="clave"
-                rules={{
-                  required: 'La contraseña es requerida',
-                  minLength: { value: 8, message: 'Mínimo 8 caracteres' },
-                  maxLength: { value: 16, message: 'Máximo 16 caracteres' },
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    placeholder="Contraseña"
-                    secureTextEntry
-                    style={styles.textInput}
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                )}
+        {/* Campo Contraseña */}
+        <View style={styles.fieldContainer}>
+          <View style={[
+            styles.inputWrapper,
+            isSubmitted && errors.clave ? styles.inputError :
+            isSubmitted && !errors.clave ? styles.inputValid : null
+          ]}>
+            <Ionicons name="lock-closed" size={20} color="#EE82EE" style={styles.inputIcon} />
+            <Controller
+              control={control}
+              name="clave"
+              rules={{
+                required: 'La contraseña es requerida',
+                minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+                maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+              }}
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  placeholder="Contraseña"
+                  secureTextEntry={ocultarClave} // Controla si se ve o se oculta
+                  style={styles.textInput}
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+            {/* Botón del Ojito */}
+            <TouchableOpacity onPress={() => setOcultarClave(!ocultarClave)}>
+              <Ionicons 
+                name={ocultarClave ? "eye-off" : "eye"} 
+                size={22} 
+                color="#A9A9A9" 
               />
-            </View>
-            {errors.clave && <Text style={styles.errorText}>{errors.clave.message}</Text>}
+            </TouchableOpacity>
           </View>
+          {errors.clave && <Text style={styles.errorText}>{errors.clave.message}</Text>}
+        </View>
 
-          {/* Campo Confirmar Contraseña */}
-          <View style={styles.fieldContainer}>
-            <View style={[
-              styles.inputWrapper,
-              isSubmitted && errors.confirmarClave ? styles.inputError :
-              isSubmitted && !errors.confirmarClave ? styles.inputValid : null
-            ]}>
-              <Ionicons name="lock-open" size={20} color="#EE82EE" style={styles.inputIcon} />
-              <Controller
-                control={control}
-                name="confirmarClave"
-                rules={{
-                  required: 'Debe confirmar su contraseña',
-                  validate: (value) => value === clave || 'Las contraseñas no coinciden',
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    placeholder="Confirmar contraseña"
-                    secureTextEntry
-                    style={styles.textInput}
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                )}
+        {/* Campo Confirmar Contraseña */}
+        <View style={styles.fieldContainer}>
+          <View style={[
+            styles.inputWrapper,
+            isSubmitted && errors.confirmarClave ? styles.inputError :
+            isSubmitted && !errors.confirmarClave ? styles.inputValid : null
+          ]}>
+            <Ionicons name="lock-open" size={20} color="#EE82EE" style={styles.inputIcon} />
+            <Controller
+              control={control}
+              name="confirmarClave"
+              rules={{
+                required: 'Debe confirmar su contraseña',
+                validate: (value) => value === clave || 'Las contraseñas no coinciden',
+              }}
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  placeholder="Confirmar contraseña"
+                  secureTextEntry={ocultarConfirmarClave} // Controla si se ve o se oculta
+                  style={styles.textInput}
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+            {/* Botón del Ojito */}
+            <TouchableOpacity onPress={() => setOcultarConfirmarClave(!ocultarConfirmarClave)}>
+              <Ionicons 
+                name={ocultarConfirmarClave ? "eye-off" : "eye"} 
+                size={22} 
+                color="#A9A9A9" 
               />
-            </View>
-            {errors.confirmarClave && <Text style={styles.errorText}>{errors.confirmarClave.message}</Text>}
+            </TouchableOpacity>
           </View>
+          {errors.confirmarClave && <Text style={styles.errorText}>{errors.confirmarClave.message}</Text>}
+        </View>
 
           {/* Botón Registrar */}
           <TouchableOpacity
@@ -282,7 +336,14 @@ export default function Registro() {
 
         </View>
       </ScrollView>
+      <AlertModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          message={modalMessage}
+          success={modalSuccess}
+        />
     </ImageBackground>
+    
   );
 }
 

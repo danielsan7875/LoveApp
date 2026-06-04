@@ -54,6 +54,36 @@ export async function loginUser(usuario, clave, tipoDocumento = 'V') {
   }
 }
 
+// Agrega esta función a tu archivo donde tienes loginUser
+export async function registrarcliente(data) {
+  try {
+    const response = await apiClient.post('/registro.php', {
+      cedula: data.cedula,
+      nombre: data.nombre,
+      apellido: data.apellido,
+      telefono: data.telefono,
+      correo: data.correo,
+      clave: data.clave,
+      tipo_documento: 'V', // Valor por defecto según tu login
+    });
+
+    const json = response.data;
+
+    // Asumiendo que respuesta === 1 es éxito en tu backend
+    if (json && json.respuesta === 1) {
+      return { success: true, mensaje: json.mensaje || 'Registro exitoso' };
+    }
+
+    return { success: false, mensaje: json.mensaje || 'Error al registrar usuario' };
+  } catch (e) {
+    console.warn('registerUser error:', e.response?.data || e.message);
+    return { 
+      success: false, 
+      mensaje: e.response?.data?.mensaje || 'Error de conexión con el servidor' 
+    };
+  }
+}
+
 export async function resetAppStorage() {
   await AsyncStorage.clear();
   console.log("¡Almacenamiento limpio!");

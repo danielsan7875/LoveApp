@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet,
-  Text,
-  View,
-  ImageBackground,
-  StatusBar,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  Modal,
-  Image,
+  StyleSheet, Text, View,ImageBackground,StatusBar,KeyboardAvoidingView,Platform,ScrollView,TextInput,
+  TouchableOpacity,Modal,Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Controller, useForm } from 'react-hook-form';
