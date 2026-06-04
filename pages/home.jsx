@@ -75,15 +75,15 @@ const BodyHome = () => {
         <Text style={styles.text}>Productos mas vendidos</Text>
       </View>
       
-      {/* --- LISTADO DE PRODUCTOS TOTALMENTE REMOTOS --- */}
+      {/* --- LISTADO DE PRODUCTOS REMOTOS --- */}
       <View style={styles.cardsContainer}>
         {remoteProductos.map((prod) => (
           <Cards
             key={prod.id_producto}
             id={prod.id_producto}
-            foto={prod.imagenes} // Enviamos el array completo de imágenes de la API
+            foto={prod.imagenes} 
             nombre={prod.nombre}
-            precioMayor={prod.precio_mayor} // Mapeado a las variables del backend remoto
+            precioMayor={prod.precio_mayor} 
             precioDetal={prod.precio_detal}
             onPress={() => handleCardPress(prod)}
           />

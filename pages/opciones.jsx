@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalado @expo/vector-icons
 import api from '../services/api';
+import AlertModal from '../componentes/ModalAlert'; 
+import ConfirmModal from '../componentes/ConfirmModal';
+
 
 const MenuItem = ({ iconName, text, route, onPress }) => {
   const navigation = useNavigation();
@@ -26,6 +29,19 @@ const MenuItem = ({ iconName, text, route, onPress }) => {
 
 export default function Opciones() {
   const navigation = useNavigation();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+
+  const handleLogoutModalClose = () => {
+    setModalVisible(false);
+    navigation.reset({ index: 0, routes: [{ name: 'Inicio' }] });
+  };
+
+  const handleConfirmLogout = async () => {
+    await api.logout();
+    setConfirmVisible(false);
+    setModalVisible(true);
+  };
 
   const menuItems1 = [
     { iconName: 'heart', text: 'Mi Lista Deseos', route: 'MisDeseos' },
@@ -91,14 +107,15 @@ export default function Opciones() {
                   text={item.text}
                   route={item.route}
                   onPress={async () => {
-                    await api.logout();
-                    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+                    setConfirmVisible(true);
                   }}
                 />
                 {index < menuItems3.length - 1 && <View style={styles.divider} />}
               </React.Fragment>
             ))}
         </View>
+        <AlertModal visible={modalVisible} onClose={handleLogoutModalClose} message={'Cierre de sesión exitoso'} success={true} />
+        <ConfirmModal visible={confirmVisible} onCancel={() => setConfirmVisible(false)} onConfirm={handleConfirmLogout} title={'Cerrar sesión'} message={'¿Estás seguro que deseas cerrar sesión?'} confirmText={'Cerrar sesión'} cancelText={'Cancelar'} />
       </ScrollView>
     </View>
   );

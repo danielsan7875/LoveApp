@@ -11,6 +11,8 @@ import { useNavigation, useIsFocused } from "@react-navigation/native";
 import TasaOficial from '../informacion/dolar';
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import AlertModal from '../componentes/ModalAlert'; 
+import ConfirmModal from '../componentes/ConfirmModal';
   
 const LoginBarra = () => {
   const tasa = TasaOficial();
@@ -18,6 +20,8 @@ const LoginBarra = () => {
   const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
   const [isLogged, setIsLogged] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -35,11 +39,21 @@ const LoginBarra = () => {
 
   const handleLoginPress = async () => {
     if (isLogged) {
-      await api.logout();
-      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      setConfirmVisible(true);
     } else {
       navigation.navigate("Login");
     }
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+    navigation.reset({ index: 0, routes: [{ name: 'Inicio' }] });
+  };
+
+  const handleConfirmLogout = async () => {
+    await api.logout();
+    setConfirmVisible(false);
+    setModalVisible(true);
   };
 
   const handleSearch = () => {
@@ -68,6 +82,8 @@ const LoginBarra = () => {
                         <Ionicons name="person-circle" size={14} color="#D81B60" /> {isLogged ? 'Cerrar sesión' : 'Inicia sesión o regístrate'}
                       </Text>
                     </TouchableOpacity>
+                    <AlertModal visible={modalVisible} onClose={handleModalClose} message={'Cierre de sesión exitoso'} success={true} />
+                    <ConfirmModal visible={confirmVisible} onCancel={() => setConfirmVisible(false)} onConfirm={handleConfirmLogout} title={'Cerrar sesión'} message={'¿Estás seguro que deseas cerrar sesión?'} confirmText={'Cerrar sesión'} cancelText={'Cancelar'} />
 
                     <View style={styles.priceBadge}>
                         <Text style={styles.priceText}>Tasa del Día: {tasa ? `${tasa} Bs` : 'Cargando...'} </Text>
