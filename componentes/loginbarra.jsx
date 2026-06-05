@@ -7,9 +7,11 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useIsFocused } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import TasaOficial from '../informacion/dolar';
 import { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { clearAuth } from '../redux/authSlice';
 import api from '../services/api';
 import AlertModal from '../componentes/ModalAlert'; 
 import ConfirmModal from '../componentes/ConfirmModal';
@@ -17,25 +19,11 @@ import ConfirmModal from '../componentes/ConfirmModal';
 const LoginBarra = () => {
   const tasa = TasaOficial();
   const navigation = useNavigation();
-  const isFocused = useIsFocused();
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLogged, setIsLogged] = useState(false);
+  const isLogged = useSelector(state => state.auth.isLogged);
+  const dispatch = useDispatch();
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    const checkToken = async () => {
-      try {
-        const token = await api.getToken();
-        if (mounted) setIsLogged(!!token);
-      } catch (e) {
-        if (mounted) setIsLogged(false);
-      }
-    };
-    checkToken();
-    return () => { mounted = false; };
-  }, [isFocused]);
 
   const handleLoginPress = async () => {
     if (isLogged) {
@@ -47,13 +35,18 @@ const LoginBarra = () => {
 
   const handleModalClose = () => {
     setModalVisible(false);
-    navigation.reset({ index: 0, routes: [{ name: 'Inicio' }] });
   };
 
   const handleConfirmLogout = async () => {
-    await api.logout();
     setConfirmVisible(false);
+
+    try {
+      await api.logout();
+    } catch (e) {
+      console.warn('api.logout error', e);
+    }
     setModalVisible(true);
+    dispatch(clearAuth());
   };
 
   const handleSearch = () => {

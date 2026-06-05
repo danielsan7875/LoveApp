@@ -7,6 +7,7 @@ import {
   ScrollView
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
 /* Componentes */
 import HearBarra from '../componentes/hear.jsx';
@@ -24,7 +25,8 @@ const Producto = ({ route }) => {
   const [todosLosProductos, setTodosLosProductos] = useState([]);
   const [resultados, setResultados] = useState([]);
 
-  
+  const isLogged = useSelector((state) => state.auth.isLogged);
+
   useEffect(() => {
     const cargarProductosRemotos = async () => {
       try {
@@ -44,7 +46,7 @@ const Producto = ({ route }) => {
     };
 
     cargarProductosRemotos();
-  }, []);
+  }, [isLogged]);
 
   
   useEffect(() => {

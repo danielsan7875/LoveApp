@@ -3,6 +3,8 @@ import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar 
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalado @expo/vector-icons
 import api from '../services/api';
+import { useDispatch } from 'react-redux';
+import { clearAuth } from '../redux/authSlice';
 import AlertModal from '../componentes/ModalAlert'; 
 import ConfirmModal from '../componentes/ConfirmModal';
 
@@ -31,15 +33,21 @@ export default function Opciones() {
   const navigation = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const dispatch = useDispatch();
 
   const handleLogoutModalClose = () => {
     setModalVisible(false);
-    navigation.reset({ index: 0, routes: [{ name: 'Inicio' }] });
+    dispatch(clearAuth()); 
   };
 
   const handleConfirmLogout = async () => {
-    await api.logout();
     setConfirmVisible(false);
+    
+    try {
+      await api.logout();
+    } catch (e) {
+      console.warn('api.logout error', e);
+    }
     setModalVisible(true);
   };
 

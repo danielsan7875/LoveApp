@@ -6,9 +6,15 @@ import Loader from './componentes/Loader';
 
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
+import { initializeAuth } from './redux/authSlice';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    // Initialize auth state from AsyncStorage on app start
+    store.dispatch(initializeAuth());
+  }, []);
 
   return (
     <Provider store={store}>
