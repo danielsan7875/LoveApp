@@ -7,13 +7,14 @@ import {
   ScrollView
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 
 /* Componentes */
 import HearBarra from '../componentes/hear.jsx';
 import LoginBarra from '../componentes/loginbarra.jsx';
 import Cards from '../componentes/Cards.jsx';
 import ModalProducto from '../componentes/Modal';
-import api from '../services/api'; // Importamos tu API centralizada de Axios
+import api from '../services/api'; 
 
 const Producto = ({ route }) => {
   const { query } = route?.params || {};
@@ -24,15 +25,15 @@ const Producto = ({ route }) => {
   const [todosLosProductos, setTodosLosProductos] = useState([]);
   const [resultados, setResultados] = useState([]);
 
-  // 1. Efecto inicial para cargar los productos activos desde el backend
+  const isLogged = useSelector((state) => state.auth.isLogged);
+
   useEffect(() => {
     const cargarProductosRemotos = async () => {
       try {
-        // Solicitamos los productos activos al nuevo endpoint
         const data = await api.fetchProductos('activos'); 
         if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
           setTodosLosProductos(data.productos);
-          setResultados(data.productos); // Inicialmente mostramos todos
+          setResultados(data.productos); 
         } else {
           setTodosLosProductos([]);
           setResultados([]);
@@ -45,9 +46,9 @@ const Producto = ({ route }) => {
     };
 
     cargarProductosRemotos();
-  }, []);
+  }, [isLogged]);
 
-  // 2. Efecto para reaccionar al cambio de la query de búsqueda sobre los datos de la API
+  
   useEffect(() => {
     if (!query) {
       setResultados(todosLosProductos);
@@ -84,11 +85,11 @@ const Producto = ({ route }) => {
               {resultados.length > 0 ? (
                 resultados.map((prod) => (
                   <Cards
-                    key={prod.id_producto} // Clave remota correcta del backend
+                    key={prod.id_producto} 
                     id={prod.id_producto}
-                    foto={prod.imagenes} // Array completo de imágenes normalizado en api.js
+                    foto={prod.imagenes} 
                     nombre={prod.nombre}
-                    precioMayor={prod.precio_mayor} // Atributos con guiones bajos de la BD
+                    precioMayor={prod.precio_mayor} 
                     precioDetal={prod.precio_detal}
                     onPress={() => handleCardPress(prod)}
                   />

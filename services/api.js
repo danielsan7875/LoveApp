@@ -53,6 +53,36 @@ export async function loginUser(usuario, clave, tipoDocumento = 'V') {
   }
 }
 
+// Agrega esta función a tu archivo donde tienes loginUser
+export async function registerUser(data) {
+  try {
+    const response = await apiClient.post('/registrocliente.php', {
+      cedula: data.cedula,
+      nombre: data.nombre,
+      apellido: data.apellido,
+      telefono: data.telefono,
+      correo: data.correo,
+      clave: data.clave,
+      tipo_documento: 'V', // Valor por defecto según tu login
+    });
+
+    const json = response.data;
+
+    // Asumiendo que respuesta === 1 es éxito en tu backend
+    if (json && json.respuesta === 1) {
+      return { success: true, mensaje: json.mensaje || 'Registro exitoso' };
+    }
+
+    return { success: false, mensaje: json.mensaje || 'Error al registrar usuario' };
+  } catch (e) {
+    console.warn('registerUser error:', e.response?.data || e.message);
+    return { 
+      success: false, 
+      mensaje: e.response?.data?.mensaje || 'Error de conexión con el servidor' 
+    };
+  }
+}
+
 export async function resetAppStorage() {
   await AsyncStorage.clear();
   console.log("¡Almacenamiento limpio!");
@@ -77,6 +107,19 @@ export async function getToken() {
   } catch (e) {
     console.warn('getToken error', e);
     return null;
+  }
+}
+
+export async function logout() {
+  try {
+    await AsyncStorage.removeItem(TOKEN_KEY);
+    if (apiClient && apiClient.defaults && apiClient.defaults.headers) {
+      delete apiClient.defaults.headers.common['Authorization'];
+    }
+    return { success: true };
+  } catch (e) {
+    console.warn('logout error', e);
+    return { success: false, mensaje: 'Error al cerrar sesión' };
   }
 }
 
@@ -135,4 +178,4 @@ export async function debugServerHeaders() {
   }
 }
 
-export default { loginUser, saveToken, getToken, fetchProductos, debugServerHeaders };
+export default { loginUser, logout, saveToken, getToken, fetchProductos, debugServerHeaders };

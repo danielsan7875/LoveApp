@@ -1,15 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalado @expo/vector-icons
+import api from '../services/api';
+import { useDispatch } from 'react-redux';
+import { clearAuth } from '../redux/authSlice';
+import AlertModal from '../componentes/ModalAlert'; 
+import ConfirmModal from '../componentes/ConfirmModal';
 
-const MenuItem = ({ iconName, text, route }) => {
+
+const MenuItem = ({ iconName, text, route, onPress }) => {
   const navigation = useNavigation();
+
+  const handlePress = () => {
+    if (onPress) return onPress();
+    if (route) navigation.navigate(route);
+  };
 
   return (
     <TouchableOpacity 
       style={styles.menuItem}
-      onPress={() => route && navigation.navigate(route)}
+      onPress={handlePress}
     >
       <Ionicons name={iconName} size={24} color="#FF69B4" style={styles.icon} />
       <Text style={styles.menuText}>{text}</Text>
@@ -19,6 +30,26 @@ const MenuItem = ({ iconName, text, route }) => {
 };
 
 export default function Opciones() {
+  const navigation = useNavigation();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const dispatch = useDispatch();
+
+  const handleLogoutModalClose = () => {
+    setModalVisible(false);
+    dispatch(clearAuth()); 
+  };
+
+  const handleConfirmLogout = async () => {
+    setConfirmVisible(false);
+    
+    try {
+      await api.logout();
+    } catch (e) {
+      console.warn('api.logout error', e);
+    }
+    setModalVisible(true);
+  };
 
   const menuItems1 = [
     { iconName: 'heart', text: 'Mi Lista Deseos', route: 'MisDeseos' },
@@ -79,11 +110,20 @@ export default function Opciones() {
         <View style={styles.card}>
             {menuItems3.map((item, index) => (
               <React.Fragment key={index}>
-                <MenuItem iconName={item.iconName} text={item.text} route={item.route} />
+                <MenuItem
+                  iconName={item.iconName}
+                  text={item.text}
+                  route={item.route}
+                  onPress={async () => {
+                    setConfirmVisible(true);
+                  }}
+                />
                 {index < menuItems3.length - 1 && <View style={styles.divider} />}
               </React.Fragment>
             ))}
         </View>
+        <AlertModal visible={modalVisible} onClose={handleLogoutModalClose} message={'Cierre de sesión exitoso'} success={true} />
+        <ConfirmModal visible={confirmVisible} onCancel={() => setConfirmVisible(false)} onConfirm={handleConfirmLogout} title={'Cerrar sesión'} message={'¿Estás seguro que deseas cerrar sesión?'} confirmText={'Cerrar sesión'} cancelText={'Cancelar'} />
       </ScrollView>
     </View>
   );

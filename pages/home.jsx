@@ -11,6 +11,7 @@ import {
 import Cards from '../componentes/Cards';
 import Banner from '../componentes/Banner';
 import ModalProducto from '../componentes/Modal';
+import { useSelector } from 'react-redux';
 import api from '../services/api';
 import { promoBanners } from '../informacion/banners';
 
@@ -26,32 +27,30 @@ const BodyHome = () => {
     setModalVisible(true);
   };
 
+  const isLogged = useSelector(state => state.auth.isLogged);
+
   // Función limpia para cargar los productos desde la API con Axios
   const loadRemote = async () => {
-  try {
-    // EN EL HOME: Le pasamos 'mas_vendidos'
-    const data = await api.fetchProductos('mas_vendidos'); 
-    console.log('loadRemote Home (Más vendidos) ->', data);
-    
-    if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
-      setRemoteProductos(data.productos);
-    } else {
+    try {
+      const data = await api.fetchProductos('mas_vendidos'); 
+      if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
+        setRemoteProductos(data.productos);
+      } else {
+        setRemoteProductos([]);
+      }
+    } catch (e) {
+      console.warn('Fetch error en Home', e.message || e);
       setRemoteProductos([]);
     }
-  } catch (e) {
-    console.warn('Fetch error en Home', e.message || e);
-    setRemoteProductos([]);
-  }
-};
+  };
 
-  // UN SOLO useEffect al montar el Home: Carga productos y ejecuta el debug si hace falta
   useEffect(() => {
     loadRemote();
     
     api.debugServerHeaders()
       .then(r => console.log('debugServerHeaders Home', r))
       .catch(console.error);
-  }, []);
+  }, [isLogged]);
 
   // --- RENDERIZADO DE BANNERS ---
   const renderBanner = ({ item }) => (
@@ -79,15 +78,15 @@ const BodyHome = () => {
         <Text style={styles.text}>Productos mas vendidos</Text>
       </View>
       
-      {/* --- LISTADO DE PRODUCTOS TOTALMENTE REMOTOS --- */}
+      {/* --- LISTADO DE PRODUCTOS REMOTOS --- */}
       <View style={styles.cardsContainer}>
         {remoteProductos.map((prod) => (
           <Cards
             key={prod.id_producto}
             id={prod.id_producto}
-            foto={prod.imagenes} // Enviamos el array completo de imágenes de la API
+            foto={prod.imagenes} 
             nombre={prod.nombre}
-            precioMayor={prod.precio_mayor} // Mapeado a las variables del backend remoto
+            precioMayor={prod.precio_mayor} 
             precioDetal={prod.precio_detal}
             onPress={() => handleCardPress(prod)}
           />
