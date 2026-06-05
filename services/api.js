@@ -55,9 +55,9 @@ export async function loginUser(usuario, clave, tipoDocumento = 'V') {
 }
 
 // Agrega esta función a tu archivo donde tienes loginUser
-export async function registrarcliente(data) {
+export async function registerUser(data) {
   try {
-    const response = await apiClient.post('/registro.php', {
+    const response = await apiClient.post('/registrocliente.php', {
       cedula: data.cedula,
       nombre: data.nombre,
       apellido: data.apellido,
