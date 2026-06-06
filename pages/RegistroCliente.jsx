@@ -1,19 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
   ImageBackground,
-  ScrollView,
+  ScrollView, ActivityIndicator,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+
 import AlertModal from '../componentes/ModalAlert'; 
+import { registerUser } from '../services/api';
 
 
 export default function Registro() {
+  const navigation = useNavigation();
   const {
     control,
     handleSubmit,
@@ -23,48 +29,48 @@ export default function Registro() {
     mode: 'onTouched', // Valida cuando el usuario interactúa con el campo
   });
 
-const [modalVisible, setModalVisible] = useState(false);
-const [modalMessage, setModalMessage] = useState('');
-const [modalSuccess, setModalSuccess] = useState(false);
-const [loading, setLoading] = useState(false); // Para el estado del botón
-
   // Observamos el valor de la clave para compararla con la confirmación
   const clave = watch('clave');
 
-// 
-  const onSubmit = async (data) => {
-  setLoading(true);
+// 1. Estados para el Modal de Alerta (Igual que en tu Login)
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalSuccess, setModalSuccess] = useState(false);
 
-  // Llamada a la API (api.js)
-  const result = await registrarcliente(data);
+  // 2. Estado para el botón (saber si está cargando)
+  const [loading, setLoading] = useState(false);
 
-  setLoading(false);
-
-  if (result.success) {
-    // Caso de éxito
-    setModalMessage("¡Registro exitoso! Ahora puedes iniciar sesión.");
-    setModalSuccess(true);
-    setModalVisible(true);
-
-    // Esperamos 2 segundos y redirigimos al Login
-    setTimeout(() => {
-      setModalVisible(false);
-      navigation.navigate('Login'); // Asegúrate de que 'Login' sea el nombre en tu Stack
-    }, 2000);
-
-  } else {
-    // Caso de error (Cédula duplicada, error de red, etc.)
-    setModalMessage(result.mensaje);
-    setModalSuccess(false);
-    setModalVisible(true);
-    
-    // El modal de error usualmente no se cierra solo para que el usuario lea
-  }
-};
+  // 3. Estados para los ojitos de la contraseña
+  const [ocultarClave, setOcultarClave] = useState(true);
+  const [ocultarConfirmarClave, setOcultarConfirmarClave] = useState(true);
 
 
-  const [ocultarClave, setOcultarClave] = React.useState(true);
-  const [ocultarConfirmarClave, setOcultarConfirmarClave] = React.useState(true);
+const onSubmit = async (data) => {
+    setLoading(true); // Desactivamos el botón y ponemos el circulito de carga
+
+    // Llamamos a la función de la Parte 1
+    const result = await registerUser(data);
+
+    setLoading(false); // Reactivamos el botón
+
+    if (result.success) {
+      // Configuramos el modal para éxito
+      setModalMessage("¡Registro exitoso! Ya puedes iniciar sesión.");
+      setModalSuccess(true);
+      setModalVisible(true);
+
+      // Esperamos 2 segundos y lo mandamos al Login
+      setTimeout(() => {
+        setModalVisible(false);
+        navigation.navigate('Login'); 
+      }, 2000);
+    } else {
+      // Configuramos el modal para error
+      setModalMessage(result.mensaje);
+      setModalSuccess(false);
+      setModalVisible(true);
+    }
+  };
 
   return (
     <ImageBackground
@@ -72,6 +78,12 @@ const [loading, setLoading] = useState(false); // Para el estado del botón
       style={styles.background}
       resizeMode="cover"
     >
+    
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.card}>
           <Text style={styles.title}>Registro</Text>
@@ -121,9 +133,18 @@ const [loading, setLoading] = useState(false); // Para el estado del botón
                 control={control}
                 name="nombre"
                 rules={{
-                  required: 'El nombre es requerido',
+                required: 'El nombre es requerido',
+                
+                minLength: {
+                  value: 3,
+                  message: 'El nombre debe tener mínimo 3 caracteres',
+                },
+                maxLength: {
+                  value: 30,
+                  message: 'El nombre no puede superar los 30 caracteres',
+                },
                   pattern: {
-                    value: /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/,
+                    value: /^[A-Za-z]+$/,
                     message: 'Solo se permiten letras y espacios',
                   }
                 }}
@@ -153,14 +174,22 @@ const [loading, setLoading] = useState(false); // Para el estado del botón
                 name="apellido"
                 rules={{
                   required: 'El apellido es requerido',
+                  minLength: {
+                  value: 3,
+                  message: 'El apellido debe tener mínimo 3 caracteres',
+                },
+                maxLength: {
+                  value: 30,
+                  message: 'El apellido no puede superar los 30 caracteres',
+                },
                   pattern: {
-                    value: /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/,
-                    message: 'Solo se permiten letras y espacios',
+                    value: /^[A-Za-z]+$/,
+                    message: 'Solo se permiten letras entre',
                   }
                 }}
                 render={({ field: { onChange, value } }) => (
                   <TextInput
-                    placeholder="Apellido (Ej: Perez)"
+                    placeholder="Apellido (Ej: z)"
                     style={styles.textInput}
                     value={value}
                     onChangeText={onChange}
@@ -250,7 +279,6 @@ const [loading, setLoading] = useState(false); // Para el estado del botón
             </View>
             {errors.correo && <Text style={styles.errorText}>{errors.correo.message}</Text>}
           </View>
-
         {/* Campo Contraseña */}
         <View style={styles.fieldContainer}>
           <View style={[
@@ -327,23 +355,27 @@ const [loading, setLoading] = useState(false); // Para el estado del botón
         </View>
 
           {/* Botón Registrar */}
-          <TouchableOpacity
-            style={styles.registerButton}
+         <TouchableOpacity
+            style={[styles.registerButton, loading && { opacity: 0.7 }]}
             onPress={handleSubmit(onSubmit)}
+            disabled={loading}
           >
-            <Text style={styles.registerButtonText}>REGISTRARSE</Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.registerButtonText}>REGISTRARSE</Text>
+            )}
           </TouchableOpacity>
-
-        </View>
-      </ScrollView>
-      <AlertModal
+               <AlertModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
           message={modalMessage}
           success={modalSuccess}
         />
+        </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
     </ImageBackground>
-    
   );
 }
 
@@ -352,9 +384,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
-    flexGrow: 1, // Corregido de 20 a 1 para comportamiento correcto de scroll
-    justifyContent: 'center',
-    padding: 20,
+    flexGrow: 1, 
+    justifyContent: 'center', // Mantiene la tarjeta centrada si hay espacio
+    paddingVertical: 30,      // Un poco más de espacio arriba y abajo
+    paddingHorizontal: 20,
   },
   card: {
     backgroundColor: '#fff',
