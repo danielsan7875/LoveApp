@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-
 const API_BASE = 'https://lovemakeuptienda.com/controlador/api';
 const TOKEN_KEY = 'jwt_token';
 
@@ -27,34 +26,31 @@ apiClient.interceptors.request.use(
   }
 );
 
-
 export async function loginUser(usuario, clave, tipoDocumento = 'V') {
   try {
     const response = await apiClient.post('/login.php', {
       usuario: usuario,
       clave: clave,
-      tipo_documento: tipoDocumento
+      tipo_documento: tipoDocumento,
     });
 
     const json = response.data;
 
-    // Si el backend responde con éxito (respuesta 1 o 2 de acuerdo a tus niveles de rol)
     if (json && (json.respuesta === 1 || json.respuesta === 2) && json.token) {
       await saveToken(json.token);
       return { success: true, user: json.usuario, respuesta: json.respuesta };
     }
-    
+
     return { success: false, mensaje: json.mensaje || 'Credenciales inválidas' };
   } catch (e) {
     console.warn('loginUser error:', e.response?.data || e.message);
-    return { 
-      success: false, 
-      mensaje: e.response?.data?.mensaje || 'Error de conexión con el servidor' 
+    return {
+      success: false,
+      mensaje: e.response?.data?.mensaje || 'Error de conexión con el servidor',
     };
   }
 }
 
-// Agrega esta función a tu archivo donde tienes loginUser
 export async function registerUser(data) {
   try {
     const response = await apiClient.post('/registrocliente.php', {
@@ -64,12 +60,11 @@ export async function registerUser(data) {
       telefono: data.telefono,
       correo: data.correo,
       clave: data.clave,
-      tipo_documento: 'V', // Valor por defecto según tu login
+      tipo_documento: 'V',
     });
 
     const json = response.data;
 
-    // Asumiendo que respuesta === 1 es éxito en tu backend
     if (json && json.respuesta === 1) {
       return { success: true, mensaje: json.mensaje || 'Registro exitoso' };
     }
@@ -77,16 +72,50 @@ export async function registerUser(data) {
     return { success: false, mensaje: json.mensaje || 'Error al registrar usuario' };
   } catch (e) {
     console.warn('registerUser error:', e.response?.data || e.message);
-    return { 
-      success: false, 
-      mensaje: e.response?.data?.mensaje || 'Error de conexión con el servidor' 
+    return {
+      success: false,
+      mensaje: e.response?.data?.mensaje || 'Error de conexión con el servidor',
+    };
+  }
+}
+
+export async function changePassword(claveActual, claveNueva) {
+  try {
+    const response = await apiClient.post('/cambiarClave.php', {
+      clave_actual: claveActual,
+      clave_nueva: claveNueva,
+    });
+
+    const json = response.data;
+
+    if (typeof json === 'string') {
+      const bodySnippet = json.slice(0, 200);
+      console.warn('changePassword received HTML or non-JSON response:', bodySnippet);
+      return {
+        success: false,
+        mensaje: 'El servidor no respondió con la API esperada. Verifica el endpoint de cambio de contraseña.',
+      };
+    }
+
+    if (json && json.respuesta === 1) {
+      return { success: true, mensaje: json.mensaje || 'Contraseña actualizada con éxito' };
+    }
+
+    return { success: false, mensaje: json.mensaje || 'No se pudo actualizar la contraseña' };
+  } catch (e) {
+    console.warn('changePassword error:', e.response?.data || e.message);
+    return {
+      success: false,
+      mensaje:
+        e.response?.data?.mensaje ||
+        'Error de conexión con el servidor al cambiar la contraseña',
     };
   }
 }
 
 export async function resetAppStorage() {
   await AsyncStorage.clear();
-  console.log("¡Almacenamiento limpio!");
+  console.log('¡Almacenamiento limpio!');
 }
 
 export async function saveToken(token) {
@@ -99,12 +128,10 @@ export async function saveToken(token) {
   }
 }
 
-
 export async function getToken() {
   try {
     const stored = await AsyncStorage.getItem(TOKEN_KEY);
-    if (stored) return stored;
-    return null; 
+    return stored || null;
   } catch (e) {
     console.warn('getToken error', e);
     return null;
@@ -124,13 +151,12 @@ export async function logout() {
   }
 }
 
-
 export async function fetchProductos(tipo = 'activos') {
   try {
     const response = await apiClient.get('/producto.php', {
-      params: { tipo: tipo }
+      params: { tipo: tipo },
     });
-    
+
     let json = response.data;
     const origin = API_BASE.split('/controlador/api')[0];
 
@@ -138,8 +164,8 @@ export async function fetchProductos(tipo = 'activos') {
       json.productos = json.productos.map((p) => {
         const prod = { ...p };
         if (prod.imagen && typeof prod.imagen === 'string') {
-          prod.imagen = prod.imagen.startsWith('http') 
-            ? prod.imagen 
+          prod.imagen = prod.imagen.startsWith('http')
+            ? prod.imagen
             : `${origin}/${prod.imagen.replace(/^\//, '')}`;
         }
         if (Array.isArray(prod.imagenes) && prod.imagenes.length > 0) {
@@ -149,7 +175,7 @@ export async function fetchProductos(tipo = 'activos') {
                 ...img,
                 url_imagen: img.url_imagen.startsWith('http')
                   ? img.url_imagen
-                  : `${origin}/${img.url_imagen.replace(/^\//, '')}`
+                  : `${origin}/${img.url_imagen.replace(/^\//, '')}`,
               };
             }
             return img;
@@ -170,7 +196,7 @@ export async function fetchProductos(tipo = 'activos') {
 export async function debugServerHeaders() {
   try {
     const response = await apiClient.get('/producto.php', {
-      params: { debug: 1, validate: 1 }
+      params: { debug: 1, validate: 1 },
     });
     return response.data;
   } catch (e) {
@@ -179,4 +205,12 @@ export async function debugServerHeaders() {
   }
 }
 
-export default { loginUser, logout, saveToken, getToken, fetchProductos, debugServerHeaders };
+export default {
+  loginUser,
+  logout,
+  saveToken,
+  getToken,
+  fetchProductos,
+  debugServerHeaders,
+  changePassword,
+};

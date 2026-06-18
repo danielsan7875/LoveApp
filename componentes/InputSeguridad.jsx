@@ -1,7 +1,10 @@
-import { View, Text, StyleSheet, TextInput} from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalado @expo/vector-icons
 
 const InputSeguridad = ({ label, iconName, value, onChangeText, isSecure = false }) => {
+  const [secureText, setSecureText] = useState(isSecure);
+
   return (
      <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>{label}</Text>
@@ -11,10 +14,19 @@ const InputSeguridad = ({ label, iconName, value, onChangeText, isSecure = false
             style={styles.input}
             value={value}
             onChangeText={onChangeText}
-            secureTextEntry={isSecure}
+            secureTextEntry={secureText}
             placeholder="Ingresa tu clave aquí"
             placeholderTextColor="#ccc"
           />
+          {isSecure && (
+            <TouchableOpacity onPress={() => setSecureText((prev) => !prev)}>
+              <Ionicons
+                name={secureText ? 'eye-off' : 'eye'}
+                size={22}
+                color="#E91E63"
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
   );

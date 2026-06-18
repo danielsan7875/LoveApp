@@ -1,30 +1,84 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
+import { useSelector } from 'react-redux';
+import { changePassword } from '../services/api';
 import { Ionicons } from '@expo/vector-icons'; 
 
 // --- Componentes ---
 import BtnSeguridad from '../componentes/BtnSeguridad';
 import InputSeguridad from '../componentes/InputSeguridad';
 
-
 const BodySeguridad = () => {
   const [ActualClave, setActualClave] = useState('');
   const [NuevaClave, setNuevaClave] = useState('');
   const [ConfirmarClave, setConfirmarClave] = useState('');
+  const [errorActual, setErrorActual] = useState('');
+  const [errorNueva, setErrorNueva] = useState('');
+  const [errorConfirmar, setErrorConfirmar] = useState('');
+  const isLogged = useSelector((state) => state.auth.isLogged);
 
-  const CambioClave = () => {
-    // Lógica para cambiar la clave
-    Alert.alert("Cambio de Clave", "Lógica de cambio de clave ejecutada.");
-    console.log("Clave Actual:", ActualClave);
-    console.log("Nueva Clave:", NuevaClave);
+  const validateForm = () => {
+    let isValid = true;
+    setErrorActual('');
+    setErrorNueva('');
+    setErrorConfirmar('');
+
+    if (!ActualClave) {
+      setErrorActual('La clave actual es obligatoria');
+      isValid = false;
+    }
+
+    if (!NuevaClave) {
+      setErrorNueva('La nueva clave es obligatoria');
+      isValid = false;
+    } else if (NuevaClave.length < 8) {
+      setErrorNueva('La nueva clave debe tener al menos 8 caracteres');
+      isValid = false;
+    }
+
+    if (!ConfirmarClave) {
+      setErrorConfirmar('Debe confirmar la nueva clave');
+      isValid = false;
+    } else if (ConfirmarClave !== NuevaClave) {
+      setErrorConfirmar('Las contraseñas no coinciden');
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
+  const CambioClave = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    if (!isLogged) {
+      Alert.alert('Acceso requerido', 'Debes iniciar sesión para cambiar tu contraseña.');
+      return;
+    }
+
+    const result = await changePassword(ActualClave, NuevaClave);
+    if (result.success) {
+      Alert.alert('Éxito', result.mensaje);
+      setActualClave('');
+      setNuevaClave('');
+      setConfirmarClave('');
+      setErrorActual('');
+      setErrorNueva('');
+      setErrorConfirmar('');
+    } else {
+      Alert.alert('Error', result.mensaje);
+    }
   };
 
   const CamposClear = () => {
-    // Lógica para limpiar los campos
     setActualClave('');
     setNuevaClave('');
     setConfirmarClave('');
-    Alert.alert("Campos Limpiados", "Todos los campos de clave han sido limpiados.");
+    setErrorActual('');
+    setErrorNueva('');
+    setErrorConfirmar('');
+    Alert.alert('Campos Limpiados', 'Todos los campos de clave han sido limpiados.');
   };
 
   return (
@@ -43,6 +97,8 @@ const BodySeguridad = () => {
           onChangeText={setActualClave}
           isSecure={true}
         />
+        {errorActual ? <Text style={styles.errorText}>{errorActual}</Text> : null}
+
         <InputSeguridad
           label="Clave nueva"
           iconName="lock-closed-outline"
@@ -50,6 +106,8 @@ const BodySeguridad = () => {
           onChangeText={setNuevaClave}
           isSecure={true}
         />
+        {errorNueva ? <Text style={styles.errorText}>{errorNueva}</Text> : null}
+
         <InputSeguridad
           label="Confirmar clave nueva"
           iconName="lock-closed-outline"
@@ -57,6 +115,7 @@ const BodySeguridad = () => {
           onChangeText={setConfirmarClave}
           isSecure={true}
         />
+        {errorConfirmar ? <Text style={styles.errorText}>{errorConfirmar}</Text> : null}
       </View>
 
 
@@ -179,6 +238,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
     fontWeight: '500',
+  },
+  errorText: {
+    color: '#D32F2F',
+    marginTop: -8,
+    marginBottom: 10,
+    marginLeft: 4,
+    fontSize: 13,
   },
 });
 
