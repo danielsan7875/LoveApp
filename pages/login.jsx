@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import AlertModal from '../componentes/ModalAlert'; 
 import { loginUser, getToken } from '../services/api';
 import { useDispatch } from 'react-redux';
-import { setToken } from '../redux/authSlice';
+import { setToken, setUser } from '../redux/authSlice';
 
 const Login = () => {
   const navigation = useNavigation();
@@ -49,6 +49,8 @@ const Login = () => {
       try {
         const token = await getToken();
         if (token) dispatch(setToken(token));
+        // Si la API nos devolvió datos de usuario, también los almacenamos
+        if (result.user) dispatch(setUser(result.user));
       } catch (e) {
         console.warn('Error syncing token to redux after login', e);
       }
