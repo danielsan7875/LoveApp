@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 // --- Componentes ---
 import BtnSeguridad from '../componentes/BtnSeguridad';
 import InputSeguridad from '../componentes/InputSeguridad';
+import AlertModal from '../componentes/ModalAlert';
 
 const BodySeguridad = () => {
   const [ActualClave, setActualClave] = useState('');
@@ -15,6 +16,9 @@ const BodySeguridad = () => {
   const [errorActual, setErrorActual] = useState('');
   const [errorNueva, setErrorNueva] = useState('');
   const [errorConfirmar, setErrorConfirmar] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalSuccess, setModalSuccess] = useState(false);
   const isLogged = useSelector((state) => state.auth.isLogged);
 
   const validateForm = () => {
@@ -53,22 +57,30 @@ const BodySeguridad = () => {
     }
 
     if (!isLogged) {
-      Alert.alert('Acceso requerido', 'Debes iniciar sesión para cambiar tu contraseña.');
+      setModalSuccess(false);
+      setModalMessage('Debes iniciar sesión para cambiar tu contraseña.');
+      setModalVisible(true);
       return;
     }
 
     const result = await changePassword(ActualClave, NuevaClave);
+
     if (result.success) {
-      Alert.alert('Éxito', result.mensaje);
+      setModalSuccess(true);
+      setModalMessage(result.mensaje);
+      setModalVisible(true);
       setActualClave('');
       setNuevaClave('');
       setConfirmarClave('');
       setErrorActual('');
       setErrorNueva('');
       setErrorConfirmar('');
-    } else {
-      Alert.alert('Error', result.mensaje);
+      return;
     }
+
+    setModalSuccess(false);
+    setModalMessage(result.mensaje || 'No se pudo actualizar la contraseña');
+    setModalVisible(true);
   };
 
   const CamposClear = () => {
@@ -159,6 +171,12 @@ const BodySeguridad = () => {
         </View>
       </View>
 
+      <AlertModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        message={modalMessage}
+        success={modalSuccess}
+      />
     </ScrollView>
   );
 };
@@ -173,7 +191,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 100,
   },
-   buttonGroup: {
+  buttonGroup: {
     marginBottom: 30,
     gap: 15,
   },
@@ -192,7 +210,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginBottom: 20,
-    marginLeft: 14, 
+    marginLeft: 14,
   },
 
   // --- TARJETA DE INPUTS ---
@@ -201,7 +219,6 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 20,
     marginBottom: 25,
-   
     ...Platform.select({
       ios: {
         shadowColor: '#E91E63',
