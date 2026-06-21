@@ -81,34 +81,59 @@ export async function registerUser(data) {
 
 export async function changePassword(claveActual, claveNueva) {
   try {
-    const response = await apiClient.post('/cambiarClave.php', {
-      clave_actual: claveActual,
-      clave_nueva: claveNueva,
-    });
+    const token = await getToken();
+    if (!token) {
+      return {
+        success: false,
+        mensaje: 'No hay sesión activa. Inicia sesión de nuevo.',
+        tokenExpired: true,
+      };
+    }
+
+    const response = await apiClient.post(
+      '/cambiarClave.php',
+      {
+        clave_actual: claveActual,
+        clave_nueva: claveNueva,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     const json = response.data;
 
-    if (typeof json === 'string') {
-      const bodySnippet = json.slice(0, 200);
-      console.warn('changePassword received HTML or non-JSON response:', bodySnippet);
+    if (!json || typeof json !== 'object') {
+      console.warn('changePassword received HTML o respuesta inesperada:', response.data);
       return {
         success: false,
         mensaje: 'El servidor no respondió con la API esperada. Verifica el endpoint de cambio de contraseña.',
       };
     }
 
-    if (json && json.respuesta === 1) {
+    if (json.respuesta === 1) {
       return { success: true, mensaje: json.mensaje || 'Contraseña actualizada con éxito' };
     }
 
     return { success: false, mensaje: json.mensaje || 'No se pudo actualizar la contraseña' };
   } catch (e) {
     console.warn('changePassword error:', e.response?.data || e.message);
+    const mensajeError =
+      e.response?.data?.mensaje ||
+      'Error de conexión con el servidor al cambiar la contraseña';
+    const isTokenExpired =
+      e.response?.status === 401 &&
+      typeof mensajeError === 'string' &&
+      mensajeError.toLowerCase().includes('expir');
+
     return {
       success: false,
-      mensaje:
-        e.response?.data?.mensaje ||
-        'Error de conexión con el servidor al cambiar la contraseña',
+      mensaje: isTokenExpired
+        ? 'Tu sesión expiró. Inicia sesión de nuevo.'
+        : mensajeError,
+      tokenExpired: isTokenExpired,
     };
   }
 }
