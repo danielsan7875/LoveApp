@@ -1,12 +1,21 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useDispatch, useSelector } from "react-redux";
-import { addToWishlist, removeFromWishlist } from "../redux/wishlistSlice";
+import { agregarWishlistThunk, eliminarWishlistThunk } from "../redux/wishlistSlice"; // <-- Ajusta ruta
 import { addToCart } from "../redux/cartSlice";
 import { Ionicons } from '@expo/vector-icons';
 
-export default function Cards({ id, foto, nombre, precioMayor, precioDetal, onPress }) {
+export default function Cards({ id, id_lista, foto, nombre, precioMayor, precioDetal, onPress }) {
   const dispatch = useDispatch();
+  
+  const { user, isLogged } = useSelector((state) => state.auth);
+
+  const cedula = user?.cedula; 
+
+  const wishlistItems = useSelector((state) => state.wishlist.items);
+  
+  const itemEnLista = wishlistItems.find(item => item.id === id);
+  const isFav = !!itemEnLista;
 
   const agregarCarrito = () => {
     dispatch(addToCart({
@@ -18,23 +27,43 @@ export default function Cards({ id, foto, nombre, precioMayor, precioDetal, onPr
     }));
   };
 
-  const wishlist = useSelector((state) => state.wishlist);
-  const isFav = wishlist.some(item => item.id === id);
-
   const toggleWishlist = () => {
+    if (!isLogged || !cedula) {
+      Alert.alert("Atención", "Debes iniciar sesión para guardar productos favoritos.");
+      return;
+    }
+
     if (isFav) {
-      dispatch(removeFromWishlist(id));
+      dispatch(eliminarWishlistThunk({ idLista: itemEnLista.id_lista, cedula }));
     } else {
-      dispatch(addToWishlist({ id, nombre, precioMayor, precioDetal, foto }));
+      dispatch(agregarWishlistThunk({ 
+        cedula, 
+        producto: { id, nombre, precioMayor, precioDetal, foto } 
+      }));
     }
   };
 
-  // Obtener la URL de la primera imagen del array remoto de forma segura
   const obtenerImagenRemota = () => {
-    if (Array.isArray(foto) && foto.length > 0 && foto[0]?.url_imagen) {
-      return { uri: foto[0].url_imagen };
+    if (Array.isArray(foto) && foto.length > 0) {
+      const primerFoto = foto[0];
+      if (primerFoto?.url_imagen) {
+        return { uri: primerFoto.url_imagen };
+      }
+      if (primerFoto?.imagen) {
+        return { uri: primerFoto.imagen };
+      }
+      if (typeof primerFoto === 'string') {
+        return { uri: primerFoto };
+      }
     }
-    // Imagen por defecto por si un producto remoto viene sin fotos
+
+    if (foto && typeof foto === 'object' && !Array.isArray(foto)) {
+      const url = foto.url_imagen || foto.imagen;
+      if (url) {
+        return { uri: url };
+      }
+    }
+
     return require('../assets/img/b6.png'); 
   };
 
@@ -42,7 +71,6 @@ export default function Cards({ id, foto, nombre, precioMayor, precioDetal, onPr
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
       <View style={styles.imageContainer}>
         <Image source={obtenerImagenRemota()} style={styles.image} />
-        
         <TouchableOpacity onPress={toggleWishlist} style={styles.favIconContainer}>
           <Ionicons
             name={isFav ? "heart" : "heart-outline"}
@@ -53,12 +81,10 @@ export default function Cards({ id, foto, nombre, precioMayor, precioDetal, onPr
       </View>
       
       <Text style={styles.nombre}>{nombre}</Text>
-
       <View style={styles.preciocontainer}>
         <Text style={styles.precioMayor}>M: {precioMayor}$</Text>
         <Text style={styles.precioDetal}>D: {precioDetal}$</Text>
       </View>
-
       <TouchableOpacity style={styles.button} onPress={agregarCarrito}>
         <Text style={styles.btnText}>Agregar</Text>
       </TouchableOpacity>
@@ -99,7 +125,6 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
 
-  /* ❤️ NUEVO */
   favIconContainer: {
     position: 'absolute',
     top: 6,

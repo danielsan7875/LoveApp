@@ -21,7 +21,7 @@ const Producto = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
 
-  // Estados independientes para el listado remoto total y el filtrado en pantalla
+  
   const [todosLosProductos, setTodosLosProductos] = useState([]);
   const [resultados, setResultados] = useState([]);
 

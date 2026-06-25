@@ -6,7 +6,6 @@ const TOKEN_KEY = 'jwt_token';
 export const initializeAuth = createAsyncThunk('auth/initialize', async () => {
   try {
     const token = await AsyncStorage.getItem(TOKEN_KEY);
-    // Try to parse user info from token payload
     let user = null;
     if (token) {
       try {

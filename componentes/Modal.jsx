@@ -6,7 +6,11 @@ export default function ModalProducto({ visible, onClose, producto }) {
 
   if (!producto) return null;
 
-  const imagenesRemotas = Array.isArray(producto.imagenes) ? producto.imagenes : [];
+  const imagenesRemotas = Array.isArray(producto.imagenes)
+    ? producto.imagenes
+    : Array.isArray(producto.foto)
+      ? producto.foto
+      : [];
 
   return (
     <Modal visible={visible} transparent animationType="slide">
@@ -22,18 +26,23 @@ export default function ModalProducto({ visible, onClose, producto }) {
               contentContainerStyle={{ flexGrow: 1 }}
             >
               {imagenesRemotas.length > 0 ? (
-                imagenesRemotas.map((img, index) => (
-                  <Image
-                    key={index}
-                    source={{ uri: img.url_imagen }}
-                    style={{
-                      width: screenWidth, // Cada imagen mide exactamente lo mismo que el carrusel
-                      height: 180,
-                      borderRadius: 12,
-                      resizeMode: 'cover',
-                    }}
-                  />
-                ))
+                imagenesRemotas.map((img, index) => {
+                  const uri = typeof img === 'string'
+                    ? img
+                    : img?.url_imagen || img?.imagen;
+                  return (
+                    <Image
+                      key={index}
+                      source={{ uri }}
+                      style={{
+                        width: screenWidth,
+                        height: 180,
+                        borderRadius: 12,
+                        resizeMode: 'cover',
+                      }}
+                    />
+                  );
+                })
               ) : (
                 // Imagen de respaldo única si no hay fotos
                 <Image

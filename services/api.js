@@ -218,6 +218,84 @@ export async function fetchProductos(tipo = 'activos') {
   }
 }
 
+// ... Tus importaciones y funciones anteriores se quedan igual ...
+
+export async function fetchWishlistRemota(cedula) {
+  try {
+    const response = await apiClient.get('/deseos.php', {
+      params: { cedula: cedula },
+    });
+
+    const origin = API_BASE.split('/controlador/api')[0];
+    const data = response.data?.data || [];
+
+    return Array.isArray(data)
+      ? data.map((item) => {
+          const imagenes = Array.isArray(item.imagenes)
+            ? item.imagenes.map((img) => {
+                if (img && img.url_imagen) {
+                  const url = img.url_imagen.startsWith('http')
+                    ? img.url_imagen
+                    : `${origin}/${img.url_imagen.replace(/^\//, '')}`;
+                  return { ...img, url_imagen: url };
+                }
+                return img;
+              })
+            : item.imagen
+              ? [{ url_imagen: item.imagen.startsWith('http') ? item.imagen : `${origin}/${item.imagen.replace(/^\//, '')}` }]
+              : [];
+
+          return {
+            ...item,
+            imagenes,
+          };
+        })
+      : [];
+  } catch (e) {
+    console.warn('fetchWishlistRemota error:', e.message);
+    throw e;
+  }
+}
+
+export async function agregarAWishlistRemota(cedula, idProducto) {
+  try {
+    const response = await apiClient.post('/deseos.php', {
+      operacion: 'agregar',
+      datos: { id_persona: cedula, id_producto: idProducto }
+    });
+    return response.data;
+  } catch (e) {
+    console.warn('agregarAWishlistRemota error:', e.message);
+    throw e;
+  }
+}
+
+export async function eliminarDeWishlistRemota(idLista) {
+  try {
+    const response = await apiClient.post('/deseos.php', {
+      operacion: 'eliminar',
+      datos: { id_lista: idLista }
+    });
+    return response.data;
+  } catch (e) {
+    console.warn('eliminarDeWishlistRemota error:', e.message);
+    throw e;
+  }
+}
+
+export async function vaciarWishlistRemota(cedula) {
+  try {
+    const response = await apiClient.post('/deseos.php', {
+      operacion: 'vaciar',
+      datos: { id_persona: cedula }
+    });
+    return response.data;
+  } catch (e) {
+    console.warn('vaciarWishlistRemota error:', e.message);
+    throw e;
+  }
+}
+
 export async function debugServerHeaders() {
   try {
     const response = await apiClient.get('/producto.php', {
@@ -238,4 +316,8 @@ export default {
   fetchProductos,
   debugServerHeaders,
   changePassword,
+  fetchWishlistRemota,
+  agregarAWishlistRemota,
+  eliminarDeWishlistRemota,
+  vaciarWishlistRemota
 };
