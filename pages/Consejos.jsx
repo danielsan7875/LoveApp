@@ -31,22 +31,22 @@ const Consejos = () => {
   const consejos = [
   {
     title: 'Asesoría personalizada en maquillaje',
-    image: require('../assets/img/imgconsejos/asesoria_maquillaje.jpg'),
+    image: require('../assets/imgconsejos/asesoria_maquillaje.jpg'),
     description: 'Navegar entre miles de productos y técnicas puede resultar abrumador. La asesoría personalizada es clave para encontrar lo que realmente funciona para ti.',
   },
   {
     title: 'La importancia del maquillaje de calidad',
-    image: require('../assets/img/imgconsejos/gama_maquillaje.jpg'),
+    image: require('../assets/imgconsejos/gama_maquillaje.jpg'),
     description: 'Elegir productos de maquillaje de calidad no es un lujo sino una inversión en tu piel y en resultados profesionales. Los productos de calidad contienen ingredientes dermatológicamente testados, libres de sustancias nocivas y con propiedades beneficiosas para la piel. Muchos incluyen protección solar, antioxidantes y activos hidratantes que cuidan tu piel mientras la embellecen.',
   },
   {
     title: 'Maquillaje y autoestima',
-    image: require('../assets/img/imgconsejos/maquillaje_autoestima.jpg'),
+    image: require('../assets/imgconsejos/maquillaje_autoestima.jpg'),
     description: 'El maquillaje va mucho más allá de la estética; es una poderosa herramienta de autoexpresión que puede impactar positivamente en nuestra percepción personal y bienestar emocional. Ver nuestra mejor versión en el espejo genera un circuito de retroalimentación positiva.',
   },
   {
     title: 'Gama en productos de maquillaje',
-    image: require('../assets/img/imgconsejos/maquillaje_calidad.jpg'),
+    image: require('../assets/imgconsejos/maquillaje_calidad.jpg'),
     description: 'El mercado del maquillaje ofrece opciones para todos los presupuestos y necesidades. Conocer las características de cada gama te ayudará a tomar decisiones informadas.',
   },
 ];

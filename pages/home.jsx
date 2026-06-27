@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Dimensions,
+  Image,
   Text,
   ScrollView,
   FlatList,
@@ -11,9 +12,10 @@ import {
 import Cards from '../componentes/Cards';
 import Banner from '../componentes/Banner';
 import ModalProducto from '../componentes/Modal';
+import BrandSlider from '../componentes/seccionmarca.jsx';
 import { useSelector } from 'react-redux';
 import api from '../services/api';
-import { promoBanners } from '../informacion/banners';
+import { promoBanners, misMarcas } from '../informacion/banners';
 
 const { width } = Dimensions.get('window');
 
@@ -26,6 +28,7 @@ const BodyHome = () => {
     setProductoActivo(producto);
     setModalVisible(true);
   };
+
 
   const isLogged = useSelector(state => state.auth.isLogged);
 
@@ -77,7 +80,8 @@ const BodyHome = () => {
       <View>
         <Text style={styles.text}>Productos mas vendidos</Text>
       </View>
-      
+        
+    
       {/* --- LISTADO DE PRODUCTOS REMOTOS --- */}
       <View style={styles.cardsContainer}>
         {remoteProductos.map((prod) => (
@@ -93,6 +97,10 @@ const BodyHome = () => {
         ))}
       </View>
 
+       {/* --- SECCION MARCAS--- */}
+      <BrandSlider brands={misMarcas} title="Lo Mejor de Nuestro Catálogo" />
+        
+
       {/* --- MODAL CON EL CARRUSEL CORREGIDO --- */}
       <ModalProducto
         visible={modalVisible}
@@ -100,6 +108,7 @@ const BodyHome = () => {
         producto={productoActivo}
       />
     </ScrollView>
+      
   );
 };
 

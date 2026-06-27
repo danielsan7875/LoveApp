@@ -26,6 +26,10 @@ apiClient.interceptors.request.use(
   }
 );
 
+
+// ------------------------------------------- DANIEL ---------------------------------------------------------
+
+// ------------------- INGRESO AL LOGIN
 export async function loginUser(usuario, clave, tipoDocumento = 'V') {
   try {
     const response = await apiClient.post('/login.php', {
@@ -51,6 +55,7 @@ export async function loginUser(usuario, clave, tipoDocumento = 'V') {
   }
 }
 
+//------------------ REGISTRO CLIENTE NUEVO
 export async function registerUser(data) {
   try {
     const response = await apiClient.post('/registrocliente.php', {
@@ -78,7 +83,152 @@ export async function registerUser(data) {
     };
   }
 }
+//---------------------- OVLIDO CLAVE | VERIFICAR Y ENVIAR CODIGO----------------
+export async function solicitarCodigoRecuperacion(correo) {
+  try {
+    console.log("📨 Enviando al backend:", correo);
 
+    const response = await apiClient.post('/olvido.php', { correo });
+    const json = response.data;
+
+    if (json && json.respuesta === 1) {
+      if (json.token) {
+        await AsyncStorage.setItem('jwt_token', json.token);
+      }
+      return { success: true, codigo: 1 };
+    }
+
+    return {
+      success: false,
+      codigo: json.respuesta || 0,
+      mensaje: json.mensaje || 'Ocurrió un problema'
+    };
+
+  } catch (e) {
+    console.log("Error detectado en API:", e);
+
+    // Si el servidor respondió con un estatus de error (401, 400, etc.)
+    if (e.response && e.response.data) {
+      const errorJson = e.response.data;
+      return {
+        success: false,
+        codigo: errorJson.respuesta || 0,
+        mensaje: errorJson.mensaje || 'Este correo no está registrado en el sistema.'
+      };
+    }
+
+    // Si realmente fue un problema de red/conexión (el servidor no respondió nada)
+    return {
+      success: false,
+      codigo: -1,
+      mensaje: 'Error de conexión con el servidor. Inténtalo más tarde.'
+    };
+  }
+}
+
+export async function verificarCodigoOTP(codigo) {
+  try {
+    // Recuperamos el token generado en el paso anterior
+    const token = await AsyncStorage.getItem('jwt_token');
+
+    const response = await apiClient.post('/verificarcodigo.php', 
+      { codigo }, 
+      {
+        headers: {
+          'Authorization': `Bearer ${token}` // Enviamos el JWT para verificarlo
+        }
+      }
+    );
+
+    const json = response.data;
+
+    if (json && json.respuesta === 1) {
+      // Si el backend generó un nuevo token (por ejemplo, con permisos para cambiar clave), lo guardamos
+      if (json.token) {
+        await AsyncStorage.setItem('jwt_token', json.token);
+      }
+      return { success: true, codigo: 1 };
+    }
+
+    return {
+      success: false,
+      codigo: json.respuesta || 0,
+      mensaje: json.mensaje || 'Código incorrecto',
+      intentos_restantes: json.intentos_restantes ?? null
+    };
+
+  } catch (e) {
+    console.log("Error en Verificación codigo:", e);
+    
+    if (e.response && e.response.data) {
+      const errorJson = e.response.data;
+      return {
+        success: false,
+        codigo: errorJson.respuesta || 0,
+        mensaje: errorJson.mensaje || 'Error al validar el código.',
+        intentos_restantes: errorJson.intentos_restantes ?? null
+      };
+    }
+
+    return {
+      success: false,
+      codigo: -1,
+      mensaje: 'Error de conexión con el servidor.'
+    };
+  }
+}
+//--------------------- ACTUALIZAR CONTRASEÑA
+export async function actualizarClave(nuevaclave) {
+  try {
+    // Recuperamos el token que tiene el permiso de actualización
+    const token = await AsyncStorage.getItem('jwt_token');
+
+    const response = await apiClient.post('/actualizarclave.php', 
+      { password: nuevaclave }, 
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    const json = response.data;
+
+    if (json && json.respuesta === 1) {
+      // Destruimos el token ya que cumplió su ciclo único de recuperación
+      await AsyncStorage.removeItem('jwt_token');
+      return { success: true, codigo: 1, mensaje: json.mensaje };
+    }
+
+    return {
+      success: false,
+      codigo: json.respuesta || 0,
+      mensaje: json.mensaje || 'No se pudo actualizar la contraseña.'
+    };
+
+  } catch (e) {
+    console.log("⚠️ Error en actualización de Password:", e);
+
+    if (e.response && e.response.data) {
+      const errorJson = e.response.data;
+      return {
+        success: false,
+        codigo: errorJson.respuesta || 0,
+        mensaje: errorJson.mensaje || 'Error interno del servidor.'
+      };
+    }
+
+    return {
+      success: false,
+      codigo: -1,
+      mensaje: 'Error de conexión con el servidor.'
+    };
+  }
+}
+
+//----------------------------------- FIN ----------------------------
+
+//-------------------
 export async function changePassword(claveActual, claveNueva) {
   try {
     const token = await getToken();

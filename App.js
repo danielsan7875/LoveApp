@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Asegúrate de importar useEffect
 import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import MainNavigator from "./route/MainNavigator";
@@ -11,21 +11,28 @@ import { initializeAuth } from './redux/authSlice';
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
-    // Initialize auth state from AsyncStorage on app start
+  useEffect(() => {
+    
     store.dispatch(initializeAuth());
+
+    const timer = setTimeout(() => {
+      setIsLoading(false); 
+    }, 2000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   return (
     <Provider store={store}>
       <SafeAreaProvider>
-        {isLoading ? (
-          <Loader onFinish={() => setIsLoading(false)} />
-        ) : (
-          <NavigationContainer>
-            <MainNavigator />
-          </NavigationContainer>
-        )}
+        
+        <NavigationContainer>
+          <MainNavigator />
+        </NavigationContainer>
+
+       
+        <Loader visible={isLoading} texto="LoveMakeup C.A" />
+
       </SafeAreaProvider>
     </Provider>
   );

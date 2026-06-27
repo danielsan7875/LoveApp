@@ -18,7 +18,7 @@ import AlertModal from '../componentes/ModalAlert';
 import { registerUser } from '../services/api';
 
 
-export default function Registro() {
+export default function Registro({activarCarga, desactivarCarga}) {
   const navigation = useNavigation();
   const {
     control,
@@ -37,21 +37,18 @@ export default function Registro() {
   const [modalMessage, setModalMessage] = useState('');
   const [modalSuccess, setModalSuccess] = useState(false);
 
-  // 2. Estado para el botón (saber si está cargando)
-  const [loading, setLoading] = useState(false);
-
   // 3. Estados para los ojitos de la contraseña
   const [ocultarClave, setOcultarClave] = useState(true);
   const [ocultarConfirmarClave, setOcultarConfirmarClave] = useState(true);
 
 
-const onSubmit = async (data) => {
-    setLoading(true); // Desactivamos el botón y ponemos el circulito de carga
+  const onSubmit = async (data) => {
+    activarCarga();
 
     // Llamamos a la función de la Parte 1
     const result = await registerUser(data);
 
-    setLoading(false); // Reactivamos el botón
+    desactivarCarga(); 
 
     if (result.success) {
       // Configuramos el modal para éxito
@@ -355,18 +352,15 @@ const onSubmit = async (data) => {
         </View>
 
           {/* Botón Registrar */}
-         <TouchableOpacity
-            style={[styles.registerButton, loading && { opacity: 0.7 }]}
+         <TouchableOpacity style={[styles.registerButton]}
             onPress={handleSubmit(onSubmit)}
-            disabled={loading}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.registerButtonText}>REGISTRARSE</Text>
-            )}
-          </TouchableOpacity>
-               <AlertModal
+
+          <Text style={styles.registerButtonText}>REGISTRARSE</Text>
+            
+          </TouchableOpacity> 
+        
+        <AlertModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
           message={modalMessage}

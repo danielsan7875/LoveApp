@@ -14,7 +14,10 @@ import HearBarra from '../componentes/hear.jsx';
 import LoginBarra from '../componentes/loginbarra.jsx';
 import Cards from '../componentes/Cards.jsx';
 import ModalProducto from '../componentes/Modal';
-import api from '../services/api'; 
+import Categoria from '../componentes/categoriafiltro.jsx';
+import api from '../services/api';
+
+
 
 const Producto = ({ route }) => {
   const { query } = route?.params || {};
@@ -67,6 +70,20 @@ const Producto = ({ route }) => {
     setModalVisible(true);
   };
 
+  // FILTRO CATEGORIA
+  const misCategorias = [
+    { id: '1', name: 'Polvo' },
+    { id: '2', name: 'Higiene Personal' },
+    { id: '3', name: 'Labiales' },
+    { id: '4', name: 'Brillos' },
+    { id: '5', name: 'Paletas' },
+  ];
+
+  const CategoriaPress = (categorianombre) => {
+    console.log('Filtrar productos por:', categorianombre);
+    // Aquí ejecutas tu lógica de filtrado...
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
@@ -75,9 +92,12 @@ const Producto = ({ route }) => {
           <HearBarra />
           <LoginBarra />
 
-          <Text style={styles.logoText}>
-            {query ? `Resultados: ${query}` : "Productos"}
-          </Text>
+          
+
+          <Categoria 
+              categories={misCategorias} 
+              onSelectCategory={CategoriaPress} 
+            />
 
           <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
             <View style={styles.cardsContainer}>
@@ -95,7 +115,7 @@ const Producto = ({ route }) => {
                   />
                 ))
               ) : (
-                <Text style={{ textAlign: "center", marginTop: 40, fontSize: 16, color: '#666' }}>
+                <Text style={{ textAlign: "center", marginTop: 150, fontSize: 20, color: '#000000' }}>
                   No se encontraron productos
                 </Text>
               )}
@@ -132,7 +152,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
   logoText: {
-    fontSize: 40,
+    fontSize: 30,
     textAlign: 'center',
     fontWeight: 'bold',
     color: '#D81B60', // Rosa oscuro

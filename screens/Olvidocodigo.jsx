@@ -1,6 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-
 import {
   StyleSheet,
   View,
@@ -10,31 +9,31 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 
 /*Pages - body*/
-import BodyRegistro from '../pages/RegistroCliente';
+import BodyOlvido from '../pages/Olvidocodigo';
 import Loader from '../componentes/Loader';
 
-const Cliente = () => {
+const Olvidocodigo = () => {
   const [cargando, setCargando] = useState(false);
-  
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
         <View style={styles.container}>
 
-
-          {/* --- BODY--- */}
-          <BodyRegistro
+          {/* Pasamos las funciones limpias para alterar el estado */}
+          <BodyOlvido 
             activarCarga={() => setCargando(true)} 
             desactivarCarga={() => setCargando(false)} 
           />
 
+          {/* El nuevo Loader se mantiene siempre declarado, él sabe cuándo mostrarse */}
           <Loader
-              visible={cargando} 
-              texto="Registrando ..."
+            visible={cargando} 
+            texto="Verificando codigo..."
           />
+
         </View>
-      
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -57,5 +56,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Cliente;
+export default Olvidocodigo;
 

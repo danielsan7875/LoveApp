@@ -150,26 +150,7 @@ const BodySeguridad = () => {
           textColor="#fff"
         />
       </View>
-
-      {/* SECCIÓN ESTADO DE LA CUENTA */}
-      <View style={styles.statusSection}>
-        <Text style={styles.Subtitle}>Estado de la Cuenta</Text>
-
-        <View style={styles.deleteAccountBlock}>
-          <View style={styles.deleteTextWrapper}>
-            <Ionicons name="person-remove-outline" size={24} color="#000" style={{ marginRight: 8 }} />
-            <Text style={styles.deleteAccountText}>¿Deseas Eliminar la Cuenta?</Text>
-          </View>
-          <BtnSeguridad
-            title="Eliminar Cuenta"
-            iconName="close-circle"
-            onPress={CamposClear}
-            color="#F44336" // Rojo
-            iconColor="#fff"
-            textColor="#fff"
-          />
-        </View>
-      </View>
+      
 
       <AlertModal
         visible={modalVisible}

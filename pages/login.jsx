@@ -14,7 +14,7 @@ import { loginUser, getToken } from '../services/api';
 import { useDispatch } from 'react-redux';
 import { setToken, setUser } from '../redux/authSlice';
 
-const Login = () => {
+const Login = ({activarCarga , desactivarCarga}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   // Estado para controlar la visibilidad de la contraseña
@@ -26,6 +26,10 @@ const Login = () => {
   const RegistrarPress = () => {
     navigation.navigate("registrarcliente");
   };
+
+  const OlvidoPress = () => {
+    navigation.navigate("Olvido");
+  };
     
   const {
     control,
@@ -33,37 +37,47 @@ const Login = () => {
     formState: { errors },
   } = useForm();
 
-  // Cambiado: Ahora procesa el login real y asíncrono con el backend
   const onSubmit = async data => {
     const { cedula, clave } = data;
 
-    // Ejecuta la petición usando la API asimétrica de tu api.js
-    const result = await loginUser(cedula, clave, 'V');
+    activarCarga(); 
 
-    if (result.success) {
-      setModalMessage(`Verificación exitosa. ¡Bienvenido, ${result.user?.nombre || ''}!`);
-      setModalSuccess(true);
-      setModalVisible(true);
+    try {
+      const result = await loginUser(cedula, clave, 'V');
 
-      // Obtener el token guardado y sincronizar el estado global inmediatamente
-      try {
-        const token = await getToken();
-        if (token) dispatch(setToken(token));
-        // Si la API nos devolvió datos de usuario, también los almacenamos
-        if (result.user) dispatch(setUser(result.user));
-      } catch (e) {
-        console.warn('Error syncing token to redux after login', e);
+      desactivarCarga(); 
+
+      if (result.success) {
+        setModalMessage(`Verificación exitosa. ¡Bienvenido, ${result.user?.nombre || ''}!`);
+        setModalSuccess(true);
+        setModalVisible(true);
+
+        // Obtener el token guardado y sincronizar el estado global inmediatamente
+        try {
+          const token = await getToken();
+          if (token) dispatch(setToken(token));
+          // Si la API nos devolvió datos de usuario, también los almacenamos
+          if (result.user) dispatch(setUser(result.user));
+        } catch (e) {
+          console.warn('Error syncing token to redux after login', e);
+        }
+
+        setTimeout(() => {
+          setModalVisible(false);
+          navigation.replace('MainTabs');
+        }, 2000);
+
+      } else {
+        setModalMessage(result.mensaje);
+        setModalSuccess(false);
+        setModalVisible(true);
       }
 
-      setTimeout(() => {
-        setModalVisible(false);
-        // Redirecciona al MainTabs de tu aplicación
-        navigation.replace('MainTabs');
-      }, 2000);
-
-    } else {
-      // Muestra el mensaje exacto de error que te mande el backend (ej: datos inválidos o suspendido)
-      setModalMessage(result.mensaje);
+    } catch (error) {
+      desactivarCarga(); 
+      console.error("Error en el proceso de login:", error);
+      
+      setModalMessage("Ocurrió un error inesperado al conectar con el servidor.");
       setModalSuccess(false);
       setModalVisible(true);
     }
@@ -201,56 +215,16 @@ const Login = () => {
 
                 {/* Footer opcional */}
                 <View style={styles.footerLinksContainer}>
-                  <TouchableOpacity onPress={() => setModalVisible2(true)}>
+                  <TouchableOpacity onPress={OlvidoPress}>
                     <Text style={styles.footerLink}>¿Olvidaste tu contraseña?</Text>
                   </TouchableOpacity>
+                  
                   <TouchableOpacity onPress={RegistrarPress}>
                     <Text style={styles.registerLink}>Registrarse</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </ScrollView>
-
-            <Modal
-              visible={modalVisible2}
-              animationType="slide"
-              transparent
-              onRequestClose={() => setModalVisible2(false)}
-            >
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
-                  <Text style={styles.modalTitle}>Recuperar contraseña</Text>
-
-                  <TextInput
-                    placeholder="Cédula"
-                    placeholderTextColor="#8A8A8A"
-                    style={styles.modalInput}
-                    keyboardType="numeric"
-                    value={cedulaRecuperar}
-                    onChangeText={(text) => setCedulaRecuperar(text.replace(/[^0-9]/g, ''))}
-                  />
-
-                  <View style={styles.modalButtons}>
-                    <TouchableOpacity
-                      style={[styles.modalButton, { backgroundColor: '#ccc' }]}
-                      onPress={() => setModalVisible2(false)}
-                    >
-                      <Text style={styles.modalButtonText}>Cerrar</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.modalButton, { backgroundColor: '#4e73df' }]}
-                      onPress={() => {
-                        console.log('Enviar cédula:', cedulaRecuperar);
-                        setModalVisible2(false);
-                      }}
-                    >
-                      <Text style={styles.modalButtonText}>Enviar</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            </Modal>
 
           </KeyboardAvoidingView>
         </ImageBackground>
