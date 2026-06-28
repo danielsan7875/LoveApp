@@ -64,7 +64,7 @@ export default function Cards({ id, id_lista, foto, nombre, precioMayor, precioD
       }
     }
 
-    return require('../assets/img/b6.png'); 
+    return require('../assets/b6.png'); 
   };
 
   return (

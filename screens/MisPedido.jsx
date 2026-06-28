@@ -125,7 +125,10 @@ const MisPedido = () => {
           
           
           {/* --- BODY--- */}
-          <Text style={styles.logoText}>Mis Pedidos</Text>
+          <View style={styles.header}>
+            <Text style={styles.title}>Mis Pedidos</Text>
+            <Text style={styles.subtitle}>Revisa el estado y detalle de todas tus compras</Text>
+          </View>
           
           <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
             {isMobile ? (
@@ -165,12 +168,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
-  logoText: {
-    fontSize: 40,
-    textAlign: 'center',
+  header: {
+    width: '100%',
+    marginTop:20,
+    marginBottom: 15,
+    alignItems: 'flex-start',
+  },
+  title: {
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#D81B60', // Rosa oscuro
-    marginVertical: 10,
+    color: '#E91E63',
+    borderLeftWidth: 4,
+    borderLeftColor: '#E91E63',
+    paddingLeft: 20,
+  },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginLeft: 14, 
   },
   scrollViewContent: {
     paddingBottom: 80, // Espacio para el nav inferior

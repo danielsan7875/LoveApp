@@ -32,7 +32,11 @@ const MisDeseos = () => {
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-          <Text style={styles.logoText}>Lista de Deseos</Text>
+
+        <View style={styles.header}>
+          <Text style={styles.title}>Mi lista de Deseos</Text>
+          <Text style={styles.subtitle}>Lo que más te gusta de nuestra tienda</Text>
+        </View>
 
           {status === 'loading' && wishlist.length === 0 ? (
             <ActivityIndicator size="large" color="#D81B60" style={{ marginTop: 20 }} />
@@ -88,13 +92,27 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
   },
- logoText: {
-      fontSize:40,
-      fontWeight: 'bold',
-      color: '#D81B60', 
-      marginBottom: 20,
-      textAlign: 'center',
+   header: {
+    width: '100%',
+    marginTop:20,
+    marginBottom: 30,
+    alignItems: 'flex-start',
   },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#E91E63',
+    borderLeftWidth: 4,
+    borderLeftColor: '#E91E63',
+    paddingLeft: 10,
+  },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginLeft: 14, 
+  },
+ 
   emptyText: {
   textAlign: 'center',
   marginTop: 40,

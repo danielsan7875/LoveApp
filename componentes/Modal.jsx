@@ -46,7 +46,7 @@ export default function ModalProducto({ visible, onClose, producto }) {
               ) : (
                 // Imagen de respaldo única si no hay fotos
                 <Image
-                  source={require('../assets/img/b6.png')}
+                  source={require('../assets/b6.png')}
                   style={{
                     width: screenWidth,
                     height: 180,

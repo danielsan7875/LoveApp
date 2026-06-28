@@ -35,7 +35,7 @@ const Consejos = () => {
     description: 'Navegar entre miles de productos y técnicas puede resultar abrumador. La asesoría personalizada es clave para encontrar lo que realmente funciona para ti.',
   },
   {
-    title: 'La importancia del maquillaje de calidad',
+    title: 'Importancia del maquillaje de calidad',
     image: require('../assets/imgconsejos/gama_maquillaje.jpg'),
     description: 'Elegir productos de maquillaje de calidad no es un lujo sino una inversión en tu piel y en resultados profesionales. Los productos de calidad contienen ingredientes dermatológicamente testados, libres de sustancias nocivas y con propiedades beneficiosas para la piel. Muchos incluyen protección solar, antioxidantes y activos hidratantes que cuidan tu piel mientras la embellecen.',
   },
@@ -54,7 +54,10 @@ const Consejos = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
     <View style={styles.bodyContainer}>
-      <Text style={styles.title}>Consejos de Belleza</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Consejos</Text>
+        <Text style={styles.subtitle}>Tu guía diaria de cuidado, tendencias y bienestar</Text>
+      </View>
 
       {consejos.map((item, index) => (
         <View key={index} style={styles.card}>
@@ -90,13 +93,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F2',
     padding: 20,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#D81B60',
-    marginBottom: 20,
-    textAlign: 'center',
+  header: {
+    width: '100%',
+    marginTop:1,
+    marginBottom: 15,
+    alignItems: 'flex-start',
   },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#E91E63',
+    borderLeftWidth: 4,
+    borderLeftColor: '#E91E63',
+    paddingLeft: 20,
+  },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginLeft: 14, 
+  },
+
   description: {
   marginTop: 10,
   fontSize: 16,
