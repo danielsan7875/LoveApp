@@ -19,7 +19,7 @@ const Cliente = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
+        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
         <View style={styles.container}>
 
 

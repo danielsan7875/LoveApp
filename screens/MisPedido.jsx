@@ -9,6 +9,8 @@ import {
   Dimensions
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import HeaderTitulo from '../componentes/Headertitulo'; 
+
 
 const MisPedido = () => {
   const screenWidth = Dimensions.get('window').width;
@@ -125,10 +127,11 @@ const MisPedido = () => {
           
           
           {/* --- BODY--- */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Mis Pedidos</Text>
-            <Text style={styles.subtitle}>Revisa el estado y detalle de todas tus compras</Text>
-          </View>
+          
+           <HeaderTitulo 
+              title="Mis Pedidos" 
+              subtitle="Revisa el estado y detalle de todas tus compras" 
+            />
           
           <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
             {isMobile ? (
@@ -163,6 +166,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    marginTop:20,
   },
   container: {
     flex: 1,

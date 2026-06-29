@@ -12,22 +12,20 @@ import { useForm, Controller } from 'react-hook-form';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-import AlertModal from '../componentes/ModalAlert'; 
+import AlertModal from '../componentes/ModalAlert';
+import Input from '../componentes/Inputvalidacion'; 
+import BtnAcion from '../componentes/BtnAcion';  
 import { actualizarClave } from '../services/api';
 
 export default function BodyOlvido({ activarCarga, desactivarCarga }) {
   const navigation = useNavigation();
- const HomePress = () => {
+  const HomePress = () => {
     navigation.navigate("MainTabs");
   };
 
   const LoginPress = () => {
     navigation.navigate("Login"); // Te lleva directo a iniciar sesión con tu nueva clave
   };
-
-  // Estados para mostrar/ocultar contraseñas
-  const [mostrarPassword, setMostrarPassword] = useState(false);
-  const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
 
   // Estados del Modal Alert
   const [modalVisible, setModalVisible] = useState(false);
@@ -42,19 +40,19 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
   } = useForm({
     mode: 'onChange',
     defaultValues: {
-      password: '',
-      confirmarPassword: ''
+      clave: '',
+      confirmarClave: ''
     }
   });
 
-  const passwordActual = watch('password');
-  const regexPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#])[A-Za-z\d@$!%*?&.#]{8,16}$/;
+    const clave = watch('clave');
+  
 
   // CONTROLADOR DE ACTUALIZACIÓN CON MODAL Y LOADER
   const manejarRestablecimiento = async (datos) => {
     activarCarga(); // loader encendido
 
-    const result = await actualizarClave(datos.password);
+    const result = await actualizarClave(datos.clave);
   
     desactivarCarga();
     if (result.success && result.codigo === 1) {
@@ -97,113 +95,43 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
         <Text style={styles.descripcionCorta}>
           Ingresa tu nueva contraseña. Asegúrate de cumplir con todos los parámetros de seguridad requeridos.
         </Text>
+      
+          {/* Campo Contraseña */}
+          <Input
+            name="clave"
+            placeholder="Contraseña"
+            icon="lock-closed"
+            control={control}
+            secureTextEntry={true}
+            isSubmitted={isSubmitted}
+            rules={{
+              required: 'La contraseña es requerida',
+              minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+              maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+            }}
+          />
 
-        {/* --- CAMPO 1: NUEVA CONTRASEÑA --- */}
-        <View style={styles.contenedorInputGeneral}>
-          <View style={[
-            styles.inputWrapper,
-            isSubmitted && errors.password ? styles.inputError :
-            isSubmitted && !errors.password ? styles.inputValid : null
-          ]}>
-            <Ionicons 
-              name="lock-closed" 
-              size={20} 
-              color={
-                isSubmitted && errors.password ? '#FF3B30' : 
-                isSubmitted && !errors.password ? '#4CD964' : '#D81B60'
-              } 
-              style={styles.inputIcon} 
-            />
-            <Controller
-              control={control}
-              name="password"
-              rules={{
-                required: 'La contraseña es requerida',
-                pattern: {
-                  value: regexPassword,
-                  message: 'Debe tener entre 8 y 16 caracteres, incluir mayúscula, minúscula, número y un carácter especial (ej: @, $, !, %, *, ?)'
-                }
-              }}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  placeholder="Nueva Contraseña"
-                  placeholderTextColor="#A0A0A0"
-                  secureTextEntry={!mostrarPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={styles.textInput}
-                  value={value}
-                  onChangeText={onChange}
-                />
-              )}
-            />
-            {/* Ícono interactivo del ojo */}
-            <TouchableOpacity onPress={() => setMostrarPassword(!mostrarPassword)}>
-              <Ionicons 
-                name={mostrarPassword ? "eye-off" : "eye"} 
-                size={22} 
-                color="#A0A0A0" 
-              />
-            </TouchableOpacity>
-          </View>
-          {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
-        </View>
-
-        {/* --- CAMPO 2: CONFIRMAR CONTRASEÑA --- */}
-        <View style={styles.contenedorInputGeneral}>
-          <View style={[
-            styles.inputWrapper,
-            isSubmitted && errors.confirmarPassword ? styles.inputError :
-            isSubmitted && !errors.confirmarPassword ? styles.inputValid : null
-          ]}>
-            <Ionicons 
-              name="lock-closed" 
-              size={20} 
-              color={
-                isSubmitted && errors.confirmarPassword ? '#FF3B30' : 
-                isSubmitted && !errors.confirmarPassword ? '#4CD964' : '#D81B60'
-              } 
-              style={styles.inputIcon} 
-            />
-            <Controller
-              control={control}
-              name="confirmarPassword"
-              rules={{
-                required: 'Es necesario confirmar la contraseña',
-                validate: valor => valor === passwordActual || 'Las contraseñas no coinciden'
-              }}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  placeholder="Confirmar Contraseña"
-                  placeholderTextColor="#A0A0A0"
-                  secureTextEntry={!mostrarConfirmar}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={styles.textInput}
-                  value={value}
-                  onChangeText={onChange}
-                />
-              )}
-            />
-            {/* Ícono interactivo del ojo */}
-            <TouchableOpacity onPress={() => setMostrarConfirmar(!mostrarConfirmar)}>
-              <Ionicons 
-                name={mostrarConfirmar ? "eye-off" : "eye"} 
-                size={22} 
-                color="#A0A0A0" 
-              />
-            </TouchableOpacity>
-          </View>
-          {errors.confirmarPassword && <Text style={styles.errorText}>{errors.confirmarPassword.message}</Text>}
-        </View>
+          {/* Campo Confirmar Contraseña */}
+          <Input
+            name="confirmarClave"
+            placeholder="Confirmar contraseña"
+            icon="lock-open"
+            control={control}
+            secureTextEntry={true}
+            isSubmitted={isSubmitted}
+            rules={{
+              required: 'Debe confirmar su contraseña',
+              validate: (value) => value === clave || 'Las contraseñas no coinciden',
+            }}
+          />
 
         {/* Botón Restablecer Contraseña */}
-        <TouchableOpacity 
-          style={styles.botonEnviar} 
-          onPress={handleSubmit(manejarRestablecimiento)}
-        >
-          <Text style={styles.textoBoton}>Actualizar contraseña</Text>
-        </TouchableOpacity>
+          <BtnAcion
+            text="Actualizar contraseña"
+            icon="lock-open"
+            backgroundColor="#D81B60"
+            onPress={handleSubmit(manejarRestablecimiento)}
+          /> 
       </View>
 
       {/* Margen inferior estructural */}
@@ -224,7 +152,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     justifyContent: 'space-between',
     paddingBottom: 30,
-    backgroundColor: '#FFF1F2', // Mantiene la identidad de marca de tu app
   },
   bloqueSuperior: {
     paddingTop: 20,
@@ -266,7 +193,7 @@ const styles = StyleSheet.create({
   tituloPrincipal: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1A1A1A',
+    color: '#D81B60',
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -319,16 +246,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     paddingHorizontal: 4,
   },
-  botonEnviar: {
-    width: '100%',
-    backgroundColor: '#D81B60',
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-    marginTop: 15,
-  },
+  
   textoBoton: {
     color: '#FFFFFF',
     fontSize: 16,

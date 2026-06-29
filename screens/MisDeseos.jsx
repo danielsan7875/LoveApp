@@ -6,6 +6,8 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { obtenerWishlistRemotaThunk } from "../redux/wishlistSlice"; 
 import Cards from "../componentes/Cards";
 import ModalProducto from "../componentes/Modal";
+import HeaderTitulo from '../componentes/Headertitulo'; 
+
 
 const MisDeseos = () => {
   const dispatch = useDispatch();
@@ -33,10 +35,10 @@ const MisDeseos = () => {
         <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
 
-        <View style={styles.header}>
-          <Text style={styles.title}>Mi lista de Deseos</Text>
-          <Text style={styles.subtitle}>Lo que más te gusta de nuestra tienda</Text>
-        </View>
+        <HeaderTitulo 
+          title="Mi lista de Deseos" 
+          subtitle="Lo que más te gusta de nuestra tienda" 
+        />
 
           {status === 'loading' && wishlist.length === 0 ? (
             <ActivityIndicator size="large" color="#D81B60" style={{ marginTop: 20 }} />
@@ -77,6 +79,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    marginTop:20,
   },
   container: {
     flex: 1,

@@ -1,11 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking, Image } from 'react-native';
 
-const ContactCard = ({ platform, url, backgroundColor }) => (
-  <TouchableOpacity style={[styles.card, { backgroundColor }]} onPress={() => Linking.openURL(url)}>
-    <Text style={styles.text}>{platform}</Text>
-  </TouchableOpacity>
-);
+import BtnAcion from '../componentes/BtnAcion'; 
 
 const ContactCards = () => {
   return (
@@ -21,22 +17,25 @@ const ContactCards = () => {
         Si necesitas asesoría, soporte técnico o tienes alguna duda, estos son nuestros canales oficiales de contacto. Estamos aquí para ayudarte.
         </Text>
 
+      <BtnAcion
+          text="Ir a Instagram"
+          icon="logo-instagram"
+          backgroundColor="#E1306C"
+          onPress={() => Linking.openURL("https://www.instagram.com/lovemakeupyk/")}
+      /> 
+      <BtnAcion
+          text="Ir a WhatsApp"
+          icon="logo-whatsapp"
+          backgroundColor="#25D366"
+          onPress={() => Linking.openURL("https://wa.me/584245115414")}
+      /> 
+      <BtnAcion
+          text="ir a Facebook"
+          icon="logo-facebook"
+          backgroundColor="#1877F2"
+          onPress={() => Linking.openURL("https://www.facebook.com/lovemakeupyk/")}
+      /> 
 
-      <ContactCard
-        platform="Ir a Instagram"
-        url="https://www.instagram.com/lovemakeupyk/"
-        backgroundColor="#E1306C"
-      />
-      <ContactCard
-        platform="Ir a WhatsApp"
-        url="https://wa.me/584245115414"
-        backgroundColor="#25D366"
-      />
-      <ContactCard
-        platform="ir a Facebook"
-        url="https://www.facebook.com/lovemakeupyk/"
-        backgroundColor="#1877F2"
-      />
     </View>
   );
 };
@@ -45,11 +44,6 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     gap: 15,
-  },
-  card: {
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
   },
   text: {
     color: '#fff',

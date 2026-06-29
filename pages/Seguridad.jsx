@@ -8,6 +8,8 @@ import { Ionicons } from '@expo/vector-icons';
 import BtnSeguridad from '../componentes/BtnSeguridad';
 import InputSeguridad from '../componentes/InputSeguridad';
 import AlertModal from '../componentes/ModalAlert';
+import HeaderTitulo from '../componentes/Headertitulo'; 
+
 
 const BodySeguridad = () => {
   const [ActualClave, setActualClave] = useState('');
@@ -97,8 +99,10 @@ const BodySeguridad = () => {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       
       {/* SECCIÓN DE CABECERA */}
-      <Text style={styles.title}>Seguridad</Text>
-      <Text style={styles.Subtitle}>Cambio de clave</Text>
+      <HeaderTitulo 
+        title="Seguridad" 
+        subtitle="Cambio de contraseña" 
+      />
 
       {/* TARJETA DE CAMBIO DE CLAVE */}
       <View style={styles.card}>

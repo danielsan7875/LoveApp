@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+import BtnAcion from '../componentes/BtnAcion'; 
+import HeaderTitulo from '../componentes/Headertitulo'; 
 // Habilitar animaciones en Android
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -54,10 +56,11 @@ const Consejos = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
     <View style={styles.bodyContainer}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Consejos</Text>
-        <Text style={styles.subtitle}>Tu guía diaria de cuidado, tendencias y bienestar</Text>
-      </View>
+
+      <HeaderTitulo 
+        title="Consejos" 
+        subtitle="Tu guía diaria de cuidado, tendencias y bienestar" 
+      />
 
       {consejos.map((item, index) => (
         <View key={index} style={styles.card}>
@@ -76,9 +79,13 @@ const Consejos = () => {
       ))}
 
       {/* Botón para ir a Productos */}
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Producto')}>
-        <Text style={styles.buttonText}>Ver productos</Text>
-      </TouchableOpacity>
+       <BtnAcion 
+          text="Ver productos" 
+          icon="bag-handle" 
+          backgroundColor="#D81B60" 
+          color="#ffffff"       
+          onPress={() => navigation.navigate('Producto')} 
+        />
     </View>
     </ScrollView>
   );
@@ -93,27 +100,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F2',
     padding: 20,
   },
-  header: {
-    width: '100%',
-    marginTop:1,
-    marginBottom: 15,
-    alignItems: 'flex-start',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#E91E63',
-    borderLeftWidth: 4,
-    borderLeftColor: '#E91E63',
-    paddingLeft: 20,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginLeft: 14, 
-  },
-
+  
   description: {
   marginTop: 10,
   fontSize: 16,

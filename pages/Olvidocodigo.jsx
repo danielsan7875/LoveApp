@@ -12,6 +12,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
 
 import AlertModal from '../componentes/ModalAlert';
+import BtnAcion from '../componentes/BtnAcion'; 
 import { verificarCodigoOTP } from '../services/api';
 
 export default function BodyOlvido({ activarCarga, desactivarCarga }) {
@@ -180,12 +181,12 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
         </View>
 
         {/* Botón de Verificar */}
-        <TouchableOpacity 
-          style={styles.botonEnviar} 
+         <BtnAcion
+          text="Verificar"
+          icon="mail"
+          backgroundColor="#D81B60"
           onPress={handleSubmit(manejarVerificacion)}
-        >
-          <Text style={styles.textoBoton}>Verificar</Text>
-        </TouchableOpacity>
+        /> 
       </View>
 
       {/* Bloque vacío inferior para mantener simetría en el flex-space-between */}
@@ -200,8 +201,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     justifyContent: 'space-between',
     paddingBottom: 30,
-    backgroundColor: '#FFF1F2', // Fondo rosa muy clarito característico
   },
+
   bloqueSuperior: {
     paddingTop: 20,
     alignItems: 'flex-start',
@@ -242,7 +243,7 @@ const styles = StyleSheet.create({
   tituloPrincipal: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1A1A1A',
+    color: '#D81B60',
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -298,24 +299,14 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
   },
   tiempoDestacado: {
-    color: '#D81B60',
+    color: '#EE82EE',
     fontWeight: 'bold',
   },
   enlaceReenvio: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#D81B60',
+    color: '#EE82EE',
     textDecorationLine: 'underline',
-  },
-
-  botonEnviar: {
-    width: '100%',
-    backgroundColor: '#D81B60',
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
   },
   textoBoton: {
     color: '#FFFFFF',

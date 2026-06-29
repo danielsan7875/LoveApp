@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking, Image } from 'react-native';
 
+import BtnAcion from '../componentes/BtnAcion'; 
+
 const LocationCard = () => {
   const openGoogleMaps = () => {
     const latitude = 10.066843467538288; // Coordenadas de ejemplo (puedes cambiarlas)
@@ -18,9 +20,14 @@ const LocationCard = () => {
         <Text style={styles.address}>
          Tienda física ubicada en la av 20 con calles 29 y 30 CC Barquisimeto plaza, Estado Lara, Venezuela. Ven y visítanos
         </Text>
-        <TouchableOpacity style={styles.button} onPress={openGoogleMaps}>
-          <Text style={styles.buttonText}>Ver en Google Maps</Text>
-        </TouchableOpacity>
+       
+        <BtnAcion
+          text="Ver en Google Map"
+          icon="location-sharp"
+          backgroundColor="#4285F4"
+          onPress={openGoogleMaps}
+        /> 
+
       </View>
       
         <Image
@@ -60,17 +67,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'justify',
   },
-  button: {
-    backgroundColor: '#4285F4',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 16,
-  },
+  
    image: {
     marginTop:20,
     width: 300,

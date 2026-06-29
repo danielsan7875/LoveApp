@@ -13,6 +13,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useForm, Controller } from 'react-hook-form';
 import { Ionicons } from '@expo/vector-icons';
 
+import Input from '../componentes/Inputvalidacion'; 
+import BtnAcion from '../componentes/BtnAcion'; 
 import AlertModal from '../componentes/ModalAlert'; 
 import { solicitarCodigoRecuperacion } from '../services/api';
 
@@ -50,7 +52,7 @@ const manejarEnvioCodigo = async (datos) => {
   activarCarga(); // Loader encendido
 
   try {
-    console.log('Enviando código a:', datos.correo);
+   // console.log('Enviando código a:', datos.correo);
     const result = await solicitarCodigoRecuperacion(datos.correo);
     
     desactivarCarga(); // Loader apagado
@@ -66,7 +68,7 @@ const manejarEnvioCodigo = async (datos) => {
     setModalVisible(true);
 
   } catch (error) {
-    desactivarCarga(); // 3. También lo apagas si el servidor o la red fallan abruptamente
+    desactivarCarga();
     
     setModalMessage("Error de conexión");
     setModalSuccess(false);
@@ -82,7 +84,7 @@ const manejarEnvioCodigo = async (datos) => {
       {/* Sección Superior: Botón de regresar */}
       <View style={styles.bloqueSuperior}>
         <TouchableOpacity style={styles.botonRegresar} onPress={HomePress}>
-          {/* Flecha hacia atrás construida con CSS nativo */}
+          {/* Flecha hacia atrás construida con CSS  */}
           <View style={styles.iconoFlecha}>
             <View style={[styles.lineaFlecha, styles.lineaSuperior]} />
             <View style={[styles.lineaFlecha, styles.lineaInferior]} />
@@ -91,7 +93,7 @@ const manejarEnvioCodigo = async (datos) => {
         </TouchableOpacity>
       </View>
 
-      {/* Sección Central: Textos e Inputs */}
+      {/* Sección Central */}
      <View style={styles.bloqueCentral}>
         <Text style={styles.tituloPrincipal}>¿Olvidaste tu contraseña?</Text>
         <Text style={styles.descripcionCorta}>
@@ -100,56 +102,31 @@ const manejarEnvioCodigo = async (datos) => {
 
         {/* --- ESTRUCTURA SOLICITADA --- */}
         <View style={styles.contenedorInputGeneral}>
-          <View style={[
-            styles.inputWrapper,
-            isSubmitted && errors.correo ? styles.inputError :
-            isSubmitted && !errors.correo ? styles.inputValid : null
-          ]}>
-            {/* El color del icono cambia dinámicamente si se envió y hay error (rojo) o acierto (verde), sino usa tu rosa */}
-            <Ionicons 
-              name="mail" 
-              size={20} 
-              color={
-                isSubmitted && errors.correo ? '#FF3B30' : 
-                isSubmitted && !errors.correo ? '#4CD964' : '#D81B60'
-              } 
-              style={styles.inputIcon} 
-            />
-            <Controller
-              control={control}
-              name="correo"
-              rules={{
-                required: 'El correo electrónico es requerido',
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: 'El formato de correo no es válido (ej: usuario@correo.com)',
-                }
-              }}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  placeholder="Correo electrónico"
-                  placeholderTextColor="#A0A0A0"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={styles.textInput}
-                  value={value}
-                  onChangeText={onChange}
-                />
-              )}
-            />
-          </View>
-          {/* Mensaje de error abajo en rojo */}
-          {errors.correo && <Text style={styles.errorText}>{errors.correo.message}</Text>}
+          {/* Campo Correo */}
+          <Input
+            name="correo"
+            placeholder="Correo electrónico"
+            icon="mail"
+            control={control}
+            keyboardType="email-address"
+            isSubmitted={isSubmitted}
+            rules={{
+              required: 'El correo electrónico es requerido',
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'El formato de correo no es válido',
+              }
+            }}
+          />
         </View>
 
         {/* Botón Principal */}
-        <TouchableOpacity 
-          style={styles.botonEnviar} 
+        <BtnAcion
+          text="Enviar Código"
+          icon="mail"
+          backgroundColor="#D81B60"
           onPress={handleSubmit(manejarEnvioCodigo)}
-        >
-          <Text style={styles.textoBoton}>Enviar Código</Text>
-        </TouchableOpacity>
+        /> 
       </View>
 
       {/* Sección Inferior: Enlace de regreso al Login */}
@@ -217,7 +194,7 @@ const styles = StyleSheet.create({
   tituloPrincipal: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1A1A1A',
+    color: '#D81B60',
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -234,7 +211,7 @@ const styles = StyleSheet.create({
   // ========================================================= 
   contenedorInputGeneral: {
     width: '100%',
-    marginBottom: 25,
+    marginBottom: 17,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -253,38 +230,7 @@ const styles = StyleSheet.create({
   inputIcon: {
     marginRight: 12,
   },
-  textInput: {
-    flex: 1,
-    paddingVertical: 16,
-    fontSize: 15,
-    color: '#333333',
-  },
-  // Estados de validación aplicados en los bordes
-  inputError: {
-    borderColor: '#FF3B30', // Borde Rojo
-    backgroundColor: '#FFF5F5',
-  },
-  inputValid: {
-    borderColor: '#4CD964', // Borde Verde
-    backgroundColor: '#F5FBF6',
-  },
-  errorText: {
-    color: '#FF3B30', // Texto de error en Rojo
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: 6,
-    paddingHorizontal: 4,
-  },
-
-  botonEnviar: {
-    width: '100%',
-    backgroundColor: '#D81B60',
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-  },
+  
   textoBoton: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -303,7 +249,7 @@ const styles = StyleSheet.create({
   textoEnlace: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#D81B60',
+    color: '#EE82EE',
     textDecorationLine: 'underline',
   },
 });

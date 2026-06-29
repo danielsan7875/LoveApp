@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Componente reutilizable para los campos de entrada
 import InputMisDatos from '../componentes/InputMisDatos';
+import HeaderTitulo from '../componentes/Headertitulo'; 
+
 
 export default function BodyMisDatos() {
   // Estado para almacenar los datos del formulario
@@ -40,10 +42,11 @@ export default function BodyMisDatos() {
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Datos Personales</Text>
-          <Text style={styles.subtitle}>Información personal</Text>
-        </View>
+      
+        <HeaderTitulo 
+          title="Datos Personales" 
+          subtitle="Información personal" 
+        />
 
         <View style={styles.card}>
           <InputMisDatos
@@ -104,25 +107,6 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     paddingBottom: 100,
-  },
-  header: {
-    width: '100%',
-    marginBottom: 20,
-    alignItems: 'flex-start',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#E91E63',
-    borderLeftWidth: 4,
-    borderLeftColor: '#E91E63',
-    paddingLeft: 10,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginLeft: 14, 
   },
   card: {
     width: '100%',

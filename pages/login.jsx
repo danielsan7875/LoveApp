@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet, Text, View,ImageBackground,StatusBar,KeyboardAvoidingView,Platform,ScrollView,TextInput,
+  StyleSheet, Text, View,ImageBackground,KeyboardAvoidingView,Platform,ScrollView,TextInput,
   TouchableOpacity,Modal,Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,8 @@ import { useNavigation } from '@react-navigation/native';
 
 
 import AlertModal from '../componentes/ModalAlert'; 
+import BtnAcion from '../componentes/BtnAcion'; 
+import Input from '../componentes/Inputvalidacion';
 import { loginUser, getToken } from '../services/api';
 import { useDispatch } from 'react-redux';
 import { setToken, setUser } from '../redux/authSlice';
@@ -17,11 +19,6 @@ import { setToken, setUser } from '../redux/authSlice';
 const Login = ({activarCarga , desactivarCarga}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  // Estado para controlar la visibilidad de la contraseña
-  const [isClaveVisible, setClaveVisible] = useState(false);
-
-  const [modalVisible2, setModalVisible2] = useState(false);
-  const [cedulaRecuperar, setCedulaRecuperar] = useState('');
 
   const RegistrarPress = () => {
     navigation.navigate("registrarcliente");
@@ -30,13 +27,20 @@ const Login = ({activarCarga , desactivarCarga}) => {
   const OlvidoPress = () => {
     navigation.navigate("Olvido");
   };
-    
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
+  
+  // Control for
+    const {
+      control,
+      handleSubmit,
+      watch,
+      formState: { errors, isSubmitted },
+    } = useForm({
+      mode: 'onTouched',
+    });
 
+    const limpiarCedula = (text) => text.replace(/[^0-9]/g, '');
+
+  // FORMULARIO
   const onSubmit = async data => {
     const { cedula, clave } = data;
 
@@ -88,26 +92,25 @@ const Login = ({activarCarga , desactivarCarga}) => {
   const [modalSuccess, setModalSuccess] = useState(false);
 
   return (
-    <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" />
-
+         {/* imagen de fondo */}
         <ImageBackground
           source={require('../assets/portada.jpg')}
           style={styles.backgroundImage}
           resizeMode="cover"
         >
+           {/* para el TECLADO */}
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingContainer}
           >
-            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between' }}>
+            <ScrollView contentContainerStyle={{ flexGrow: 3, justifyContent: 'space-between' }}>
 
               {/* Contenedor del logo y nombre de la marca */}
               <View style={styles.logoContainer}>
                 <View style={styles.logoBackground}>
                   <Image
-                    source={require('../assets/logo2.png')} // Asegúrate de que la imagen exista en esta ruta
+                    source={require('../assets/logo2.png')} 
                     style={styles.logoImage}
                     resizeMode="contain"
                   />
@@ -117,103 +120,48 @@ const Login = ({activarCarga , desactivarCarga}) => {
               <View style={styles.formContainer}>
                 <Text style={styles.title}>Bienvenido</Text>
 
-                {/* Input Cédula */}
-                <View
-                  style={[
-                    styles.inputWrapper,
-                    errors.cedula
-                      ? { borderColor: 'red' }
-                      : control._formValues?.cedula
-                      ? { borderColor: 'green' }
-                      : {},
-                  ]}
-                >
-                  <Ionicons name="person" size={20} color="#EE82EE" style={styles.inputIcon} />
-                  <Controller
-                    control={control}
+                {/* Campo Cédula */}
+                <Input
                     name="cedula"
+                    placeholder="Cédula (Ej: 12333444)"
+                    icon="card"
+                    control={control}
+                    keyboardType="numeric"
+                    isSubmitted={isSubmitted}
+                    onChangeTextModifier={limpiarCedula}
                     rules={{
-                      required: 'La cédula es obligatoria',
+                      required: 'La cédula es requerida',
                       pattern: {
                         value: /^\d{7,8}$/,
-                        message: 'Debe tener entre 7 y 8 dígitos numéricos',
-                      },
+                        message: 'La cédula debe tener entre 7 y 8 dígitos numéricos',
+                      }
                     }}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        placeholder="Cédula"
-                        placeholderTextColor="#8A8A8A"
-                        style={styles.textInput}
-                        keyboardType="numeric"
-                        onBlur={onBlur}
-                        onChangeText={(text) => {
-                          const numericText = text.replace(/[^0-9]/g, '');
-                          onChange(numericText);
-                        }}
-                        value={value}
-                      />
-                    )}
-                  />
-                </View>
-                {errors.cedula && (
-                  <Text style={styles.errorText}>{errors.cedula.message}</Text>
-                )}
-
-                {/* Input Contraseña */}
-                <View
-                  style={[
-                    styles.inputWrapper,
-                    errors.clave
-                      ? { borderColor: 'red' }
-                      : control._formValues?.clave
-                      ? { borderColor: 'green' }
-                      : {},
-                  ]}
-                >
-                  <Ionicons name="lock-closed" size={20} color="#EE82EE" style={styles.inputIcon} />
-                  <Controller
-                    control={control}
-                    name="clave"
-                    rules={{
-                      required: 'La contraseña es obligatoria',
-                      pattern: {
-                        value: /^.{8,16}$/,
-                        message: 'Debe tener entre 8 y 16 caracteres',
-                      },
-                    }}
-                    render={({ field: { onChange, onBlur, value } }) => (
-                      <TextInput
-                        placeholder="Contraseña"
-                        placeholderTextColor="#8A8A8A"
-                        style={styles.textInput}
-                        secureTextEntry={!isClaveVisible}
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        value={value}
-                      />
-                    )}
-                  />
-                  <TouchableOpacity onPress={() => setClaveVisible(!isClaveVisible)}>
-                    <Ionicons
-                      name={isClaveVisible ? 'eye-off' : 'eye'}
-                      size={20}
-                      color="#EE82EE"
-                    />
-                  </TouchableOpacity>
-                </View>
-                {errors.clave && (
-                  <Text style={styles.errorText}>{errors.clave.message}</Text>
-                )}
+                />
+                {/* Campo Contraseña */}
+                <Input
+                  name="clave"
+                  placeholder="Contraseña"
+                  icon="lock-closed"
+                  control={control}
+                  secureTextEntry={true}
+                  isSubmitted={isSubmitted}
+                  rules={{
+                    required: 'La contraseña es requerida',
+                    minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+                    maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+                  }}
+                />
 
                 {/* Botón Ingresar */}
-                <TouchableOpacity
-                  style={styles.loginButton}
-                  onPress={handleSubmit(onSubmit)}
-                >
-                  <Text style={styles.loginButtonText}>INGRESAR</Text>
-                </TouchableOpacity>
+                <BtnAcion 
+                  text="INGRESAR" 
+                  icon="log-out" 
+                  backgroundColor="#EE82EE" 
+                  color="#ffffff"       
+                  onPress={handleSubmit(onSubmit)} 
+                />
 
-                {/* Footer opcional */}
+                {/* Footer */}
                 <View style={styles.footerLinksContainer}>
                   <TouchableOpacity onPress={OlvidoPress}>
                     <Text style={styles.footerLink}>¿Olvidaste tu contraseña?</Text>
@@ -228,7 +176,8 @@ const Login = ({activarCarga , desactivarCarga}) => {
 
           </KeyboardAvoidingView>
         </ImageBackground>
-
+        
+         {/* ALERTA  */}
         <AlertModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
@@ -236,7 +185,6 @@ const Login = ({activarCarga , desactivarCarga}) => {
           success={modalSuccess}
         />
       </SafeAreaView>
-    </SafeAreaProvider>
   );
 };
 
@@ -250,8 +198,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   keyboardAvoidingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    flex: 2,
+    justifyContent: 'space-between', 
+    paddingBottom: 30,
   },
   logoContainer: {
     alignItems: 'center',
@@ -264,10 +213,10 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 18,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
@@ -279,24 +228,6 @@ const styles = StyleSheet.create({
   logoImage: {
     width: 120,
     height: 120,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    marginLeft: 20,
-  },
-  backText: {
-    marginLeft: 8,
-    fontSize: 16,
-    color: '#FFFFFF',
-    fontWeight: '500',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginBottom: 8,
-    marginLeft: 10,
   },
   formContainer: {
     backgroundColor: '#FFFFFF',
@@ -312,45 +243,6 @@ const styles = StyleSheet.create({
     color: '#000000ff',
     marginBottom: 30,
   },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F7F7F7',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    marginBottom: 20,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  textInput: {
-    flex: 1,
-    height: 50,
-    fontSize: 16,
-    color: '#050404ff',
-  },
-  loginButton: {
-    backgroundColor: '#EE82EE',
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 10,
-    shadowColor: "#EE82EE",
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-  loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   footerLinksContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -365,48 +257,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContainer: {
-    backgroundColor: '#fff',
-    width: '85%',
-    borderRadius: 12,
-    padding: 20,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 14,
-    marginBottom: 20,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    marginHorizontal: 5,
-    alignItems: 'center',
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
+  
 });
 
 export default Login;

@@ -12,13 +12,14 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import BodyOlvido from '../pages/Olvidocodigo';
 import Loader from '../componentes/Loader';
 
+
 const Olvidocodigo = () => {
   const [cargando, setCargando] = useState(false);
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
+        <StatusBar barStyle="dark-content" backgroundColor="#000000" />
         <View style={styles.container}>
 
           {/* Pasamos las funciones limpias para alterar el estado */}
@@ -40,19 +41,13 @@ const Olvidocodigo = () => {
 };
 
 const styles = StyleSheet.create({
-  
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
-    backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
-  },
- logoText: {
-      fontSize: 60,
-      fontWeight: 'bold',
-      color: '#D81B60', // Rosa oscuro
+    backgroundColor: '#ffffff', // Un rosado muy claro de fondo
   },
 });
 

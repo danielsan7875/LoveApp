@@ -1,72 +1,74 @@
 import React, { useState } from 'react';
 import {
+  StyleSheet,
   View,
   Text,
-  StyleSheet,
-  TextInput,
   ImageBackground,
-  ScrollView, ActivityIndicator,
-  TouchableOpacity,
+  ScrollView,
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import AlertModal from '../componentes/ModalAlert'; 
+import Input from '../componentes/Inputvalidacion'; 
+import BtnAcion from '../componentes/BtnAcion'; 
 import { registerUser } from '../services/api';
 
 
 export default function Registro({activarCarga, desactivarCarga}) {
-  const navigation = useNavigation();
+ const navigation = useNavigation();
+  
+ // control del for
   const {
     control,
     handleSubmit,
     watch,
     formState: { errors, isSubmitted },
   } = useForm({
-    mode: 'onTouched', // Valida cuando el usuario interactúa con el campo
+    mode: 'onTouched',
   });
 
-  // Observamos el valor de la clave para compararla con la confirmación
+  // Observamos la contraseña para poder validarla en la confirmación ---------------
   const clave = watch('clave');
 
-// 1. Estados para el Modal de Alerta (Igual que en tu Login)
+  // MODAL ALERT
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalSuccess, setModalSuccess] = useState(false);
-
-  // 3. Estados para los ojitos de la contraseña
-  const [ocultarClave, setOcultarClave] = useState(true);
-  const [ocultarConfirmarClave, setOcultarConfirmarClave] = useState(true);
-
-
+  
+  // ENVIO DE FORMULARIO --------------------
   const onSubmit = async (data) => {
     activarCarga();
-
-    // Llamamos a la función de la Parte 1
     const result = await registerUser(data);
-
     desactivarCarga(); 
 
     if (result.success) {
-      // Configuramos el modal para éxito
       setModalMessage("¡Registro exitoso! Ya puedes iniciar sesión.");
       setModalSuccess(true);
       setModalVisible(true);
 
-      // Esperamos 2 segundos y lo mandamos al Login
       setTimeout(() => {
         setModalVisible(false);
         navigation.navigate('Login'); 
       }, 2000);
     } else {
-      // Configuramos el modal para error
-      setModalMessage(result.mensaje);
+      setModalMessage(result.mensaje || "Error en el registro");
       setModalSuccess(false);
       setModalVisible(true);
     }
+  };
+
+  // Funciones limpiar datos en tiempo de escritura --------
+  const limpiarCedula = (text) => text.replace(/[^0-9]/g, '');
+  
+  const formatearTelefono = (text) => {
+    let clear = text.replace(/[^0-9-]/g, '').replace(/-/g, '');
+    if (clear.length > 4) {
+      clear = `${clear.slice(0, 4)}-${clear.slice(4, 11)}`;
+    }
+    return clear;
   };
 
   return (
@@ -75,299 +77,150 @@ export default function Registro({activarCarga, desactivarCarga}) {
       style={styles.background}
       resizeMode="cover"
     >
-    
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 6 }}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          
+          <View style={styles.card}>
+            <Text style={styles.title}>Registro</Text>
 
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Registro</Text>
-
-          {/* Campo Cédula */}
-          <View style={styles.fieldContainer}>
-            <View style={[
-              styles.inputWrapper,
-              isSubmitted && errors.cedula ? styles.inputError :
-              isSubmitted && !errors.cedula ? styles.inputValid : null
-            ]}>
-              <Ionicons name="card" size={20} color="#EE82EE" style={styles.inputIcon} />
-              <Controller
-                control={control}
-                name="cedula"
-                rules={{
-                  required: 'La cédula es requerida',
-                  pattern: {
-                    value: /^\d{7,8}$/,
-                    message: 'La cédula debe tener entre 7 y 8 dígitos numéricos',
-                  }
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    placeholder="Cédula (Ej: 12333444)"
-                    keyboardType="numeric"
-                    style={styles.textInput}
-                    value={value}
-                    // Filtrar solo números al escribir de manera limpia
-                    onChangeText={(text) => onChange(text.replace(/[^0-9]/g, ''))}
-                  />
-                )}
-              />
-            </View>
-            {errors.cedula && <Text style={styles.errorText}>{errors.cedula.message}</Text>}
-          </View>
-
-          {/* Campo Nombre */}
-          <View style={styles.fieldContainer}>
-            <View style={[
-              styles.inputWrapper,
-              isSubmitted && errors.nombre ? styles.inputError :
-              isSubmitted && !errors.nombre ? styles.inputValid : null
-            ]}>
-              <Ionicons name="person" size={20} color="#EE82EE" style={styles.inputIcon} />
-              <Controller
-                control={control}
-                name="nombre"
-                rules={{
-                required: 'El nombre es requerido',
-                
-                minLength: {
-                  value: 3,
-                  message: 'El nombre debe tener mínimo 3 caracteres',
-                },
-                maxLength: {
-                  value: 30,
-                  message: 'El nombre no puede superar los 30 caracteres',
-                },
-                  pattern: {
-                    value: /^[A-Za-z]+$/,
-                    message: 'Solo se permiten letras y espacios',
-                  }
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    placeholder="Nombre (Ej: Jose)"
-                    style={styles.textInput}
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                )}
-              />
-            </View>
-            {errors.nombre && <Text style={styles.errorText}>{errors.nombre.message}</Text>}
-          </View>
-
-          {/* Campo Apellido */}
-          <View style={styles.fieldContainer}>
-            <View style={[
-              styles.inputWrapper,
-              isSubmitted && errors.apellido ? styles.inputError :
-              isSubmitted && !errors.apellido ? styles.inputValid : null
-            ]}>
-              <Ionicons name="person-outline" size={20} color="#EE82EE" style={styles.inputIcon} />
-              <Controller
-                control={control}
-                name="apellido"
-                rules={{
-                  required: 'El apellido es requerido',
-                  minLength: {
-                  value: 3,
-                  message: 'El apellido debe tener mínimo 3 caracteres',
-                },
-                maxLength: {
-                  value: 30,
-                  message: 'El apellido no puede superar los 30 caracteres',
-                },
-                  pattern: {
-                    value: /^[A-Za-z]+$/,
-                    message: 'Solo se permiten letras entre',
-                  }
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    placeholder="Apellido (Ej: z)"
-                    style={styles.textInput}
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                )}
-              />
-            </View>
-            {errors.apellido && <Text style={styles.errorText}>{errors.apellido.message}</Text>}
-          </View>
-
-         {/* Campo Teléfono */}
-          <View style={styles.fieldContainer}>
-            <View style={[
-              styles.inputWrapper,
-              isSubmitted && errors.telefono ? styles.inputError :
-              isSubmitted && !errors.telefono ? styles.inputValid : null
-            ]}>
-              <Ionicons name="call" size={20} color="#EE82EE" style={styles.inputIcon} />
-              <Controller
-                control={control}
-                name="telefono"
-                rules={{
-                  required: 'El teléfono es requerido',
-                  pattern: {
-                    // Valida que empiece por 0414, 0426 o 0412, luego un guion, y luego exactamente 7 números
-                    value: /^(0414|0424|0416|0426|0412|0422)-\d{7}$/,
-                    message: 'El formato debe ser válido (Ej: 0412-1234567)',
-                  }
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    placeholder="Teléfono (Ej: 0412-1234567)"
-                    keyboardType="phone-pad"
-                    style={styles.textInput}
-                    maxLength={12} // Evita que el usuario escriba más de la cuenta (4 dígitos + 1 guion + 7 dígitos)
-                    value={value}
-                    onChangeText={(text) => {
-                      // Removemos todo lo que no sea un número o el guion que ya pusimos
-                      let cleaned = text.replace(/[^0-9-]/g, '');
-                      
-                      // Si el usuario borra el guion manualmente, eliminamos los guiones para reformatear
-                      cleaned = cleaned.replace(/-/g, '');
-
-                      // Si ya escribió más de 4 dígitos, le encajamos el guion automáticamente
-                      if (cleaned.length > 4) {
-                        cleaned = `${cleaned.slice(0, 4)}-${cleaned.slice(4, 11)}`;
-                      }
-                      // Guardamos el estado formateado
-                      onChange(cleaned);
-                    }}
-                  />
-                )}
-              />
-            </View>
-            {errors.telefono && <Text style={styles.errorText}>{errors.telefono.message}</Text>}
-          </View>
-
-          {/* Campo Correo */}
-          <View style={styles.fieldContainer}>
-            <View style={[
-              styles.inputWrapper,
-              isSubmitted && errors.correo ? styles.inputError :
-              isSubmitted && !errors.correo ? styles.inputValid : null
-            ]}>
-              <Ionicons name="mail" size={20} color="#EE82EE" style={styles.inputIcon} />
-              <Controller
-                control={control}
-                name="correo"
-                rules={{
-                  required: 'El correo electrónico es requerido',
-                  pattern: {
-                    value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: 'El formato de correo no es válido (ej: usuario@correo.com)',
-                  }
-                }}
-                render={({ field: { onChange, value } }) => (
-                  <TextInput
-                    placeholder="Correo electrónico"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={styles.textInput}
-                    value={value}
-                    onChangeText={onChange}
-                  />
-                )}
-              />
-            </View>
-            {errors.correo && <Text style={styles.errorText}>{errors.correo.message}</Text>}
-          </View>
-        {/* Campo Contraseña */}
-        <View style={styles.fieldContainer}>
-          <View style={[
-            styles.inputWrapper,
-            isSubmitted && errors.clave ? styles.inputError :
-            isSubmitted && !errors.clave ? styles.inputValid : null
-          ]}>
-            <Ionicons name="lock-closed" size={20} color="#EE82EE" style={styles.inputIcon} />
-            <Controller
+            {/* Campo Cédula */}
+            <Input
+              name="cedula"
+              placeholder="Cédula (Ej: 12333444)"
+              icon="card"
               control={control}
+              keyboardType="numeric"
+              isSubmitted={isSubmitted}
+              onChangeTextModifier={limpiarCedula}
+              rules={{
+                required: 'La cédula es requerida',
+                pattern: {
+                  value: /^\d{7,8}$/,
+                  message: 'La cédula debe tener entre 7 y 8 dígitos numéricos',
+                }
+              }}
+            />
+
+            {/* Campo Nombre */}
+            <Input
+              name="nombre"
+              placeholder="Nombre (Ej: Jose)"
+              icon="person"
+              control={control}
+              isSubmitted={isSubmitted}
+              rules={{
+                required: 'El nombre es requerido',
+                minLength: { value: 3, message: 'El nombre debe tener mínimo 3 caracteres' },
+                maxLength: { value: 30, message: 'El nombre no puede superar los 30 caracteres' },
+                pattern: {
+                  value: /^[A-Za-z]+$/,
+                  message: 'Solo se permiten letras',
+                }
+              }}
+            />
+
+            {/* Campo Apellido */}
+            <Input
+              name="apellido"
+              placeholder="Apellido (Ej: Perez)"
+              icon="person-outline"
+              control={control}
+              isSubmitted={isSubmitted}
+              rules={{
+                required: 'El apellido es requerido',
+                minLength: { value: 3, message: 'El apellido debe tener mínimo 3 caracteres' },
+                maxLength: { value: 30, message: 'El apellido no puede superar los 30 caracteres' },
+                pattern: {
+                  value:  /^[A-Za-z]+$/,
+                  message: 'Solo se permiten letras',
+                }
+              }}
+            />
+
+            {/* Campo Teléfono */}
+            <Input
+              name="telefono"
+              placeholder="Teléfono (Ej: 0412-1234567)"
+              icon="call"
+              control={control}
+              keyboardType="phone-pad"
+              maxLength={12}
+              isSubmitted={isSubmitted}
+              onChangeTextModifier={formatearTelefono}
+              rules={{
+                required: 'El teléfono es requerido',
+                pattern: {
+                  value: /^(0414|0424|0416|0426|0412|0422)-\d{7}$/,
+                  message: 'El formato debe ser válido (Ej: 0412-1234567)',
+                }
+              }}
+            />
+
+            {/* Campo Correo */}
+            <Input
+              name="correo"
+              placeholder="Correo electrónico"
+              icon="mail"
+              control={control}
+              keyboardType="email-address"
+              isSubmitted={isSubmitted}
+              rules={{
+                required: 'El correo electrónico es requerido',
+                pattern: {
+                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                  message: 'El formato de correo no es válido',
+                }
+              }}
+            />
+
+            {/* Campo Contraseña */}
+            <Input
               name="clave"
+              placeholder="Contraseña"
+              icon="lock-closed"
+              control={control}
+              secureTextEntry={true}
+              isSubmitted={isSubmitted}
               rules={{
                 required: 'La contraseña es requerida',
                 minLength: { value: 8, message: 'Mínimo 8 caracteres' },
                 maxLength: { value: 16, message: 'Máximo 16 caracteres' },
               }}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  placeholder="Contraseña"
-                  secureTextEntry={ocultarClave} // Controla si se ve o se oculta
-                  style={styles.textInput}
-                  value={value}
-                  onChangeText={onChange}
-                />
-              )}
             />
-            {/* Botón del Ojito */}
-            <TouchableOpacity onPress={() => setOcultarClave(!ocultarClave)}>
-              <Ionicons 
-                name={ocultarClave ? "eye-off" : "eye"} 
-                size={22} 
-                color="#A9A9A9" 
-              />
-            </TouchableOpacity>
-          </View>
-          {errors.clave && <Text style={styles.errorText}>{errors.clave.message}</Text>}
-        </View>
 
-        {/* Campo Confirmar Contraseña */}
-        <View style={styles.fieldContainer}>
-          <View style={[
-            styles.inputWrapper,
-            isSubmitted && errors.confirmarClave ? styles.inputError :
-            isSubmitted && !errors.confirmarClave ? styles.inputValid : null
-          ]}>
-            <Ionicons name="lock-open" size={20} color="#EE82EE" style={styles.inputIcon} />
-            <Controller
-              control={control}
+            {/* Campo Confirmar Contraseña */}
+            <Input
               name="confirmarClave"
+              placeholder="Confirmar contraseña"
+              icon="lock-open"
+              control={control}
+              secureTextEntry={true}
+              isSubmitted={isSubmitted}
               rules={{
                 required: 'Debe confirmar su contraseña',
                 validate: (value) => value === clave || 'Las contraseñas no coinciden',
               }}
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  placeholder="Confirmar contraseña"
-                  secureTextEntry={ocultarConfirmarClave} // Controla si se ve o se oculta
-                  style={styles.textInput}
-                  value={value}
-                  onChangeText={onChange}
-                />
-              )}
             />
-            {/* Botón del Ojito */}
-            <TouchableOpacity onPress={() => setOcultarConfirmarClave(!ocultarConfirmarClave)}>
-              <Ionicons 
-                name={ocultarConfirmarClave ? "eye-off" : "eye"} 
-                size={22} 
-                color="#A9A9A9" 
-              />
-            </TouchableOpacity>
+
+            {/* Botón de Envió utilizando tu nuevo diseño de componente */}
+            <BtnAcion
+              text="REGISTRARSE"
+              icon="person-add-outline"
+              backgroundColor="#EE82EE"
+              onPress={handleSubmit(onSubmit)}
+            /> 
+          
+            <AlertModal
+              visible={modalVisible}
+              onClose={() => setModalVisible(false)}
+              message={modalMessage}
+              success={modalSuccess}
+            />
           </View>
-          {errors.confirmarClave && <Text style={styles.errorText}>{errors.confirmarClave.message}</Text>}
-        </View>
-
-          {/* Botón Registrar */}
-         <TouchableOpacity style={[styles.registerButton]}
-            onPress={handleSubmit(onSubmit)}
-          >
-
-          <Text style={styles.registerButtonText}>REGISTRARSE</Text>
-            
-          </TouchableOpacity> 
-        
-        <AlertModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          message={modalMessage}
-          success={modalSuccess}
-        />
-        </View>
-      </ScrollView>
+        </ScrollView>
       </KeyboardAvoidingView>
     </ImageBackground>
   );
@@ -379,8 +232,8 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1, 
-    justifyContent: 'center', // Mantiene la tarjeta centrada si hay espacio
-    paddingVertical: 30,      // Un poco más de espacio arriba y abajo
+    justifyContent: 'center',
+    paddingVertical: 30,      
     paddingHorizontal: 20,
   },
   card: {
@@ -395,52 +248,5 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 20,
     textAlign: 'center',
-  },
-  fieldContainer: {
-    marginBottom: 15, // Engloba el input y su mensaje de error
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F7F7F7',
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    borderRadius: 12,
-    paddingHorizontal: 15,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  textInput: {
-    flex: 1,
-    height: 50,
-    fontSize: 16,
-    color: '#050404',
-  },
-  registerButton: {
-    backgroundColor: '#EE82EE',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  registerButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  inputError: {
-    borderColor: 'red',
-    borderWidth: 1.5,
-  },
-  inputValid: {
-    borderColor: 'green',
-    borderWidth: 1.5,
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 5,
   },
 });
