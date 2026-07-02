@@ -70,19 +70,39 @@ const Producto = ({ route }) => {
     setModalVisible(true);
   };
 
-  // FILTRO CATEGORIA
-  const misCategorias = [
-    { id: '1', name: 'Polvo' },
-    { id: '2', name: 'Higiene Personal' },
-    { id: '3', name: 'Labiales' },
-    { id: '4', name: 'Brillos' },
-    { id: '5', name: 'Paletas' },
-  ];
+
+  useEffect(() => {
+    const cargarCategoriasRemotas = async () => {
+      try {
+        const data = await api.fetchCategorias();
+        if (data && data.respuesta === 1 && Array.isArray(data.categorias)) {
+          setMisCategorias(data.categorias);
+        }
+      } catch (error) {
+        console.warn("Error cargando categorías remotas:", error);
+      }
+    };
+
+    cargarCategoriasRemotas();
+  }, []);
+
+  const [misCategorias, setMisCategorias] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   const CategoriaPress = (categorianombre) => {
-    console.log('Filtrar productos por:', categorianombre);
-    // Aquí ejecutas tu lógica de filtrado...
-  };
+  setSelectedCategory(categorianombre);
+
+  if (!categorianombre) {
+    setResultados(todosLosProductos);
+    return;
+  }
+
+  const filtrados = todosLosProductos.filter((producto) =>
+    producto.nombre_categoria?.toLowerCase() === categorianombre.toLowerCase()
+  );
+
+  setResultados(filtrados);
+};
 
   return (
     <SafeAreaProvider>
@@ -97,6 +117,7 @@ const Producto = ({ route }) => {
           <Categoria 
               categories={misCategorias} 
               onSelectCategory={CategoriaPress} 
+              selectedCategory={selectedCategory}
             />
 
           <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
