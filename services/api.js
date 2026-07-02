@@ -3,6 +3,252 @@ import axios from 'axios';
 
 const API_BASE = 'https://lovemakeuptienda.com/controlador/api';
 const TOKEN_KEY = 'jwt_token';
+const USER_KEY = 'auth_user';
+
+export function normalizeCedula(value) {
+  return String(value ?? '').replace(/\D/g, '');
+}
+
+export function decodeJwtPayload(token) {
+  if (!token) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+
+    let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+
+    let jsonPayload = null;
+    if (typeof atob === 'function') {
+      const decoded = atob(b64);
+      jsonPayload = decodeURIComponent(
+        Array.prototype.map
+          .call(decoded, (c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
+          .join('')
+      );
+    } else if (typeof Buffer !== 'undefined') {
+      jsonPayload = Buffer.from(b64, 'base64').toString('utf8');
+    }
+
+    return jsonPayload ? JSON.parse(jsonPayload) : null;
+  } catch (e) {
+    console.warn('decodeJwtPayload error', e);
+    return null;
+  }
+}
+
+export function mergeUserProfiles(...sources) {
+  const result = {};
+
+  const assignValues = (obj) => {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        result[key] = value;
+      }
+    });
+  };
+
+  sources.forEach((source) => {
+    assignValues(source);
+    if (source?.usuario) {
+      if (typeof source.usuario === 'object') {
+        assignValues(source.usuario);
+      } else {
+        result.usuario = source.usuario;
+        const normalizedUsuario = normalizeCedula(source.usuario);
+        if (normalizedUsuario && !result.cedula) {
+          result.cedula = normalizedUsuario;
+        }
+      }
+    }
+    if (source?.cliente) assignValues(source.cliente);
+    if (source?.data && typeof source.data === 'object' && !Array.isArray(source.data)) {
+      assignValues(source.data);
+    }
+  });
+
+  return Object.keys(result).length ? result : null;
+}
+
+export function getProfileIdentity(user) {
+  if (!user || typeof user !== 'object') return '';
+
+  const candidates = [
+    user.cedula,
+    user.documento,
+    user.cedula_cliente,
+    user.num_cedula,
+    user.usuario,
+    user?.cliente?.cedula,
+    user?.data?.cedula,
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = normalizeCedula(candidate);
+    if (normalized.length >= 7 && normalized.length <= 9) {
+      return normalized;
+    }
+  }
+
+  return '';
+}
+
+export function isSameProfile(storedUser, nextUser) {
+  const storedIdentity = getProfileIdentity(storedUser);
+  const nextIdentity = getProfileIdentity(nextUser);
+  if (!storedIdentity || !nextIdentity) return true;
+  return storedIdentity === nextIdentity;
+}
+
+export async function saveUserProfile(user) {
+  if (!user) return false;
+  try {
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(user));
+    return true;
+  } catch (e) {
+    console.warn('saveUserProfile error', e);
+    return false;
+  }
+}
+
+export async function loadUserProfile() {
+  try {
+    const stored = await AsyncStorage.getItem(USER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch (e) {
+    console.warn('loadUserProfile error', e);
+    return null;
+  }
+}
+
+export async function clearUserProfile() {
+  try {
+    await AsyncStorage.removeItem(USER_KEY);
+    return true;
+  } catch (e) {
+    console.warn('clearUserProfile error', e);
+    return false;
+  }
+}
+
+function mapCedulaUpdateMessage(mensaje) {
+  if (!mensaje || typeof mensaje !== 'string') return mensaje;
+
+  const lower = mensaje.toLowerCase();
+  if (
+    lower.includes('cedula') ||
+    lower.includes('cédula') ||
+    lower.includes('documento')
+  ) {
+    if (
+      lower.includes('registr') ||
+      lower.includes('existe') ||
+      lower.includes('duplicate') ||
+      lower.includes('duplicad')
+    ) {
+      return 'La cédula ya está registrada en el sistema.';
+    }
+  }
+
+  return mensaje;
+}
+
+function parseUserFromApiResponse(json) {
+  if (!json || typeof json !== 'object') return null;
+
+  const candidate =
+    json.usuario ||
+    json.user ||
+    json.cliente ||
+    json.data ||
+    null;
+
+  if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+    return candidate;
+  }
+
+  const profileKeys = ['cedula', 'nombre', 'apellido', 'telefono', 'correo', 'email'];
+  const hasProfileFields = profileKeys.some((key) => Object.prototype.hasOwnProperty.call(json, key));
+
+  return hasProfileFields ? json : null;
+}
+
+function collectProfileValues(input, bag = {}) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return bag;
+
+  Object.entries(input).forEach(([key, value]) => {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      collectProfileValues(value, bag);
+      return;
+    }
+
+    if (value !== null && value !== undefined && `${value}`.trim() !== '') {
+      bag[key] = value;
+      bag[key.toLowerCase()] = value;
+    }
+  });
+
+  return bag;
+}
+
+export function extractProfileField(user, aliases = []) {
+  if (!user || typeof user !== 'object') return '';
+
+  const values = collectProfileValues(user);
+
+  for (const alias of aliases) {
+    const direct = values[alias] ?? values[String(alias).toLowerCase()];
+    if (direct !== undefined && direct !== null && `${direct}`.trim() !== '') {
+      return `${direct}`.trim();
+    }
+  }
+
+  return '';
+}
+
+export function buildProfileFormData(userObject) {
+  return {
+    cedula:
+      getProfileIdentity(userObject) ||
+      extractProfileField(userObject, ['cedula', 'documento', 'cedula_cliente', 'num_cedula']),
+    nombre: extractProfileField(userObject, ['nombre', 'first_name', 'nombre_cliente']),
+    apellido: extractProfileField(userObject, ['apellido', 'last_name', 'apellido_cliente']),
+    telefono: extractProfileField(userObject, [
+      'telefono',
+      'celular',
+      'phone',
+      'telefono_cliente',
+      'celular_cliente',
+      'tlf',
+      'movil',
+      'num_telefono',
+      'numero_telefono',
+      'telefono_celular',
+      'telefono_movil',
+    ]),
+    correo: extractProfileField(userObject, [
+      'correo',
+      'email',
+      'correo_electronico',
+      'correo_cliente',
+      'email_cliente',
+      'mail',
+      'e_mail',
+    ]),
+  };
+}
+
+async function syncUserProfile(user) {
+  if (!user) return null;
+
+  const storedUser = await loadUserProfile();
+  const mergedUser = mergeUserProfiles(storedUser, user) || user;
+
+  if (mergedUser) await saveUserProfile(mergedUser);
+  return mergedUser;
+}
 
 // Configuración de la instancia de Axios
 const apiClient = axios.create({
@@ -43,6 +289,22 @@ export async function loginUser(usuario, clave, tipoDocumento = 'V') {
     if (json && (json.respuesta === 1 || json.respuesta === 2) && json.token) {
       await saveToken(json.token);
       return { success: true, user: json.usuario, respuesta: json.respuesta };
+
+      const payload = decodeJwtPayload(json.token);
+      const storedUser = await loadUserProfile();
+      const loginIdentity = { cedula: usuario, usuario };
+      const canUseStoredUser = isSameProfile(storedUser, loginIdentity);
+      const user =
+        (await syncUserProfile(
+          mergeUserProfiles(
+            payload?.data,
+            json.usuario,
+            canUseStoredUser ? storedUser : null,
+            loginIdentity
+          )
+        )) || json.usuario;
+
+      return { success: true, user, respuesta: json.respuesta };
     }
 
     return { success: false, mensaje: json.mensaje || 'Credenciales inválidas' };
@@ -455,6 +717,198 @@ export async function debugServerHeaders() {
   } catch (e) {
     if (e.response) return { raw: e.response.data };
     throw e;
+  }
+}
+
+// --------------------- MIS DATOS | CONSULTAR PERFIL
+export async function fetchUserProfile() {
+  try {
+    const token = await getToken();
+    if (!token) {
+      return {
+        success: false,
+        user: null,
+        mensaje: 'No hay sesión activa. Inicia sesión de nuevo.',
+        tokenExpired: true,
+      };
+    }
+
+    let json = null;
+    let remoteUser = null;
+
+    const attempts = [
+      () => apiClient.get('/actualizarDatos.php'),
+      () => apiClient.post('/actualizarDatos.php', { operacion: 'consultar' }),
+      () => apiClient.post('/actualizarDatos.php', { operacion: 'obtener' }),
+    ];
+
+    for (const attempt of attempts) {
+      try {
+        const response = await attempt();
+        json = response.data;
+        remoteUser = parseUserFromApiResponse(json);
+        if (remoteUser && (json?.respuesta === 1 || json?.respuesta === '1')) {
+          break;
+        }
+      } catch (requestError) {
+        if (requestError.response?.data) {
+          json = requestError.response.data;
+          remoteUser = parseUserFromApiResponse(json);
+          if (remoteUser && (json?.respuesta === 1 || json?.respuesta === '1')) {
+            break;
+          }
+        }
+      }
+    }
+
+    const isSuccess = json?.respuesta === 1 || json?.respuesta === '1';
+    const hasProfileData =
+      !!remoteUser &&
+      !!(
+        extractProfileField(remoteUser, ['telefono', 'celular']) ||
+        extractProfileField(remoteUser, ['correo', 'email']) ||
+        extractProfileField(remoteUser, ['nombre'])
+      );
+
+    if (remoteUser && (isSuccess || hasProfileData)) {
+      const payload = decodeJwtPayload(token);
+      const user = await syncUserProfile(mergeUserProfiles(payload?.data, remoteUser));
+
+      return {
+        success: true,
+        user,
+      };
+    }
+
+    const storedUser = await loadUserProfile();
+    const payload = decodeJwtPayload(token);
+    const fallbackUser = mergeUserProfiles(payload?.data, storedUser);
+
+    if (fallbackUser) {
+      return { success: true, user: fallbackUser, fromCache: true };
+    }
+
+    return {
+      success: false,
+      user: null,
+      mensaje: json?.mensaje || 'No se pudieron cargar los datos del usuario',
+    };
+  } catch (e) {
+    console.warn('fetchUserProfile error:', e.response?.data || e.message);
+
+    const storedUser = await loadUserProfile();
+    if (storedUser) {
+      return { success: true, user: storedUser, fromCache: true };
+    }
+
+    return {
+      success: false,
+      user: null,
+      mensaje: e.response?.data?.mensaje || 'Error al cargar los datos del usuario',
+    };
+  }
+}
+
+// --------------------- MIS DATOS | ACTUALIZAR PERFIL
+export async function updateUserData(formData) {
+  try {
+    const token = await getToken();
+    if (!token) {
+      return {
+        success: false,
+        mensaje: 'No hay sesión activa. Inicia sesión de nuevo.',
+        tokenExpired: true,
+      };
+    }
+
+    const payload = decodeJwtPayload(token);
+    const storedUser = await loadUserProfile();
+    const sessionUser = mergeUserProfiles(payload?.data, storedUser);
+    const cedulaSesion = getProfileIdentity(sessionUser);
+    const cedulaFormulario = normalizeCedula(formData?.cedula);
+    const cedulaCambiada =
+      !!cedulaSesion && !!cedulaFormulario && cedulaSesion !== cedulaFormulario;
+
+    if (cedulaCambiada && !cedulaFormulario) {
+      return { success: false, mensaje: 'La cédula ingresada no es válida.' };
+    }
+
+    const requestBody = {
+      nombre: String(formData?.nombre ?? '').trim(),
+      apellido: String(formData?.apellido ?? '').trim(),
+      telefono: String(formData?.telefono ?? '').trim(),
+      correo: String(formData?.correo ?? '').trim(),
+      tipo_documento: 'V',
+    };
+
+    if (cedulaCambiada) {
+      requestBody.cedula = cedulaFormulario;
+      requestBody.usuario = cedulaFormulario;
+      requestBody.cedula_anterior = cedulaSesion;
+      requestBody.cedula_modificada = 1;
+    } else {
+      requestBody.cedula_modificada = 0;
+      if (cedulaSesion) {
+        requestBody.cedula_anterior = cedulaSesion;
+      }
+    }
+
+    const response = await apiClient.post('/actualizarDatos.php', requestBody);
+    const json = response.data;
+
+    if (!json || typeof json !== 'object') {
+      return {
+        success: false,
+        mensaje: 'El servidor no respondió con la API esperada.',
+      };
+    }
+
+    const isSuccess = json.respuesta === 1 || json.respuesta === '1';
+    const user = parseUserFromApiResponse(json);
+    const mensaje = mapCedulaUpdateMessage(json.mensaje);
+
+    if (isSuccess) {
+      const mergedUser = await syncUserProfile(
+        mergeUserProfiles(storedUser, sessionUser, user, {
+          cedula: cedulaCambiada ? cedulaFormulario : cedulaSesion || cedulaFormulario,
+          nombre: requestBody.nombre,
+          apellido: requestBody.apellido,
+          telefono: requestBody.telefono,
+          correo: requestBody.correo,
+        })
+      );
+
+      if (cedulaCambiada && json.token) {
+        await saveToken(json.token);
+      }
+
+      return {
+        success: true,
+        mensaje: mensaje || 'Datos actualizados con éxito',
+        user: mergedUser || user,
+      };
+    }
+
+    return {
+      success: false,
+      mensaje: mensaje || 'No se pudieron actualizar los datos',
+    };
+  } catch (e) {
+    console.warn('updateUserData error:', e.response?.data || e.message);
+
+    const mensajeError = mapCedulaUpdateMessage(e.response?.data?.mensaje);
+    const isTokenExpired =
+      e.response?.status === 401 &&
+      typeof mensajeError === 'string' &&
+      mensajeError.toLowerCase().includes('token');
+
+    return {
+      success: false,
+      mensaje: isTokenExpired
+        ? 'Tu sesión expiró. Inicia sesión de nuevo.'
+        : mensajeError || 'Error de conexión con el servidor al actualizar los datos',
+      tokenExpired: isTokenExpired,
+    };
   }
 }
 
