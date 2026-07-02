@@ -90,12 +90,15 @@ const Producto = ({ route }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   const CategoriaPress = (categorianombre) => {
-  setSelectedCategory(categorianombre);
+  const mismaCategoria = categorianombre === selectedCategory;
 
-  if (!categorianombre) {
+  if (mismaCategoria) {
+    setSelectedCategory(null);
     setResultados(todosLosProductos);
     return;
   }
+
+  setSelectedCategory(categorianombre);
 
   const filtrados = todosLosProductos.filter((producto) =>
     producto.nombre_categoria?.toLowerCase() === categorianombre.toLowerCase()
