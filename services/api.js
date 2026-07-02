@@ -708,6 +708,16 @@ export async function vaciarWishlistRemota(cedula) {
   }
 }
 
+export async function fetchCategorias() {
+  try {
+    const response = await apiClient.get('/categoria.php');
+    return response.data;
+  } catch (e) {
+    console.warn('fetchCategorias error:', e.message);
+    throw e;
+  }
+}
+
 export async function debugServerHeaders() {
   try {
     const response = await apiClient.get('/producto.php', {
@@ -923,5 +933,6 @@ export default {
   fetchWishlistRemota,
   agregarAWishlistRemota,
   eliminarDeWishlistRemota,
-  vaciarWishlistRemota
+  vaciarWishlistRemota,
+  fetchCategorias
 };

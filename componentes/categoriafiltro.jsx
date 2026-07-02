@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function CategoryFilter({ categories, onSelectCategory }) {
+export default function CategoryFilter({ categories, selectedCategory, onSelectCategory }) {
   return (
     <View style={styles.container}>
       <ScrollView
@@ -10,23 +10,27 @@ export default function CategoryFilter({ categories, onSelectCategory }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
       >
-        {categories.map((item) => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.badge}
-            activeOpacity={0.7}
-            onPress={() => onSelectCategory && onSelectCategory(item.name)}
-          >
-            {/* Único icono de etiqueta de Ionicons */}
-            <Ionicons 
-              name="pricetag-outline" 
-              size={18} 
-              color="#000000" 
-              style={styles.icon} 
-            />
-            <Text style={styles.badgeText}>{item.name}</Text>
-          </TouchableOpacity>
-        ))}
+        {categories.map((item) => {
+          const isActive = item.nombre === selectedCategory;
+          return (
+            <TouchableOpacity
+              key={item.id_categoria}
+              style={[styles.badge, isActive && styles.badgeSelected]}
+              activeOpacity={0.7}
+              onPress={() => onSelectCategory && onSelectCategory(item.nombre)}
+            >
+              <Ionicons
+                name="pricetag-outline"
+                size={18}
+                color={isActive ? "#FFFFFF" : "#000000"}
+                style={styles.icon}
+              />
+              <Text style={[styles.badgeText, isActive && styles.badgeTextSelected]}>
+                {item.nombre}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -54,6 +58,13 @@ const styles = StyleSheet.create({
   icon: {
     marginRight: 6,             
   },
+  badgeSelected: {
+  backgroundColor: '#ff5694',
+  borderColor: '#c70039',
+},
+badgeTextSelected: {
+  color: '#FFFFFF',
+},
   badgeText: {
     color: '#000000',           
     fontSize: 15,
