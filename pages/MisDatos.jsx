@@ -89,20 +89,8 @@ export default function BodyMisDatos() {
   const handleActualizar = async () => {
     setModalSuccess(false);
 
-    const cedulaActual = normalizeCedula(formData.cedula);
-    const cedulaOriginal = cedulaSesion || getProfileIdentity(user);
-
-    if (cedulaActual && cedulaOriginal && cedulaActual !== cedulaOriginal) {
-      if (cedulaActual.length < 7 || cedulaActual.length > 9) {
-        setModalSuccess(false);
-        setModalMessage('La cédula debe tener entre 7 y 9 dígitos numéricos.');
-        setModalVisible(true);
-        return;
-      }
-    }
-
     try {
-      const result = await updateUserData(formData);
+      const result = await updateUserData(formData, { cedulaSesion });
       if (result.success) {
         setModalSuccess(true);
         setModalMessage(result.mensaje || 'Datos actualizados con éxito');

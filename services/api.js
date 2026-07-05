@@ -154,6 +154,120 @@ function mapCedulaUpdateMessage(mensaje) {
 
   return mensaje;
 }
+function mapProfileUpdateMessage(mensaje) {
+  if (!mensaje || typeof mensaje !== 'string') return mensaje;
+
+  let mapped = mapCedulaUpdateMessage(mensaje);
+  const lower = mapped.toLowerCase();
+
+  if (
+    lower.includes('foreign key') ||
+    lower.includes('integrity constraint') ||
+    lower.includes('bitacora')
+  ) {
+    return 'No se puede cambiar la cédula porque existen registros vinculados en el sistema.';
+  }
+
+  if (lower.includes('json') && lower.includes('invalid')) {
+    return 'El servidor recibió datos inválidos. Verifica que todos los campos estén completos.';
+  }
+
+  if (lower.includes('datos incompletos')) {
+    return 'Datos incompletos. Verifica que cédula, nombre, apellido, teléfono y correo estén llenos.';
+  }
+
+  return mapped;
+}
+
+function validateProfilePayload(formData, cedulaFinal) {
+  const nombre = String(formData?.nombre ?? '').trim();
+  const apellido = String(formData?.apellido ?? '').trim();
+  const telefono = String(formData?.telefono ?? '').trim();
+  const correo = String(formData?.correo ?? '').trim();
+  const cedula = normalizeCedula(cedulaFinal);
+
+  if (!cedula || cedula.length < 7 || cedula.length > 9) {
+    return { valid: false, mensaje: 'La cédula debe tener entre 7 y 9 dígitos numéricos.' };
+  }
+  if (!nombre) return { valid: false, mensaje: 'El nombre es requerido.' };
+  if (!apellido) return { valid: false, mensaje: 'El apellido es requerido.' };
+  if (!telefono) return { valid: false, mensaje: 'El teléfono es requerido.' };
+  if (!correo) return { valid: false, mensaje: 'El correo electrónico es requerido.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+    return { valid: false, mensaje: 'El formato del correo electrónico no es válido.' };
+  }
+
+  return {
+    valid: true,
+    datos: {
+      cedula,
+      usuario: cedula,
+      nombre,
+      apellido,
+      telefono,
+      correo,
+      tipo_documento: 'V',
+    },
+  };
+}
+
+function buildActualizarDatosPayloads(datos, cedulaAnterior, cedulaCambiada) {
+  const datosConAnterior = { ...datos };
+
+  if (cedulaCambiada && cedulaAnterior) {
+    datosConAnterior.cedula_anterior = cedulaAnterior;
+  }
+
+  return [
+    { operacion: 'actualizar', datos: datosConAnterior },
+    datosConAnterior,
+  ];
+}
+
+async function postActualizarDatos(body) {
+  const response = await apiClient.post('/actualizarDatos.php', body);
+  return response.data;
+}
+
+export async function verificarCedulaDisponible(cedulaNueva, cedulaActual) {
+  const cedulaNuevaNorm = normalizeCedula(cedulaNueva);
+  const cedulaActualNorm = normalizeCedula(cedulaActual);
+
+  if (!cedulaNuevaNorm || cedulaNuevaNorm === cedulaActualNorm) {
+    return { disponible: true };
+  }
+
+  const verifyAttempts = [
+    {
+      operacion: 'verificar_cedula',
+      datos: { cedula: cedulaNuevaNorm, cedula_anterior: cedulaActualNorm },
+    },
+    {
+      operacion: 'validar_cedula',
+      datos: { cedula: cedulaNuevaNorm },
+    },
+  ];
+
+  for (const body of verifyAttempts) {
+    try {
+      const json = await postActualizarDatos(body);
+      if (json?.respuesta === 1) {
+        return { disponible: true };
+      }
+      const mensaje = json?.mensaje || json?.text;
+      if (mensaje && /cedula|c[eé]dula|documento/i.test(mensaje) && /registr|existe|duplicate|duplicad/i.test(mensaje)) {
+        return { disponible: false, mensaje: 'La cédula ya está registrada en el sistema.' };
+      }
+    } catch (e) {
+      const mensaje = e.response?.data?.mensaje || e.response?.data?.text;
+      if (mensaje && /cedula|c[eé]dula|documento/i.test(mensaje) && /registr|existe|duplicate|duplicad/i.test(mensaje)) {
+        return { disponible: false, mensaje: 'La cédula ya está registrada en el sistema.' };
+      }
+    }
+  }
+
+  return { disponible: true, unchecked: true };
+}
 
 function parseUserFromApiResponse(json) {
   if (!json || typeof json !== 'object') return null;
@@ -173,6 +287,59 @@ function parseUserFromApiResponse(json) {
   const hasProfileFields = profileKeys.some((key) => Object.prototype.hasOwnProperty.call(json, key));
 
   return hasProfileFields ? json : null;
+}
+
+function normalizeRoleValue(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).trim().toLowerCase();
+}
+
+function hasAdminIndicator(user) {
+  const role = extractProfileField(user, [
+    'rol',
+    'role',
+    'tipo_usuario',
+    'tipoUsuario',
+    'perfil',
+    'profile',
+    'usuario_tipo',
+    'tipo',
+    'cargo',
+  ]);
+  const normalized = normalizeRoleValue(role);
+  return [
+    'admin',
+    'administrador',
+    'administrativo',
+    'empleado',
+    'superuser',
+  ].some((term) => normalized.includes(term));
+}
+
+function hasClientIndicator(user) {
+  const role = extractProfileField(user, [
+    'rol',
+    'role',
+    'tipo_usuario',
+    'tipoUsuario',
+    'perfil',
+    'profile',
+    'usuario_tipo',
+    'tipo',
+  ]);
+  const normalized = normalizeRoleValue(role);
+  return [
+    'cliente',
+    'client',
+    'usuario',
+  ].some((term) => normalized.includes(term));
+}
+
+export function isClientUser(user) {
+  if (!user || typeof user !== 'object') return false;
+  if (hasAdminIndicator(user)) return false;
+  if (user?.cliente || user?.cedula_cliente || user?.cliente?.cedula) return true;
+  return hasClientIndicator(user);
 }
 
 function collectProfileValues(input, bag = {}) {
@@ -790,65 +957,23 @@ export async function fetchUserProfile() {
       };
     }
 
-    let json = null;
-    let remoteUser = null;
+    const storedUser = await loadUserProfile();
+    const payload = decodeJwtPayload(token);
+    const mergedUser = mergeUserProfiles(payload?.data, storedUser);
 
-    const attempts = [
-      () => apiClient.get('/actualizarDatos.php'),
-      () => apiClient.post('/actualizarDatos.php', { operacion: 'consultar' }),
-      () => apiClient.post('/actualizarDatos.php', { operacion: 'obtener' }),
-    ];
-
-    for (const attempt of attempts) {
-      try {
-        const response = await attempt();
-        json = response.data;
-        remoteUser = parseUserFromApiResponse(json);
-        if (remoteUser && (json?.respuesta === 1 || json?.respuesta === '1')) {
-          break;
-        }
-      } catch (requestError) {
-        if (requestError.response?.data) {
-          json = requestError.response.data;
-          remoteUser = parseUserFromApiResponse(json);
-          if (remoteUser && (json?.respuesta === 1 || json?.respuesta === '1')) {
-            break;
-          }
-        }
-      }
-    }
-
-    const isSuccess = json?.respuesta === 1 || json?.respuesta === '1';
-    const hasProfileData =
-      !!remoteUser &&
-      !!(
-        extractProfileField(remoteUser, ['telefono', 'celular']) ||
-        extractProfileField(remoteUser, ['correo', 'email']) ||
-        extractProfileField(remoteUser, ['nombre'])
-      );
-
-    if (remoteUser && (isSuccess || hasProfileData)) {
-      const payload = decodeJwtPayload(token);
-      const user = await syncUserProfile(mergeUserProfiles(payload?.data, remoteUser));
-
+    if (mergedUser) {
+      const user = await syncUserProfile(mergedUser);
       return {
         success: true,
         user,
+        fromCache: true,
       };
-    }
-
-    const storedUser = await loadUserProfile();
-    const payload = decodeJwtPayload(token);
-    const fallbackUser = mergeUserProfiles(payload?.data, storedUser);
-
-    if (fallbackUser) {
-      return { success: true, user: fallbackUser, fromCache: true };
     }
 
     return {
       success: false,
       user: null,
-      mensaje: json?.mensaje || 'No se pudieron cargar los datos del usuario',
+      mensaje: 'No se encontraron datos de usuario en la sesión actual.',
     };
   } catch (e) {
     console.warn('fetchUserProfile error:', e.response?.data || e.message);
@@ -867,7 +992,7 @@ export async function fetchUserProfile() {
 }
 
 // --------------------- MIS DATOS | ACTUALIZAR PERFIL
-export async function updateUserData(formData) {
+export async function updateUserData(formData, options = {}) {
   try {
     const token = await getToken();
     if (!token) {
@@ -881,37 +1006,58 @@ export async function updateUserData(formData) {
     const payload = decodeJwtPayload(token);
     const storedUser = await loadUserProfile();
     const sessionUser = mergeUserProfiles(payload?.data, storedUser);
-    const cedulaSesion = getProfileIdentity(sessionUser);
+    const cedulaSesion = normalizeCedula(options.cedulaSesion || getProfileIdentity(sessionUser));
     const cedulaFormulario = normalizeCedula(formData?.cedula);
-    const cedulaCambiada =
-      !!cedulaSesion && !!cedulaFormulario && cedulaSesion !== cedulaFormulario;
+    const cedulaCambiada = !!cedulaSesion && !!cedulaFormulario && cedulaSesion !== cedulaFormulario;
+    const cedulaFinal = cedulaFormulario || cedulaSesion;
+    const isClient = isClientUser(sessionUser || payload?.data || storedUser);
 
-    if (cedulaCambiada && !cedulaFormulario) {
-      return { success: false, mensaje: 'La cédula ingresada no es válida.' };
+    const validation = validateProfilePayload(formData, cedulaFinal);
+    if (!validation.valid) {
+      return { success: false, mensaje: validation.mensaje };
     }
 
-    const requestBody = {
-      nombre: String(formData?.nombre ?? '').trim(),
-      apellido: String(formData?.apellido ?? '').trim(),
-      telefono: String(formData?.telefono ?? '').trim(),
-      correo: String(formData?.correo ?? '').trim(),
-      tipo_documento: 'V',
-    };
+    if (cedulaCambiada && !isClient) {
+      return {
+        success: false,
+        mensaje: 'Solo los clientes pueden cambiar la cédula. Los usuarios administrativos no pueden modificarla.',
+      };
+    }
 
-    if (cedulaCambiada) {
-      requestBody.cedula = cedulaFormulario;
-      requestBody.usuario = cedulaFormulario;
-      requestBody.cedula_anterior = cedulaSesion;
-      requestBody.cedula_modificada = 1;
-    } else {
-      requestBody.cedula_modificada = 0;
-      if (cedulaSesion) {
-        requestBody.cedula_anterior = cedulaSesion;
+    if (cedulaCambiada && isClient) {
+      const cedulaCheck = await verificarCedulaDisponible(cedulaFormulario, cedulaSesion);
+      if (!cedulaCheck.disponible) {
+        return {
+          success: false,
+          mensaje: cedulaCheck.mensaje || 'La cédula ya está registrada en el sistema.',
+        };
       }
     }
 
-    const response = await apiClient.post('/actualizarDatos.php', requestBody);
-    const json = response.data;
+    const payloads = buildActualizarDatosPayloads(
+      validation.datos,
+      cedulaSesion,
+      cedulaCambiada
+    );
+
+    let json = null;
+    let lastMessage = 'No se pudieron actualizar los datos';
+
+    for (const body of payloads) {
+      json = await postActualizarDatos(body);
+      const isSuccess = json?.respuesta === 1 || json?.respuesta === '1';
+
+      if (isSuccess) break;
+
+      lastMessage = mapProfileUpdateMessage(json?.mensaje) || lastMessage;
+
+      const lower = lastMessage.toLowerCase();
+      const shouldRetry =
+        lower.includes('datos incompletos') ||
+        (lower.includes('json') && lower.includes('invalid'));
+
+      if (!shouldRetry) break;
+    }
 
     if (!json || typeof json !== 'object') {
       return {
@@ -922,17 +1068,11 @@ export async function updateUserData(formData) {
 
     const isSuccess = json.respuesta === 1 || json.respuesta === '1';
     const user = parseUserFromApiResponse(json);
-    const mensaje = mapCedulaUpdateMessage(json.mensaje);
+    const mensaje = mapProfileUpdateMessage(json.mensaje);
 
     if (isSuccess) {
       const mergedUser = await syncUserProfile(
-        mergeUserProfiles(storedUser, sessionUser, user, {
-          cedula: cedulaCambiada ? cedulaFormulario : cedulaSesion || cedulaFormulario,
-          nombre: requestBody.nombre,
-          apellido: requestBody.apellido,
-          telefono: requestBody.telefono,
-          correo: requestBody.correo,
-        })
+        mergeUserProfiles(storedUser, sessionUser, user, validation.datos)
       );
 
       if (cedulaCambiada && json.token) {
@@ -948,12 +1088,13 @@ export async function updateUserData(formData) {
 
     return {
       success: false,
-      mensaje: mensaje || 'No se pudieron actualizar los datos',
+      mensaje: mensaje || lastMessage,
     };
   } catch (e) {
     console.warn('updateUserData error:', e.response?.data || e.message);
 
-    const mensajeError = mapCedulaUpdateMessage(e.response?.data?.mensaje);
+    const rawMessage = e.response?.data?.mensaje || e.message || '';
+    const mensajeError = mapProfileUpdateMessage(rawMessage);
     const isTokenExpired =
       e.response?.status === 401 &&
       typeof mensajeError === 'string' &&
@@ -981,5 +1122,9 @@ export default {
   agregarAWishlistRemota,
   eliminarDeWishlistRemota,
   vaciarWishlistRemota,
-  fetchCategorias
+  fetchCategorias,
 };
+
+
+
+
