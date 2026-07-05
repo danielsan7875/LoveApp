@@ -1,4 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,24 +7,29 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-
 /*Pages - body*/
 import BodySeguridad from '../pages/Seguridad';
+import Loader from '../componentes/Loader';
 
 
-const Ubicacion = () => {
+const Seguridad = () => {
+  const [cargando, setCargando] = useState(false);
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
+        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
         <View style={styles.container}>
 
-         
-
-
-
-          {/* --- BODY--- */}
-         <BodySeguridad />
+        {/* --- BODY--- */}
+         <BodySeguridad
+          activarCarga={() => setCargando(true)} 
+          desactivarCarga={() => setCargando(false)} 
+        /> 
+        {/*Loader*/}
+        <Loader
+          visible={cargando} 
+          texto="Actualizando..."
+        />
         </View>
        
     
@@ -32,8 +38,7 @@ const Ubicacion = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  
+const styles = StyleSheet.create({ 
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
@@ -42,12 +47,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
- logoText: {
-      fontSize: 60,
-      fontWeight: 'bold',
-      color: '#D81B60', // Rosa oscuro
-  },
 });
 
-export default Ubicacion;
+export default Seguridad;
 

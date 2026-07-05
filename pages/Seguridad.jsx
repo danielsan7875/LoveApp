@@ -1,63 +1,45 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import { useSelector } from 'react-redux';
-import { changePassword } from '../services/api';
 import { Ionicons } from '@expo/vector-icons'; 
+import { useForm, Controller } from 'react-hook-form';
 
 // --- Componentes ---
-import BtnSeguridad from '../componentes/BtnSeguridad';
-import InputSeguridad from '../componentes/InputSeguridad';
+import { changePassword } from '../services/api';
+import Input from '../componentes/Inputvalidacion'; 
+import BtnAcion from '../componentes/BtnAcion'; 
 import AlertModal from '../componentes/ModalAlert';
 import HeaderTitulo from '../componentes/Headertitulo'; 
 
 
-const BodySeguridad = () => {
-  const [ActualClave, setActualClave] = useState('');
-  const [NuevaClave, setNuevaClave] = useState('');
-  const [ConfirmarClave, setConfirmarClave] = useState('');
-  const [errorActual, setErrorActual] = useState('');
-  const [errorNueva, setErrorNueva] = useState('');
-  const [errorConfirmar, setErrorConfirmar] = useState('');
+const BodySeguridad = ({activarCarga, desactivarCarga}) => {
+  const isLogged = useSelector((state) => state.auth.isLogged);
+
+  // MODAL ALERT STATE
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalSuccess, setModalSuccess] = useState(false);
-  const isLogged = useSelector((state) => state.auth.isLogged);
 
-  const validateForm = () => {
-    let isValid = true;
-    setErrorActual('');
-    setErrorNueva('');
-    setErrorConfirmar('');
+  // CONTROL FORM
+  const {
+    control,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { isSubmitted },
+  } = useForm({
+    mode: 'onTouched',
+  });
 
-    if (!ActualClave) {
-      setErrorActual('La clave actual es obligatoria');
-      isValid = false;
-    }
+  // Observamos el valor de "nuevaClave" 
+  const nuevaClave = watch('nuevaClave');
 
-    if (!NuevaClave) {
-      setErrorNueva('La nueva clave es obligatoria');
-      isValid = false;
-    } else if (NuevaClave.length < 8) {
-      setErrorNueva('La nueva clave debe tener al menos 8 caracteres');
-      isValid = false;
-    }
-
-    if (!ConfirmarClave) {
-      setErrorConfirmar('Debe confirmar la nueva clave');
-      isValid = false;
-    } else if (ConfirmarClave !== NuevaClave) {
-      setErrorConfirmar('Las contraseñas no coinciden');
-      isValid = false;
-    }
-
-    return isValid;
-  };
-
-  const CambioClave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
+  const limpiar = ()=>{
+    reset();
+  }
+  
+  // ENVÍO DEL FORMULARIO PROCESADO
+  const onSubmit = async (data) => {
     if (!isLogged) {
       setModalSuccess(false);
       setModalMessage('Debes iniciar sesión para cambiar tu contraseña.');
@@ -65,34 +47,23 @@ const BodySeguridad = () => {
       return;
     }
 
-    const result = await changePassword(ActualClave, NuevaClave);
+    activarCarga(); // Loader
+
+    const result = await changePassword(data.actualClave, data.nuevaClave);
+
+    desactivarCarga(); // Loeader quitar
 
     if (result.success) {
       setModalSuccess(true);
-      setModalMessage(result.mensaje);
+      setModalMessage(result.mensaje || "¡Contraseña actualizada con éxito!");
       setModalVisible(true);
-      setActualClave('');
-      setNuevaClave('');
-      setConfirmarClave('');
-      setErrorActual('');
-      setErrorNueva('');
-      setErrorConfirmar('');
-      return;
+      
+      reset(); // Limpiar
+    } else {
+      setModalSuccess(false);
+      setModalMessage(result.mensaje || 'No se pudo actualizar la contraseña');
+      setModalVisible(true);
     }
-
-    setModalSuccess(false);
-    setModalMessage(result.mensaje || 'No se pudo actualizar la contraseña');
-    setModalVisible(true);
-  };
-
-  const CamposClear = () => {
-    setActualClave('');
-    setNuevaClave('');
-    setConfirmarClave('');
-    setErrorActual('');
-    setErrorNueva('');
-    setErrorConfirmar('');
-    Alert.alert('Campos Limpiados', 'Todos los campos de clave han sido limpiados.');
   };
 
   return (
@@ -106,56 +77,80 @@ const BodySeguridad = () => {
 
       {/* TARJETA DE CAMBIO DE CLAVE */}
       <View style={styles.card}>
-        <InputSeguridad
-          label="Clave actual"
-          iconName="key-outline"
-          value={ActualClave}
-          onChangeText={setActualClave}
-          isSecure={true}
+       {/*  CONTRASEÑA ACTUAL */}
+        <Input
+          name="actualClave"
+          label="Contraseña Actual"  
+          placeholder="Coloca tu contraseña actual"
+          icon="key-outline"
+          control={control}
+          secureTextEntry={true}
+          isSubmitted={isSubmitted}
+          rules={{
+            required: 'La contraseña actual es obligatoria',
+            minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+            maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+          }}
         />
-        {errorActual ? <Text style={styles.errorText}>{errorActual}</Text> : null}
 
-        <InputSeguridad
-          label="Clave nueva"
-          iconName="lock-closed-outline"
-          value={NuevaClave}
-          onChangeText={setNuevaClave}
-          isSecure={true}
+        {/* CONTRASEÑA NUEVA */}
+        <Input
+          name="nuevaClave"
+          label="Contraseña Nueva"  
+          placeholder="Coloca tu nueva contraseña"
+          icon="lock-closed"
+          control={control}
+          secureTextEntry={true}
+          isSubmitted={isSubmitted}
+          rules={{
+            required: 'La nueva contraseña es obligatoria',
+            minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+            maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+          }}
         />
-        {errorNueva ? <Text style={styles.errorText}>{errorNueva}</Text> : null}
 
-        <InputSeguridad
-          label="Confirmar clave nueva"
-          iconName="lock-closed-outline"
-          value={ConfirmarClave}
-          onChangeText={setConfirmarClave}
-          isSecure={true}
+        {/* CONFIRMAR CONTRASEÑA NUEVA */}
+        <Input
+          name="confirmarClave"
+          label="Confirmar Contraseña Nueva"  
+          placeholder="Repite la nueva contraseña"
+          icon="lock-closed"
+          control={control}
+          secureTextEntry={true}
+          isSubmitted={isSubmitted}
+          rules={{
+            required: 'Debe confirmar la nueva contraseña',
+            validate: (val) => {
+              if (val !== nuevaClave) {
+                return 'Las contraseñas no coinciden';
+              }
+            },
+          }}
         />
-        {errorConfirmar ? <Text style={styles.errorText}>{errorConfirmar}</Text> : null}
       </View>
 
 
       {/* BOTONES DE ACCIÓN */}
       <View style={styles.buttonGroup}>
-        <BtnSeguridad
-          title="Cambiar Clave"
-          iconName="key"
-          onPress={CambioClave}
-          color="#2E7D32" // Verde
-          iconColor="#fff"
-          textColor="#fff"
-        />
-        <BtnSeguridad
-          title="Limpiar"
-          iconName="refresh-outline"
-          onPress={CamposClear}
-          color="#616161" // Gris
-          iconColor="#fff"
-          textColor="#fff"
-        />
+          
+          {/* Enviar Form*/}
+        <BtnAcion
+          text="Cambiar Clave"
+          icon="key"
+          backgroundColor="#2E7D32"
+          onPress={handleSubmit(onSubmit)}
+        /> 
+        {/* limpiar */}
+        <BtnAcion
+          text="Limpiar"
+          icon="refresh-outline"
+          backgroundColor="#666666"
+          onPress={limpiar}
+        /> 
+        
       </View>
       
-
+      {/* ALERTA */}
       <AlertModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -180,24 +175,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     gap: 15,
   },
-  // --- CABECERAS ---
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#E91E63',
-    marginBottom: 5,
-    borderLeftWidth: 4,
-    borderLeftColor: '#E91E63',
-    paddingLeft: 10,
-  },
-  Subtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 20,
-    marginLeft: 14,
-  },
-
+ 
   // --- TARJETA DE INPUTS ---
   card: {
     backgroundColor: '#fff',
@@ -219,35 +197,7 @@ const styles = StyleSheet.create({
     borderLeftColor: '#E91E63',
   },
   
-  // --- SECCIÓN DE ELIMINAR CUENTA ---
-  statusSection: {
-    marginTop: 20,
-    paddingBottom: 40,
-  },
-  deleteAccountBlock: {
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 15,
-    padding: 15,
-    backgroundColor: '#fff',
-  },
-  deleteTextWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  deleteAccountText: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: '500',
-  },
-  errorText: {
-    color: '#D32F2F',
-    marginTop: -8,
-    marginBottom: 10,
-    marginLeft: 4,
-    fontSize: 13,
-  },
+
 });
 
 export default BodySeguridad;

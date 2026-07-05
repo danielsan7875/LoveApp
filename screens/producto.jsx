@@ -131,6 +131,7 @@ const Producto = ({ route }) => {
                   <Cards
                     key={prod.id_producto} 
                     id={prod.id_producto}
+                    nombre_marca={prod.nombre_marca}
                     foto={prod.imagenes} 
                     nombre={prod.nombre}
                     precioMayor={prod.precio_mayor} 

@@ -32,6 +32,7 @@ const Login = ({activarCarga , desactivarCarga}) => {
     const {
       control,
       handleSubmit,
+      reset,
       watch,
       formState: { errors, isSubmitted },
     } = useForm({
@@ -66,6 +67,7 @@ const Login = ({activarCarga , desactivarCarga}) => {
           console.warn('Error syncing token to redux after login', e);
         }
 
+        reset();
         setTimeout(() => {
           setModalVisible(false);
           navigation.replace('MainTabs');
@@ -101,7 +103,8 @@ const Login = ({activarCarga , desactivarCarga}) => {
         >
            {/* para el TECLADO */}
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+       
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.keyboardAvoidingContainer}
           >
             <ScrollView contentContainerStyle={{ flexGrow: 3, justifyContent: 'space-between' }}>
@@ -123,6 +126,7 @@ const Login = ({activarCarga , desactivarCarga}) => {
                 {/* Campo Cédula */}
                 <Input
                     name="cedula"
+                    label="Documento de Identidad"
                     placeholder="Cédula (Ej: 12333444)"
                     icon="card"
                     control={control}
@@ -140,6 +144,7 @@ const Login = ({activarCarga , desactivarCarga}) => {
                 {/* Campo Contraseña */}
                 <Input
                   name="clave"
+                  label="Contraseña"
                   placeholder="Contraseña"
                   icon="lock-closed"
                   control={control}
@@ -161,6 +166,14 @@ const Login = ({activarCarga , desactivarCarga}) => {
                   onPress={handleSubmit(onSubmit)} 
                 />
 
+                  {/* ALERTA  */}
+                  <AlertModal
+                    visible={modalVisible}
+                    onClose={() => setModalVisible(false)}
+                    message={modalMessage}
+                    success={modalSuccess}
+                  />
+
                 {/* Footer */}
                 <View style={styles.footerLinksContainer}>
                   <TouchableOpacity onPress={OlvidoPress}>
@@ -177,13 +190,7 @@ const Login = ({activarCarga , desactivarCarga}) => {
           </KeyboardAvoidingView>
         </ImageBackground>
         
-         {/* ALERTA  */}
-        <AlertModal
-          visible={modalVisible}
-          onClose={() => setModalVisible(false)}
-          message={modalMessage}
-          success={modalSuccess}
-        />
+       
       </SafeAreaView>
   );
 };
@@ -198,14 +205,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   keyboardAvoidingContainer: {
-    flex: 2,
+    flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'space-between', 
-    paddingBottom: 30,
   },
   logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: Platform.OS === 'ios' ? 40 : 60,
+    flex: 1, 
+    minHeight: 180, 
+    paddingTop: Platform.OS === 'ios' ? 20 : 40,
     paddingBottom: 20,
   },
   logoBackground: {
@@ -213,34 +224,31 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 18,
     shadowColor: "#000",
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    width: 140,
-    height: 140,
+    width: 130,
+    height: 130,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoImage: {
-    width: 120,
-    height: 120,
+    width: 110,
+    height: 110,
   },
   formContainer: {
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     paddingHorizontal: 30,
-    paddingTop: 40,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 70,
+    paddingTop: 45,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 35, 
   },
   title: {
     fontSize: 26,
     fontWeight: 'bold',
-    color: '#000000ff',
+    color: '#000000',
     marginBottom: 30,
   },
   footerLinksContainer: {
@@ -250,14 +258,13 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    color: '#000000ff',
+    color: '#000000',
   },
   registerLink: {
     color: '#EE82EE',
     fontWeight: '600',
     fontSize: 16,
   },
-  
 });
 
 export default Login;

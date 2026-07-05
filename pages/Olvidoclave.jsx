@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import AlertModal from '../componentes/ModalAlert';
+import TituloGrande from '../componentes/titulogrande'; 
+import BtnRegresar from '../componentes/Btnregresar'; 
 import Input from '../componentes/Inputvalidacion'; 
 import BtnAcion from '../componentes/BtnAcion';  
 import { actualizarClave } from '../services/api';
@@ -79,26 +81,20 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
       style={styles.contenedorFormulario}
     >
       {/* Sección Superior: Botón Atrás */}
-      <View style={styles.bloqueSuperior}>
-        <TouchableOpacity style={styles.botonRegresar} onPress={HomePress}>
-          <View style={styles.iconoFlecha}>
-            <View style={[styles.lineaFlecha, styles.lineaSuperior]} />
-            <View style={[styles.lineaFlecha, styles.lineaInferior]} />
-            <View style={styles.lineaCuerpo} />
-          </View>
-        </TouchableOpacity>
-      </View>
+      <BtnRegresar onPress={() => navigation.navigate("MainTabs")} />
+      
 
       {/* Sección Central */}
       <View style={styles.bloqueCentral}>
-        <Text style={styles.tituloPrincipal}>Restablecer contraseña</Text>
-        <Text style={styles.descripcionCorta}>
-          Ingresa tu nueva contraseña. Asegúrate de cumplir con todos los parámetros de seguridad requeridos.
-        </Text>
+        <TituloGrande
+          title="Restablecer contraseña"
+          description="Ingresa tu nueva contraseña. Asegurate de cumplir con todos los parámetros de seguridad requeridos."
+        />
       
           {/* Campo Contraseña */}
           <Input
             name="clave"
+            label="Contraseña"
             placeholder="Contraseña"
             icon="lock-closed"
             control={control}
@@ -114,6 +110,7 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
           {/* Campo Confirmar Contraseña */}
           <Input
             name="confirmarClave"
+            label="Confirmar Contraseña"
             placeholder="Confirmar contraseña"
             icon="lock-open"
             control={control}
@@ -153,56 +150,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 30,
   },
-  bloqueSuperior: {
-    paddingTop: 20,
-    alignItems: 'flex-start',
-  },
-  botonRegresar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-  },
-  iconoFlecha: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lineaFlecha: {
-    position: 'absolute',
-    width: 10,
-    height: 2.5,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 2,
-    left: 3,
-  },
-  lineaSuperior: { transform: [{ rotate: '-45deg' }], top: 6 },
-  lineaInferior: { transform: [{ rotate: '45deg' }], bottom: 6 },
-  lineaCuerpo: { position: 'absolute', width: 13, height: 2.5, backgroundColor: '#1A1A1A', borderRadius: 2, left: 4 },
-  
   bloqueCentral: {
     flex: 1,
     justifyContent: 'center',
     marginTop: -20,
-  },
-  tituloPrincipal: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#D81B60',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  descripcionCorta: {
-    fontSize: 15,
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
   },
   contenedorInputGeneral: {
     width: '100%',

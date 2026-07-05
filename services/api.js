@@ -424,6 +424,16 @@ export async function verificarCodigoOTP(codigo) {
     
     if (e.response && e.response.data) {
       const errorJson = e.response.data;
+
+      if (errorJson.respuesta === 0 && errorJson.token) {
+        await AsyncStorage.setItem('jwt_token', errorJson.token);
+      }
+
+      // Si es respuesta -2 (Error 403), puedes opcionalmente borrarlo para limpiar la basura
+      if (errorJson.respuesta === -2) {
+        await AsyncStorage.removeItem('jwt_token');
+      }
+
       return {
         success: false,
         codigo: errorJson.respuesta || 0,
@@ -439,6 +449,43 @@ export async function verificarCodigoOTP(codigo) {
     };
   }
 }
+//----------------------- REENVIAR CODIGO
+export async function reenviarCodigoOTP() {
+  try {
+    // 1. Recuperamos el token almacenado previamente
+    const token = await AsyncStorage.getItem('jwt_token');
+
+    // 2. Enviamos la petición con la acción 100 y el token por Header
+    const response = await apiClient.post('/olvido.php', 
+      { accion: 100 }, 
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+
+    const json = response.data;
+
+    if (json && json.respuesta === 1) {
+      // 3. Sobreescribimos el almacenamiento local con el nuevo JWT (código nuevo, intentos: 0)
+      if (json.token) {
+        await AsyncStorage.setItem('jwt_token', json.token);
+      }
+      return { success: true, mensaje: json.mensaje };
+    }
+
+    return { success: false, mensaje: json.mensaje || 'No se pudo reenviar el código.' };
+
+  } catch (e) {
+    console.log("Error en reenvío OTP:", e);
+    if (e.response && e.response.data) {
+      return { success: false, mensaje: e.response.data.mensaje };
+    }
+    return { success: false, mensaje: 'Error de conexión con el servidor.' };
+  }
+}
+
 //--------------------- ACTUALIZAR CONTRASEÑA
 export async function actualizarClave(nuevaclave) {
   try {

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function CustomInput({ 
   control, 
   name, 
+  label,
   rules = {}, 
   placeholder, 
   icon, 
@@ -28,6 +29,11 @@ export default function CustomInput({
 
         return (
           <View style={styles.fieldContainer}>
+          {label && (
+              <Text style={[styles.label, tieneError && styles.labelError]}>
+                {label}
+              </Text>
+            )}
             <View style={[
               styles.inputWrapper,
               tieneError ? styles.inputError : esValido ? styles.inputValid : null
@@ -84,6 +90,16 @@ export default function CustomInput({
 const styles = StyleSheet.create({
   fieldContainer: {
     marginBottom: 15,
+  },
+  label: { // 👈 Estilos para tu nuevo Label
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#464646',
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  labelError: { // Cambia el color del label a rojo si hay error
+    color: 'red',
   },
   inputWrapper: {
     flexDirection: 'row',

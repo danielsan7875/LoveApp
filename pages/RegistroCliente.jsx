@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { useNavigation } from '@react-navigation/native';
-
+ 
 import AlertModal from '../componentes/ModalAlert'; 
 import Input from '../componentes/Inputvalidacion'; 
 import BtnAcion from '../componentes/BtnAcion'; 
@@ -24,6 +24,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
   const {
     control,
     handleSubmit,
+    reset,
     watch,
     formState: { errors, isSubmitted },
   } = useForm({
@@ -37,7 +38,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalSuccess, setModalSuccess] = useState(false);
-  
+ 
   // ENVIO DE FORMULARIO --------------------
   const onSubmit = async (data) => {
     activarCarga();
@@ -48,6 +49,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
       setModalMessage("¡Registro exitoso! Ya puedes iniciar sesión.");
       setModalSuccess(true);
       setModalVisible(true);
+      reset(); 
 
       setTimeout(() => {
         setModalVisible(false);
@@ -89,6 +91,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
             {/* Campo Cédula */}
             <Input
               name="cedula"
+              label="Documento de Identidad"     
               placeholder="Cédula (Ej: 12333444)"
               icon="card"
               control={control}
@@ -107,6 +110,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
             {/* Campo Nombre */}
             <Input
               name="nombre"
+              label="Nombre"  
               placeholder="Nombre (Ej: Jose)"
               icon="person"
               control={control}
@@ -125,6 +129,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
             {/* Campo Apellido */}
             <Input
               name="apellido"
+              label="Apellido"  
               placeholder="Apellido (Ej: Perez)"
               icon="person-outline"
               control={control}
@@ -143,6 +148,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
             {/* Campo Teléfono */}
             <Input
               name="telefono"
+              label="Telefono"  
               placeholder="Teléfono (Ej: 0412-1234567)"
               icon="call"
               control={control}
@@ -162,6 +168,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
             {/* Campo Correo */}
             <Input
               name="correo"
+              label="Correo Electrónico"  
               placeholder="Correo electrónico"
               icon="mail"
               control={control}
@@ -179,6 +186,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
             {/* Campo Contraseña */}
             <Input
               name="clave"
+              label="Contraseña"  
               placeholder="Contraseña"
               icon="lock-closed"
               control={control}
@@ -194,6 +202,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
             {/* Campo Confirmar Contraseña */}
             <Input
               name="confirmarClave"
+              label="Confirmar Contraseña"  
               placeholder="Confirmar contraseña"
               icon="lock-open"
               control={control}

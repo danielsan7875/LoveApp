@@ -1,21 +1,34 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { useDispatch, useSelector } from "react-redux";
-import { agregarWishlistThunk, eliminarWishlistThunk } from "../redux/wishlistSlice"; // <-- Ajusta ruta
+import { agregarWishlistThunk, eliminarWishlistThunk } from "../redux/wishlistSlice"; 
 import { addToCart } from "../redux/cartSlice";
 import { Ionicons } from '@expo/vector-icons';
+import TasaOficial from '../informacion/dolar';
 
-export default function Cards({ id, id_lista, foto, nombre, precioMayor, precioDetal, onPress }) {
+const { width } = Dimensions.get('window');
+const cardWidth = (width / 2) - 20; // Ajuste perfecto para diseño en cuadrícula de 2 columnas
+
+export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precioMayor, precioDetal, onPress }) {
   const dispatch = useDispatch();
   
   const { user, isLogged } = useSelector((state) => state.auth);
-
   const cedula = user?.cedula; 
 
   const wishlistItems = useSelector((state) => state.wishlist.items);
-  
   const itemEnLista = wishlistItems.find(item => item.id === id);
   const isFav = !!itemEnLista;
+
+  const tasaCambio = TasaOficial() || 600;
+
+// Aseguramos que el precio detal sea un número válido
+const precioNumerico = parseFloat(precioDetal) * tasaCambio;
+
+// Aplicamos el formato de para punto y coma
+const precioBs = new Intl.NumberFormat('es-VE', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+}).format(precioNumerico);
 
   const agregarCarrito = () => {
     dispatch(addToCart({
@@ -46,132 +59,167 @@ export default function Cards({ id, id_lista, foto, nombre, precioMayor, precioD
   const obtenerImagenRemota = () => {
     if (Array.isArray(foto) && foto.length > 0) {
       const primerFoto = foto[0];
-      if (primerFoto?.url_imagen) {
-        return { uri: primerFoto.url_imagen };
-      }
-      if (primerFoto?.imagen) {
-        return { uri: primerFoto.imagen };
-      }
-      if (typeof primerFoto === 'string') {
-        return { uri: primerFoto };
-      }
+      if (primerFoto?.url_imagen) return { uri: primerFoto.url_imagen };
+      if (primerFoto?.imagen) return { uri: primerFoto.imagen };
+      if (typeof primerFoto === 'string') return { uri: primerFoto };
     }
 
     if (foto && typeof foto === 'object' && !Array.isArray(foto)) {
       const url = foto.url_imagen || foto.imagen;
-      if (url) {
-        return { uri: url };
-      }
+      if (url) return { uri: url };
     }
 
     return require('../assets/b6.png'); 
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
+      
+      {/* IMAGEN */}
       <View style={styles.imageContainer}>
         <Image source={obtenerImagenRemota()} style={styles.image} />
         <TouchableOpacity onPress={toggleWishlist} style={styles.favIconContainer}>
           <Ionicons
             name={isFav ? "heart" : "heart-outline"}
-            size={24}
-            color={isFav ? "#D81B60" : "#fff"}
+            size={20}
+            color={isFav ? "#EE82EE" : "#666"}
           />
         </TouchableOpacity>
       </View>
       
-      <Text style={styles.nombre}>{nombre}</Text>
-      <View style={styles.preciocontainer}>
-        <Text style={styles.precioMayor}>M: {precioMayor}$</Text>
-        <Text style={styles.precioDetal}>D: {precioDetal}$</Text>
+      {/* CONTENEDOR DE TEXTOS CON ALINEACIÓN IZQUIERDA */}
+      <View style={styles.infoContainer}>
+        {/* MARCA */}
+        <Text style={styles.marca} numberOfLines={1}>
+          {nombre_marca || 'Sin marca'}
+        </Text>
+
+        {/* NOMBRE */}
+        <Text style={styles.nombre} numberOfLines={1}>
+          {nombre}
+        </Text>
+
+        {/* PRECIO DETAL $ | Bs */}
+        <View style={styles.precioRow}>
+          <Text style={styles.precioDolar}>Ref {precioDetal}</Text>
+          <Text style={styles.separador}>|</Text>
+          <Text style={styles.precioBs}> {precioBs} Bs</Text>
+        </View>
       </View>
-      <TouchableOpacity style={styles.button} onPress={agregarCarrito}>
+
+      {/* 5. BOTÓN AGREGAR */}
+      <TouchableOpacity style={styles.button} onPress={agregarCarrito} activeOpacity={0.8}>
+        <Ionicons name="add-circle-outline" size={18} color="#fff" style={{ marginRight: 4 }} />
         <Text style={styles.btnText}>Agregar</Text>
       </TouchableOpacity>
+
     </TouchableOpacity>
   );
 }
 
-
 const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
-    borderRadius: 18,
-    margin: 10,
-    alignItems: 'center',
-    elevation: 7,
-    width: 160,
+    borderRadius: 20,
+    margin: 8,
+    width: cardWidth,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
     overflow: 'hidden',
+    justifyContent: 'space-between', // Mantiene el botón siempre abajo de forma simétrica
   },
 
   imageContainer: {
     width: '100%',
-    height: 120,
-    backgroundColor: '#f8bbd0',
+    height: 135,
+    backgroundColor: '#F9F9FB', // Fondo sutil idéntico a la UI que elegiste
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopLeftRadius: 18,
-    borderTopRightRadius: 18,
-    overflow: "hidden",
+    position: 'relative',
   },
 
   image: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
+    width: '85%',
+    height: '85%',
+    resizeMode: 'contain', // Cambiado a 'contain' para que los cosméticos luzcan enteros y perfectos
   },
 
   favIconContainer: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    top: 8,
+    right: 8,
+    backgroundColor: '#fff',
     padding: 6,
     borderRadius: 20,
-    zIndex: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+
+  infoContainer: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+
+  marca: {
+    fontSize: 11,
+    color: '#A9A9A9',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    marginBottom: 2,
   },
 
   nombre: {
     fontWeight: 'bold',
-    fontSize: 16,
-    color: '#d81b60',
-    textAlign: 'center',
-    marginTop: 4,
+    fontSize: 14,
+    color: '#2F2F2F',
+    marginBottom: 6,
   },
 
-  preciocontainer: {
-    marginVertical: 6,
+  precioRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
 
-  precioMayor: {
-    color: '#388e3c',
+  precioDolar: {
+    color: '#EE82EE', // Tu tono fucsia/lila del modal
     fontWeight: 'bold',
     fontSize: 15,
   },
 
-  precioDetal: {
-    color: '#1976d2',
-    fontWeight: 'bold',
-    fontSize: 15,
+  separador: {
+    marginHorizontal: 5,
+    color: '#000000',
+    fontSize: 13,
+  },
+
+  precioBs: {
+    color: '#2F2F2F',
+    fontSize: 13,
+    fontWeight: '500',
   },
 
   button: {
-    backgroundColor: '#d81b60',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginBottom: 10,
+    backgroundColor: '#D81B60', 
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    width: '100%',
+    borderTopLeftRadius: 0, // Plano arriba para fusionarse con el cuerpo
+    borderTopRightRadius: 0,
   },
 
   btnText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 14,
   },
 });

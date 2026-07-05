@@ -13,7 +13,9 @@ import { useNavigation } from '@react-navigation/native';
 
 import AlertModal from '../componentes/ModalAlert';
 import BtnAcion from '../componentes/BtnAcion'; 
-import { verificarCodigoOTP } from '../services/api';
+import BtnRegresar from '../componentes/Btnregresar'; 
+import TituloGrande from '../componentes/titulogrande'; 
+import { verificarCodigoOTP, reenviarCodigoOTP } from '../services/api';
 
 export default function BodyOlvido({ activarCarga, desactivarCarga }) {
   const navigation = useNavigation();
@@ -27,6 +29,25 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
   };
 
   const [segundos, setSegundos] = useState(120);
+
+  const manejarReenvio = async () => {
+  activarCarga(); // Encendemos loader
+
+  const result = await reenviarCodigoOTP();
+
+  desactivarCarga(); // Apagamos loader
+
+  if (result.success) {
+    setSegundos(120); // Resetea el contador visual a 2 minutos
+    setModalMessage("¡Código nuevo enviado con éxito a tu correo!");
+    setModalSuccess(true);
+    setModalVisible(true);
+  } else {
+    setModalMessage(result.mensaje);
+    setModalSuccess(false);
+    setModalVisible(true);
+  }
+};
 
   // Estados para el Modal Alert
   const [modalVisible, setModalVisible] = useState(false);
@@ -113,23 +134,18 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
       style={styles.contenedorFormulario}
     >
       {/* Sección Superior: Botón Atrás */}
-      <View style={styles.bloqueSuperior}>
-        <TouchableOpacity style={styles.botonRegresar} onPress={HomePress}>
-          <View style={styles.iconoFlecha}>
-            <View style={[styles.lineaFlecha, styles.lineaSuperior]} />
-            <View style={[styles.lineaFlecha, styles.lineaInferior]} />
-            <View style={styles.lineaCuerpo} />
-          </View>
-        </TouchableOpacity>
-      </View>
+      <BtnRegresar onPress={() => navigation.navigate("MainTabs")} />
+      
 
       {/* Sección Central */}
       <View style={styles.bloqueCentral}>
-        <Text style={styles.tituloPrincipal}>Ingresa tu Codigo de Verificación</Text>
-        <Text style={styles.descripcionCorta}>
-          Hemos enviado un código de verificación a tu correo electrónico. Te recomendamos revisar también la bandeja de spam o los correos no deseados en caso de que no lo encuentres.
-        </Text>
 
+        <TituloGrande
+          title="Ingresa tu Codigo de Verificación"
+          description="Hemos enviado un código de verificación a tu correo electrónico. Te recomendamos revisar también la 
+          bandeja de spam o los correos no deseados en caso de que no lo encuentres."
+         /> 
+         
         {/* Fila de los 6 Inputs */}
         <View style={styles.contenedorOtpGlobal}>
           {[0, 1, 2, 3, 4, 5].map((index) => (
@@ -174,7 +190,7 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
               Reenviar código en <Text style={styles.tiempoDestacado}>{segundos} Segundos</Text>
             </Text>
           ) : (
-            <TouchableOpacity onPress={() => setSegundos(120)}>
+            <TouchableOpacity onPress={manejarReenvio}>
               <Text style={styles.enlaceReenvio}>Reenviar Código</Text>
             </TouchableOpacity>
           )}
@@ -202,57 +218,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 30,
   },
-
-  bloqueSuperior: {
-    paddingTop: 20,
-    alignItems: 'flex-start',
-  },
-  botonRegresar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-  },
-  iconoFlecha: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lineaFlecha: {
-    position: 'absolute',
-    width: 10,
-    height: 2.5,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 2,
-    left: 3,
-  },
-  lineaSuperior: { transform: [{ rotate: '-45deg' }], top: 6 },
-  lineaInferior: { transform: [{ rotate: '45deg' }], bottom: 6 },
-  lineaCuerpo: { position: 'absolute', width: 13, height: 2.5, backgroundColor: '#1A1A1A', borderRadius: 2, left: 4 },
   
   bloqueCentral: {
     flex: 1,
     justifyContent: 'center',
     marginTop: -20,
-  },
-  tituloPrincipal: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#D81B60',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  descripcionCorta: {
-    fontSize: 15,
-    color: '#8E8E93',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 35,
   },
 
   // Estilos de la cuadrícula OTP de 6 elementos

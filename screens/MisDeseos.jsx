@@ -25,8 +25,8 @@ const MisDeseos = () => {
   }, [dispatch, isLogged, cedula]);
 
   const handleCardPress = (item) => {
-    setProductoActivo({ ...item, imagenes: item.foto || item.imagenes || [] });
-    setModalVisible(true);
+   /* setProductoActivo({ ...item, imagenes: item.foto || item.imagenes || [] });
+    setModalVisible(true);*/
   };
 
   return (
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF1F2',
     marginTop:20,
   },
   container: {
@@ -86,8 +86,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
   contentContainer: {
-    paddingHorizontal: 12,
-    paddingBottom: 24,
+    paddingHorizontal: 4,
+    paddingBottom: 80,
   },
   cardsContainer: {
     flexDirection: 'row',
