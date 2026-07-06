@@ -12,8 +12,17 @@ const cardWidth = (width / 2) - 20; // Ajuste perfecto para diseño en cuadrícu
 export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precioMayor, precioDetal, onPress }) {
   const dispatch = useDispatch();
   
-  const { user, isLogged } = useSelector((state) => state.auth);
-  const cedula = user?.cedula; 
+const { user, isLogged } = useSelector((state) => {
+  const datosAuth = state.auth;
+
+  if (datosAuth.user?.codigo || datosAuth.user?.autorizado === true) {
+    return { user: null, isLogged: false };
+  }
+
+  return { user: datosAuth.user, isLogged: datosAuth.isLogged };
+});
+
+const cedula = user?.cedula;
 
   const wishlistItems = useSelector((state) => state.wishlist.items);
   const itemEnLista = wishlistItems.find(item => item.id === id);

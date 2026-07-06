@@ -17,7 +17,7 @@ export default function PedidoCard({ pedido, onVerDetalle }) {
 
   return (
     <View style={styles.card}>
-      {/* FILA 1: Encabezado */}
+      {/*  Encabezado */}
       <View style={styles.headerRow}>
         <View style={styles.iconTextRow}>
           <Ionicons name="receipt-outline" size={18} color="#EE82EE" style={styles.iconMargin} />
@@ -29,7 +29,7 @@ export default function PedidoCard({ pedido, onVerDetalle }) {
         </View>
       </View>
 
-      {/* FILA 2: Bloque de datos */}
+      {/* datos */}
       <View style={styles.infoBlock}>
         <View style={styles.infoRow}>
           <Text style={styles.label}>Tipo:</Text>

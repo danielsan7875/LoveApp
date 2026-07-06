@@ -439,8 +439,9 @@ apiClient.interceptors.request.use(
   }
 );
 
-
-// ------------------------------------------- DANIEL ---------------------------------------------------------
+//-----------------------------
+// ---------------------------------------------------- DANIEL ---------------------------------------------------------
+//-----------------------------
 
 // ------------------- INGRESO AL LOGIN
 export async function loginUser(usuario, clave, tipoDocumento = 'V') {
@@ -512,10 +513,10 @@ export async function registerUser(data) {
     };
   }
 }
-//---------------------- OVLIDO CLAVE | VERIFICAR Y ENVIAR CODIGO----------------
+//---------------------- OVLIDO CLAVE | VERIFICAR CORREO Y ENVIAR CODIGO----------------
 export async function solicitarCodigoRecuperacion(correo) {
   try {
-    console.log("📨 Enviando al backend:", correo);
+    console.log(" Enviando ", correo);
 
     const response = await apiClient.post('/olvido.php', { correo });
     const json = response.data;
@@ -534,9 +535,8 @@ export async function solicitarCodigoRecuperacion(correo) {
     };
 
   } catch (e) {
-    console.log("Error detectado en API:", e);
+    console.log("Error en API:", e);
 
-    // Si el servidor respondió con un estatus de error (401, 400, etc.)
     if (e.response && e.response.data) {
       const errorJson = e.response.data;
       return {
@@ -546,7 +546,6 @@ export async function solicitarCodigoRecuperacion(correo) {
       };
     }
 
-    // Si realmente fue un problema de red/conexión (el servidor no respondió nada)
     return {
       success: false,
       codigo: -1,
@@ -554,7 +553,7 @@ export async function solicitarCodigoRecuperacion(correo) {
     };
   }
 }
-
+//----------------------- VERIFICAR CODIGO
 export async function verificarCodigoOTP(codigo) {
   try {
     // Recuperamos el token generado en el paso anterior
@@ -572,7 +571,6 @@ export async function verificarCodigoOTP(codigo) {
     const json = response.data;
 
     if (json && json.respuesta === 1) {
-      // Si el backend generó un nuevo token (por ejemplo, con permisos para cambiar clave), lo guardamos
       if (json.token) {
         await AsyncStorage.setItem('jwt_token', json.token);
       }
@@ -596,7 +594,7 @@ export async function verificarCodigoOTP(codigo) {
         await AsyncStorage.setItem('jwt_token', errorJson.token);
       }
 
-      // Si es respuesta -2 (Error 403), puedes opcionalmente borrarlo para limpiar la basura
+      // Si es respuesta -2 (Error 403)
       if (errorJson.respuesta === -2) {
         await AsyncStorage.removeItem('jwt_token');
       }
@@ -619,10 +617,8 @@ export async function verificarCodigoOTP(codigo) {
 //----------------------- REENVIAR CODIGO
 export async function reenviarCodigoOTP() {
   try {
-    // 1. Recuperamos el token almacenado previamente
     const token = await AsyncStorage.getItem('jwt_token');
 
-    // 2. Enviamos la petición con la acción 100 y el token por Header
     const response = await apiClient.post('/olvido.php', 
       { accion: 100 }, 
       {
@@ -635,7 +631,7 @@ export async function reenviarCodigoOTP() {
     const json = response.data;
 
     if (json && json.respuesta === 1) {
-      // 3. Sobreescribimos el almacenamiento local con el nuevo JWT (código nuevo, intentos: 0)
+      // Sobreescribimos el almacenamiento local con el nuevo JWT (código nuevo, intentos: 0)
       if (json.token) {
         await AsyncStorage.setItem('jwt_token', json.token);
       }
@@ -653,7 +649,7 @@ export async function reenviarCodigoOTP() {
   }
 }
 
-//--------------------- ACTUALIZAR CONTRASEÑA
+//--------------------- ACTUALIZAR CONTRASEÑA | OLVIDO DE CLAVE
 export async function actualizarClave(nuevaclave) {
   try {
     // Recuperamos el token que tiene el permiso de actualización
@@ -701,10 +697,11 @@ export async function actualizarClave(nuevaclave) {
     };
   }
 }
+//-----------------------------
+//----------------------------------- FIN  DANIEL ----------------------------
+//-----------------------------
 
-//----------------------------------- FIN ----------------------------
 
-//-------------------
 export async function changePassword(claveActual, claveNueva) {
   try {
     const token = await getToken();

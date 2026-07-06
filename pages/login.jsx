@@ -13,12 +13,17 @@ import AlertModal from '../componentes/ModalAlert';
 import BtnAcion from '../componentes/BtnAcion'; 
 import Input from '../componentes/Inputvalidacion';
 import { loginUser, getToken } from '../services/api';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setToken, setUser } from '../redux/authSlice';
+import { registrarIntentoFallidoLogin, resetearIntentosLogin } from '../redux/seguridadSlice';
 
 const Login = ({activarCarga , desactivarCarga}) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+
+  // Traemos las variables globales en español desde nuestro nuevo estado de seguridad
+  const intentosFallidos = useSelector((state) => state.seguridad.intentosFallidosLogin);
+  const tiempoDesbloqueo = useSelector((state) => state.seguridad.tiempoDesbloqueo);
 
   const RegistrarPress = () => {
     navigation.navigate("registrarcliente");
@@ -43,51 +48,71 @@ const Login = ({activarCarga , desactivarCarga}) => {
 
   // FORMULARIO
   const onSubmit = async data => {
-    const { cedula, clave } = data;
+  const { cedula, clave } = data;
 
-    activarCarga(); 
+  // 1VALIDACIÓN PREVIA DE BLOQUEO 
+  if (tiempoDesbloqueo && Date.now() < tiempoDesbloqueo) {
+    const milisegundosRestantes = tiempoDesbloqueo - Date.now();
+    const segundosRestantes = Math.ceil(milisegundosRestantes / 1000);
+    
+    setModalMessage(`Por seguridad, tu acceso está limitado por los próximos ${segundosRestantes} segundos.`);
+    setModalSuccess(false);
+    setModalVisible(true);
+    return; // Detiene no envía nada al servidor
+  }
 
-    try {
-      const result = await loginUser(cedula, clave, 'V');
+  activarCarga(); // Loader
 
-      desactivarCarga(); 
+  try {
+    const result = await loginUser(cedula, clave, 'V');
+    desactivarCarga(); // Loader
 
-      if (result.success) {
-        setModalMessage(`Verificación exitosa. ¡Bienvenido, ${result.user?.nombre || ''}!`);
-        setModalSuccess(true);
-        setModalVisible(true);
+    if (result.success) {
+      // Si el inicio es exitoso, limpiamos inmediatamente el contador de seguridad
+      dispatch(resetearIntentosLogin());
 
-        // Obtener el token guardado y sincronizar el estado global inmediatamente
-        try {
-          const token = await getToken();
-          if (token) dispatch(setToken(token));
-          // Si la API nos devolvió datos de usuario, también los almacenamos
-          if (result.user) dispatch(setUser(result.user));
-        } catch (e) {
-          console.warn('Error syncing token to redux after login', e);
-        }
+      setModalMessage(`Verificación exitosa. ¡Bienvenido, ${result.user?.nombre || ''}!`);
+      setModalSuccess(true);
+      setModalVisible(true);
 
-        reset();
-        setTimeout(() => {
-          setModalVisible(false);
-          navigation.replace('MainTabs');
-        }, 2000);
-
-      } else {
-        setModalMessage(result.mensaje);
-        setModalSuccess(false);
-        setModalVisible(true);
+      try {
+        const token = await getToken();
+        if (token) dispatch(setToken(token));
+        if (result.user) dispatch(setUser(result.user));
+      } catch (e) {
+        console.warn('Error syncing token to redux after login', e);
       }
 
-    } catch (error) {
-      desactivarCarga(); 
-      console.error("Error en el proceso de login:", error);
-      
-      setModalMessage("Ocurrió un error inesperado al conectar con el servidor.");
+      reset();
+      setTimeout(() => {
+        setModalVisible(false);
+        navigation.replace('MainTabs');
+      }, 2000);
+
+    } else {
+      dispatch(registrarIntentoFallidoLogin());
+
+      const intentosRestantes = 5 - (intentosFallidos + 1);
+
+      if (intentosRestantes <= 0) {
+        setModalMessage(`${result.mensaje}\n\nHas alcanzado el máximo de intentos permitidos. El acceso se ha bloqueado por 2 minutos.`);
+      } else {
+        setModalMessage(result.mensaje);
+      }
+
       setModalSuccess(false);
       setModalVisible(true);
     }
-  };
+
+  } catch (error) {
+    desactivarCarga(); 
+    console.error("Error en el proceso de login:", error);
+    
+    setModalMessage("Ocurrió un error inesperado al conectar con el servidor.");
+    setModalSuccess(false);
+    setModalVisible(true);
+  }
+};
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');

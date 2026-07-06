@@ -24,13 +24,27 @@ const Producto = ({ route }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
 
-  
   const [todosLosProductos, setTodosLosProductos] = useState([]);
   const [resultados, setResultados] = useState([]);
 
-  const isLogged = useSelector((state) => state.auth.isLogged);
+  const isLogged = useSelector((state) => {
+    const usuario = state.auth.user;
+
+    if (!state.auth.isLogged || !usuario) return false;
+
+    if (usuario.codigo || usuario.autorizado === true) {
+      return false; 
+    }
+
+    return true;
+  });
 
   useEffect(() => {
+    if (!isLogged) {
+      setTodosLosProductos([]);
+      setResultados([]);
+      return; 
+    }
     const cargarProductosRemotos = async () => {
       try {
         const data = await api.fetchProductos('activos'); 

@@ -30,7 +30,17 @@ const BodyHome = () => {
     setModalVisible(true);
   };
 
-  const isLogged = useSelector(state => state.auth.isLogged);
+   const isLogged = useSelector((state) => {
+      const usuario = state.auth.user;
+  
+      if (!state.auth.isLogged || !usuario) return false;
+  
+      if (usuario.codigo || usuario.autorizado === true) {
+        return false; 
+      }
+  
+      return true;
+    });
 
   // Función limpia para cargar los productos desde la API con Axios
   const loadRemote = async () => {
@@ -48,6 +58,9 @@ const BodyHome = () => {
   };
 
   useEffect(() => {
+    if (!isLogged) {
+      return; 
+    }
     loadRemote();
     
     api.debugServerHeaders()

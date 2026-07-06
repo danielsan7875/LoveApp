@@ -20,7 +20,19 @@ const LoginBarra = () => {
   const tasa = TasaOficial();
   const navigation = useNavigation();
   const [searchQuery, setSearchQuery] = useState("");
-  const isLogged = useSelector(state => state.auth.isLogged);
+  
+  const isLogged = useSelector((state) => {
+      const usuario = state.auth.user;
+      const token = state.auth.token; 
+
+      if (!state.auth.isLogged || !usuario) return false;
+      if (usuario.codigo || usuario.autorizado === true) {
+        return false; 
+      }
+
+      return true;
+  });
+
   const dispatch = useDispatch();
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
