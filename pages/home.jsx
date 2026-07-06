@@ -15,7 +15,8 @@ import ModalProducto from '../componentes/Modal';
 import BrandSlider from '../componentes/seccionmarca.jsx';
 import { useSelector } from 'react-redux';
 import api from '../services/api';
-import { promoBanners, misMarcas } from '../informacion/banners';
+import { promoBanners, misMarcas, banners } from '../informacion/banners';
+import BannerPublicidad from '../componentes/BannerPublicidad'; // Ajusta la ruta
 
 const { width } = Dimensions.get('window');
 
@@ -28,7 +29,6 @@ const BodyHome = () => {
     setProductoActivo(producto);
     setModalVisible(true);
   };
-
 
   const isLogged = useSelector(state => state.auth.isLogged);
 
@@ -67,15 +67,11 @@ const BodyHome = () => {
 
   return (
     <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-      {/* --- BANNERS PROMOCIONALES --- */}
-      <FlatList
-        data={promoBanners}
-        renderItem={renderBanner}
-        keyExtractor={(item) => item.id}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.bannerList}
-      />
+
+
+      {/*  banner publicitario */}
+      <BannerPublicidad imagenes={banners} />
+      
 
       <View>
         <Text style={styles.text}>Productos mas vendidos</Text>
@@ -106,6 +102,15 @@ const BodyHome = () => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         producto={productoActivo}
+      />
+
+      <FlatList
+        data={promoBanners}
+        renderItem={renderBanner}
+        keyExtractor={(item) => item.id}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.bannerList}
       />
     </ScrollView>
       

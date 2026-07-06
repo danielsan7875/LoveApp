@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, StatusBar, Platform,} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { useForm } from 'react-hook-form';
+import { useSelector, useDispatch } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 
-// Componente reutilizable para los campos de entrada
-import InputMisDatos from '../componentes/InputMisDatos';
+import Input from '../componentes/Inputvalidacion'; 
 import HeaderTitulo from '../componentes/Headertitulo'; 
 import AlertModal from '../componentes/ModalAlert';
-import { useSelector, useDispatch } from 'react-redux';
+import BtnAcion from '../componentes/BtnAcion';
+
 import {
   updateUserData,
   fetchUserProfile,
@@ -17,42 +18,48 @@ import {
 } from '../services/api';
 import { setUser } from '../redux/authSlice';
 
-export default function BodyMisDatos() {
+export default function BodyMisDatos({ activarCarga, desactivarCarga }) {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
 
-  // Estado para almacenar los datos del formulario
-  const [formData, setFormData] = useState({
-    cedula: '',
-    nombre: '',
-    apellido: '',
-    telefono: '',
-    correo: '',
-  });
-
+  // MODAL ALERT STATE
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalSuccess, setModalSuccess] = useState(false);
+  
+  // Identificador único de sesión persistente
   const [cedulaSesion, setCedulaSesion] = useState('');
 
-  const applyUserToForm = (userObject) => {
+  // CONTROL DE REACT HOOK FORM
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { isSubmitted },
+  } = useForm({
+    mode: 'onTouched',
+  });
+
+  // Función  para sincronizar los datos del usuario con el formulario
+  const applyUserToForm = useCallback((userObject) => {
     if (!userObject) return;
 
     const nextFormData = buildProfileFormData(userObject);
-    if (__DEV__) {
-      console.log('[MisDatos] user object:', userObject);
-      console.log('[MisDatos] resolved form data:', nextFormData);
-    }
-    setFormData(nextFormData);
+    
+    // Rellena o actualiza todos los controladores del formulario a la vez
+    reset(nextFormData); 
+    
     setCedulaSesion(getProfileIdentity(userObject) || normalizeCedula(nextFormData.cedula));
-  };
+  }, [reset]);
 
+  // Sincroniza si el estado global de Redux cambia
   useEffect(() => {
     if (user) {
       applyUserToForm(user);
     }
-  }, [user]);
+  }, [user, applyUserToForm]);
 
+  // al enfocar la pantalla
   useFocusEffect(
     useCallback(() => {
       let active = true;
@@ -71,30 +78,20 @@ export default function BodyMisDatos() {
     }, [dispatch])
   );
 
-  // Función para manejar los cambios en los inputs
-  const EnvioForm = (field, value) => {
-    const nextValue = field === 'cedula' ? normalizeCedula(value) : value;
-    setFormData(prevState => ({
-      ...prevState,
-      [field]: nextValue,
-    }));
-  };
-
-  const RestaurarDatos = () => {
-    if (user) {
-      applyUserToForm(user);
-    }
-  };
-
-  const handleActualizar = async () => {
+  // ENVÍO DE ACTUALIZACIÓN DE FORMULARIO
+  const onSubmit = async (data) => {
+    if (typeof activarCarga === 'function') activarCarga();
     setModalSuccess(false);
 
     try {
-      const result = await updateUserData(formData, { cedulaSesion });
+      const result = await updateUserData(data, { cedulaSesion });
+      if (typeof desactivarCarga === 'function') desactivarCarga();
+
       if (result.success) {
         setModalSuccess(true);
         setModalMessage(result.mensaje || 'Datos actualizados con éxito');
         setModalVisible(true);
+        
         if (result.user) {
           dispatch(setUser(result.user));
           const nuevaCedula = getProfileIdentity(result.user);
@@ -107,69 +104,162 @@ export default function BodyMisDatos() {
       setModalMessage(result.mensaje || 'No se pudieron actualizar los datos');
       setModalVisible(true);
     } catch (e) {
+      if (typeof desactivarCarga === 'function') desactivarCarga();
       setModalSuccess(false);
       setModalMessage('Error conectando con el servidor. Intenta más tarde.');
       setModalVisible(true);
     }
   };
 
+  // Botón Restaurar revierte los cambios escritos 
+  const RestaurarDatos = () => {
+    if (user) {
+      applyUserToForm(user);
+    }
+  };
+
+  // Formateadores idénticos a tu lógica de Registro
+  const limpiarCedula = (text) => text.replace(/[^0-9]/g, '');
+  
+  const formatearTelefono = (text) => {
+    let clear = text.replace(/[^0-9-]/g, '').replace(/-/g, '');
+    if (clear.length > 4) {
+      clear = `${clear.slice(0, 4)}-${clear.slice(4, 11)}`;
+    }
+    return clear;
+  };
+
   return (
-    <View style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f7f7f7" />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      style={styles.safeArea}
+    >
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Datos Personales</Text>
-          <Text style={styles.subtitle}>Información personal</Text>
-        </View>
+        {/* CABECERA CON TU COMPONENTE */}
+        <HeaderTitulo 
+          title="Datos Personales" 
+          subtitle="Información personal" 
+        />
 
+        {/* CONTENEDOR TARJETA DE INPUTS */}
         <View style={styles.card}>
-          <InputMisDatos
+          
+          {/* CÉDULA */}
+          <Input
+            name="cedula"
             label="Cédula"
-            iconName="card-outline"
-            value={formData.cedula}
-            onChangeText={text => EnvioForm('cedula', text)}
+            placeholder="Cédula de identidad"
+            icon="card-outline"
+            control={control}
             keyboardType="number-pad"
+            isSubmitted={isSubmitted}
+            onChangeTextModifier={limpiarCedula}
+            rules={{
+              pattern: {
+                  value: /^\d{7,8}$/,
+                  message: 'La cédula debe tener entre 7 y 8 dígitos numéricos',
+                }
+            }}
           />
-          <InputMisDatos
+
+          {/* NOMBRE */}
+          <Input
+            name="nombre"
             label="Nombre"
-            iconName="person-outline"
-            value={formData.nombre}
-            onChangeText={text => EnvioForm('nombre', text)}
+            placeholder="Tu primer nombre"
+            icon="person-outline"
+            control={control}
+            isSubmitted={isSubmitted}
+            rules={{
+               required: 'El nombre es requerido',
+                minLength: { value: 3, message: 'El nombre debe tener mínimo 3 caracteres' },
+                maxLength: { value: 30, message: 'El nombre no puede superar los 30 caracteres' },
+                pattern: {
+                  value: /^[A-Za-z]+$/,
+                  message: 'Solo se permiten letras',
+                }
+            }}
           />
-          <InputMisDatos
+
+          {/* APELLIDO */}
+          <Input
+            name="apellido"
             label="Apellido"
-            iconName="person-outline"
-            value={formData.apellido}
-            onChangeText={text => EnvioForm('apellido', text)}
+            placeholder="Tu apellido"
+            icon="person-outline"
+            control={control}
+            isSubmitted={isSubmitted}
+            rules={{
+                required: 'El apellido es requerido',
+                minLength: { value: 3, message: 'El apellido debe tener mínimo 3 caracteres' },
+                maxLength: { value: 30, message: 'El apellido no puede superar los 30 caracteres' },
+                pattern: {
+                  value:  /^[A-Za-z]+$/,
+                  message: 'Solo se permiten letras',
+                }
+            }}
           />
-          <InputMisDatos
+
+          {/* TELEFONO */}
+          <Input
+            name="telefono"
             label="Teléfono"
-            iconName="call-outline"
-            value={formData.telefono}
-            onChangeText={text => EnvioForm('telefono', text)}
+            placeholder="Ej: 0412-1234567"
+            icon="call-outline"
+            control={control}
             keyboardType="phone-pad"
+            maxLength={12}
+            isSubmitted={isSubmitted}
+            onChangeTextModifier={formatearTelefono}
+            rules={{
+              required: 'El teléfono es requerido',
+              pattern: {
+                value: /^(0414|0424|0416|0426|0412|0422)-\d{7}$/,
+                message: 'Formato inválido (Ej: 0412-1234567)',
+              }
+            }}
           />
-          <InputMisDatos
+
+          {/* CORREO */}
+          <Input
+            name="correo"
             label="Correo Electrónico"
-            iconName="mail-outline"
-            value={formData.correo}
-            onChangeText={text => EnvioForm('correo', text)}
+            placeholder="correo@ejemplo.com"
+            icon="mail-outline"
+            control={control}
             keyboardType="email-address"
+            isSubmitted={isSubmitted}
+            rules={{
+              required: 'El correo es requerido',
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: 'Formato de correo no válido',
+              }
+            }}
           />
         </View>
 
-        <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={handleActualizar}>
-          <Ionicons name="save-outline" size={22} color="white" />
-          <Text style={styles.buttonText}>Actualizar Datos</Text>
-        </TouchableOpacity>
+        {/* ACCIONES USANDO BTNACION */}
+        <BtnAcion
+          text="Actualizar Datos"
+          icon="save-outline"
+          backgroundColor="#2E7D32" 
+          onPress={handleSubmit(onSubmit)}
+          styleCustom={{ marginBottom: 0, marginTop: 15 }}
+        />
 
-        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={RestaurarDatos}>
-          <Ionicons name="refresh-outline" size={22} color="white" />
-          <Text style={styles.buttonText}>Restaurar</Text>
-        </TouchableOpacity>
+        <BtnAcion
+          text="Restaurar"
+          icon="refresh-outline"
+          backgroundColor="#7F7F7F" // Gris secundario neutro
+          onPress={RestaurarDatos}
+          styleCustom={{ marginBottom: 0, marginTop: 12 }}
+        />
+
+        {/* ALERT MODAL */}
         <AlertModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
@@ -177,7 +267,7 @@ export default function BodyMisDatos() {
           success={modalSuccess}
         />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -187,9 +277,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F2',
   },
   scrollContainer: {
-    padding: 20,
-    alignItems: 'center',
-    paddingBottom: 100,
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingBottom: 150, 
   },
   header: {
     width: '100%',

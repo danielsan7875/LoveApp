@@ -240,10 +240,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
-    flexGrow: 1, 
+    flexGrow: 5, 
     justifyContent: 'center',
     paddingVertical: 30,      
     paddingHorizontal: 20,
+    paddingBottom: 80,
   },
   card: {
     backgroundColor: '#fff',

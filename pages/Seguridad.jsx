@@ -139,6 +139,7 @@ const BodySeguridad = ({activarCarga, desactivarCarga}) => {
           icon="key"
           backgroundColor="#2E7D32"
           onPress={handleSubmit(onSubmit)}
+          styleCustom={{ marginBottom: 0, marginTop: 4 }}
         /> 
         {/* limpiar */}
         <BtnAcion
@@ -146,6 +147,7 @@ const BodySeguridad = ({activarCarga, desactivarCarga}) => {
           icon="refresh-outline"
           backgroundColor="#666666"
           onPress={limpiar}
+          styleCustom={{ marginBottom: 0, marginTop: 4 }}
         /> 
         
       </View>

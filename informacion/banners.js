@@ -25,7 +25,7 @@ const misMarcas = [
     { 
       id: '1', 
       name: 'Ushas', 
-      image: require('../assets/marcas/01.webp') // Ajusta tus rutas de imagen
+      image: require('../assets/marcas/01.webp') 
     },
     { 
       id: '2', 
@@ -54,4 +54,10 @@ const misMarcas = [
     },
     
   ];
-export { promoBanners, misMarcas };
+  const banners = [
+    require('../assets/banner/publicidad1.webp'),
+    require('../assets/banner/publicidad2.webp'),
+    require('../assets/banner/publicidad3.webp'),
+    require('../assets/banner/publicidad4.webp'),
+  ];
+export { promoBanners, misMarcas, banners };
