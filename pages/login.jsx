@@ -7,15 +7,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { Controller, useForm } from 'react-hook-form';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch, useSelector } from 'react-redux';
 
+import { setToken, setUser } from '../redux/authSlice';
+import { registrarIntentoFallidoLogin, resetearIntentosLogin } from '../redux/seguridadSlice';
 
 import AlertModal from '../componentes/ModalAlert'; 
 import BtnAcion from '../componentes/BtnAcion'; 
 import Input from '../componentes/Inputvalidacion';
+import SelectorFormulario from '../componentes/Selectformulario'; 
 import { loginUser, getToken } from '../services/api';
-import { useDispatch, useSelector } from 'react-redux';
-import { setToken, setUser } from '../redux/authSlice';
-import { registrarIntentoFallidoLogin, resetearIntentosLogin } from '../redux/seguridadSlice';
 
 const Login = ({activarCarga , desactivarCarga}) => {
   const navigation = useNavigation();
@@ -48,7 +49,7 @@ const Login = ({activarCarga , desactivarCarga}) => {
 
   // FORMULARIO
   const onSubmit = async data => {
-  const { cedula, clave } = data;
+  const { cedula, clave, tipoDoc } = data;
 
   // 1VALIDACIÓN PREVIA DE BLOQUEO 
   if (tiempoDesbloqueo && Date.now() < tiempoDesbloqueo) {
@@ -64,7 +65,7 @@ const Login = ({activarCarga , desactivarCarga}) => {
   activarCarga(); // Loader
 
   try {
-    const result = await loginUser(cedula, clave, 'V');
+    const result = await loginUser(cedula, clave, tipoDoc);
     desactivarCarga(); // Loader
 
     if (result.success) {
@@ -146,26 +147,48 @@ const Login = ({activarCarga , desactivarCarga}) => {
               </View>
 
               <View style={styles.formContainer}>
-                <Text style={styles.title}>Bienvenido</Text>
+                <Text style={styles.title}>Bienvenido/a</Text>
 
                 {/* Campo Cédula */}
-                <Input
-                    name="cedula"
-                    label="Documento de Identidad"
-                    placeholder="Cédula (Ej: 12333444)"
-                    icon="card"
-                    control={control}
-                    keyboardType="numeric"
-                    isSubmitted={isSubmitted}
-                    onChangeTextModifier={limpiarCedula}
-                    rules={{
-                      required: 'La cédula es requerida',
-                      pattern: {
-                        value: /^\d{7,8}$/,
-                        message: 'La cédula debe tener entre 7 y 8 dígitos numéricos',
-                      }
-                    }}
+              <Text style={styles.labelGlobal}>Documento de Identidad</Text>
+              <View style={styles.filaDocumento}>
+                
+               {/* Selector Limpio */}
+                <SelectorFormulario
+                  name="tipoDoc"
+                  control={control}
+                  defaultValue="V"
+                  opciones={[
+                   { label: 'Venezolano (V)', value: 'V' },
+                   { label: 'Extranjero (E)', value: 'E' }
+                  ]}
+                  ancho="25%"
+                  marginRight="3%"
+                  style={{ marginTop: -15 }}
                 />
+
+              {/* Campo Cédula Expandido */}
+              <View style={styles.contenedorCedula}>
+                <Input
+                  name="cedula"
+                  label="" 
+                  placeholder="Ej: 12333444"
+                  icon="card"
+                  control={control}
+                  keyboardType="numeric"
+                  isSubmitted={isSubmitted}
+                  onChangeTextModifier={limpiarCedula}
+                  rules={{
+                    required: 'La cédula es requerida',
+                    pattern: {
+                      value: /^\d{7,8}$/,
+                      message: 'Debe tener entre 7 y 8 dígitos numéricos',
+                    }
+                  }}
+                />
+              </View>
+            </View>
+                
                 {/* Campo Contraseña */}
                 <Input
                   name="clave"
@@ -290,6 +313,23 @@ const styles = StyleSheet.create({
     color: '#EE82EE',
     fontWeight: '600',
     fontSize: 16,
+  },
+  labelGlobal: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+    paddingHorizontal: 4,
+  },
+  filaDocumento: {
+    flexDirection: 'row',
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  contenedorCedula: {
+    flex: 1,
+    justifyContent: 'center', 
   },
 });
 

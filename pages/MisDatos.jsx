@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform,Text } from 'react-native';
 import { useForm } from 'react-hook-form';
 import { useSelector, useDispatch } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import Input from '../componentes/Inputvalidacion';
 import HeaderTitulo from '../componentes/Headertitulo'; 
 import AlertModal from '../componentes/ModalAlert';
 import BtnAcion from '../componentes/BtnAcion';
+import SelectorFormulario from '../componentes/Selectformulario'; 
 
 import {
   updateUserData,
@@ -148,22 +149,44 @@ export default function BodyMisDatos({ activarCarga, desactivarCarga }) {
         <View style={styles.card}>
           
           {/* CÉDULA */}
-          <Input
-            name="cedula"
-            label="Cédula"
-            placeholder="Cédula de identidad"
-            icon="card-outline"
-            control={control}
-            keyboardType="number-pad"
-            isSubmitted={isSubmitted}
-            onChangeTextModifier={limpiarCedula}
-            rules={{
-              pattern: {
-                  value: /^\d{7,8}$/,
-                  message: 'La cédula debe tener entre 7 y 8 dígitos numéricos',
-                }
-            }}
-          />
+            <Text style={styles.labelGlobal}>Documento de Identidad</Text>
+              <View style={styles.filaDocumento}>
+                
+               {/* Selector Limpio */}
+                <SelectorFormulario
+                  name="tipoDoc"
+                  control={control}
+                  defaultValue="V"
+                  opciones={[
+                   { label: 'Venezolano (V)', value: 'V' },
+                   { label: 'Extranjero (E)', value: 'E' }
+                  ]}
+                  ancho="25%"
+                  marginRight="3%"
+                  style={{ marginTop: -15 }}
+                />
+
+              {/* Campo Cédula Expandido */}
+              <View style={styles.contenedorCedula}>
+                <Input
+                  name="cedula"
+                  label="" 
+                  placeholder="Ej: 12333444"
+                  icon="card"
+                  control={control}
+                  keyboardType="numeric"
+                  isSubmitted={isSubmitted}
+                  onChangeTextModifier={limpiarCedula}
+                  rules={{
+                    required: 'La cédula es requerida',
+                    pattern: {
+                      value: /^\d{7,8}$/,
+                      message: 'Debe tener entre 7 y 8 dígitos numéricos',
+                    }
+                  }}
+                />
+              </View>
+            </View>
 
           {/* NOMBRE */}
           <Input
@@ -343,5 +366,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 10,
+  },
+  labelGlobal: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+    paddingHorizontal: 4,
+  },
+  filaDocumento: {
+    flexDirection: 'row',
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  contenedorCedula: {
+    flex: 1,
+    justifyContent: 'center', 
   },
 });

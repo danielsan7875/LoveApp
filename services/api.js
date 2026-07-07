@@ -444,12 +444,12 @@ apiClient.interceptors.request.use(
 //-----------------------------
 
 // ------------------- INGRESO AL LOGIN
-export async function loginUser(usuario, clave, tipoDocumento = 'V') {
+export async function loginUser(usuario, clave, tipoDoc) {
   try {
     const response = await apiClient.post('/login.php', {
       usuario: usuario,
       clave: clave,
-      tipo_documento: tipoDocumento,
+      tipo_documento: tipoDoc,
     });
 
     const json = response.data;
@@ -495,7 +495,7 @@ export async function registerUser(data) {
       telefono: data.telefono,
       correo: data.correo,
       clave: data.clave,
-      tipo_documento: 'V',
+      tipo_documento: data.tipoDoc,
     });
 
     const json = response.data;
