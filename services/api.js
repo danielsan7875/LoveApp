@@ -179,13 +179,19 @@ function mapProfileUpdateMessage(mensaje) {
   return mapped;
 }
 
+const TIPOS_DOCUMENTO_VALIDOS = ['V', 'E', 'J'];
+
 function validateProfilePayload(formData, cedulaFinal) {
   const nombre = String(formData?.nombre ?? '').trim();
   const apellido = String(formData?.apellido ?? '').trim();
   const telefono = String(formData?.telefono ?? '').trim();
   const correo = String(formData?.correo ?? '').trim();
+  const tipoDocumento = String(formData?.tipo_documento ?? '').trim().toUpperCase();
   const cedula = normalizeCedula(cedulaFinal);
 
+  if (!TIPOS_DOCUMENTO_VALIDOS.includes(tipoDocumento)) {
+    return { valid: false, mensaje: 'Selecciona un tipo de documento válido.' };
+  }
   if (!cedula || cedula.length < 7 || cedula.length > 9) {
     return { valid: false, mensaje: 'La cédula debe tener entre 7 y 9 dígitos numéricos.' };
   }
@@ -206,7 +212,7 @@ function validateProfilePayload(formData, cedulaFinal) {
       apellido,
       telefono,
       correo,
-      tipo_documento: 'V',
+      tipo_documento: tipoDocumento,
     },
   };
 }
@@ -376,7 +382,17 @@ export function extractProfileField(user, aliases = []) {
 }
 
 export function buildProfileFormData(userObject) {
+  const tipoDocumento =
+    extractProfileField(userObject, [
+      'tipo_documento',
+      'tipoDocumento',
+      'tipo_documento_cliente',
+    ]) || 'V';
+
   return {
+    tipo_documento: TIPOS_DOCUMENTO_VALIDOS.includes(tipoDocumento.toUpperCase())
+      ? tipoDocumento.toUpperCase()
+      : 'V',
     cedula:
       getProfileIdentity(userObject) ||
       extractProfileField(userObject, ['cedula', 'documento', 'cedula_cliente', 'num_cedula']),
