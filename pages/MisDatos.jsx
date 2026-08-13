@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
-import { useForm } from 'react-hook-form';
+import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform, Text, TouchableOpacity } from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
+import { Ionicons } from '@expo/vector-icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -17,6 +18,12 @@ import {
   normalizeCedula,
 } from '../services/api';
 import { setUser } from '../redux/authSlice';
+
+const TIPOS_DOCUMENTO = [
+  { value: 'V', label: 'Venezolano' },
+  { value: 'E', label: 'Extranjero' },
+  { value: 'J', label: 'Jurídico' },
+];
 
 export default function BodyMisDatos({ activarCarga, desactivarCarga }) {
   const dispatch = useDispatch();
@@ -146,6 +153,61 @@ export default function BodyMisDatos({ activarCarga, desactivarCarga }) {
 
         {/* CONTENEDOR TARJETA DE INPUTS */}
         <View style={styles.card}>
+
+          {/* TIPO DE DOCUMENTO */}
+          <Controller
+            control={control}
+            name="tipo_documento"
+            rules={{ required: 'Selecciona el tipo de documento' }}
+            render={({ field: { onChange, value }, fieldState: { error } }) => {
+              const tieneError = !!error;
+              const esValido = isSubmitted && !error;
+
+              return (
+                <View style={styles.fieldContainer}>
+                  <Text style={[styles.label, tieneError && styles.labelError]}>
+                    Tipo de Documento
+                  </Text>
+                  <View style={[
+                    styles.tipoDocumentoWrapper,
+                    tieneError ? styles.inputError : esValido ? styles.inputValid : null,
+                  ]}>
+                    <Ionicons
+                      name="document-text-outline"
+                      size={20}
+                      color={tieneError ? 'red' : '#E91E63'}
+                      style={styles.tipoDocumentoIcon}
+                    />
+                    <View style={styles.tipoDocumentoOptions}>
+                      {TIPOS_DOCUMENTO.map((tipo) => {
+                        const selected = value === tipo.value;
+                        return (
+                          <TouchableOpacity
+                            key={tipo.value}
+                            style={[
+                              styles.tipoDocumentoOption,
+                              selected && styles.tipoDocumentoOptionSelected,
+                            ]}
+                            onPress={() => onChange(tipo.value)}
+                          >
+                            <Text style={[
+                              styles.tipoDocumentoOptionText,
+                              selected && styles.tipoDocumentoOptionTextSelected,
+                            ]}>
+                              {tipo.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                  {tieneError && (
+                    <Text style={styles.errorText}>{error.message}</Text>
+                  )}
+                </View>
+              );
+            }}
+          />
           
           {/* CÉDULA */}
           <Input
@@ -321,6 +383,72 @@ const styles = StyleSheet.create({
       }),
       borderLeftWidth: 5,
       borderLeftColor: '#E91E63', // Borde lateral rosa
+  },
+  fieldContainer: {
+    marginBottom: 15,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#464646',
+    marginBottom: 6,
+    marginLeft: 4,
+  },
+  labelError: {
+    color: 'red',
+  },
+  tipoDocumentoWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#E91E63',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  tipoDocumentoIcon: {
+    marginRight: 8,
+  },
+  tipoDocumentoOptions: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  tipoDocumentoOption: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E91E63',
+    backgroundColor: '#FFF1F2',
+  },
+  tipoDocumentoOptionSelected: {
+    backgroundColor: '#E91E63',
+    borderColor: '#E91E63',
+  },
+  tipoDocumentoOptionText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#E91E63',
+  },
+  tipoDocumentoOptionTextSelected: {
+    color: '#ffffff',
+  },
+  inputError: {
+    borderColor: 'red',
+    borderWidth: 1.5,
+  },
+  inputValid: {
+    borderColor: 'green',
+    borderWidth: 1.5,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 5,
   },
   
   button: {
