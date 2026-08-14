@@ -148,8 +148,9 @@ const Producto = ({ route }) => {
                     nombre_marca={prod.nombre_marca}
                     foto={prod.imagenes} 
                     nombre={prod.nombre}
-                    precioMayor={prod.precio_mayor} 
+                    precioMayor={prod.precio_mayor}
                     precioDetal={prod.precio_detal}
+                    cantidadMayor={prod.cantidad_mayor}
                     onPress={() => handleCardPress(prod)}
                   />
                 ))

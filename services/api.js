@@ -1123,6 +1123,19 @@ export async function updateUserData(formData, options = {}) {
   }
 }
 
+export async function registrarPedido(datosPedido) {
+  try {
+    const response = await apiClient.post('/VentaWeb.php', { datos: datosPedido });
+    return response.data;
+  } catch (e) {
+    console.warn('registrarPedido error:', e.response?.data || e.message);
+    return {
+      success: false,
+      message: e.response?.data?.error || e.response?.data?.message || 'Error de conexión con el servidor',
+    };
+  }
+}
+
 export default {
   loginUser,
   logout,
@@ -1136,6 +1149,7 @@ export default {
   eliminarDeWishlistRemota,
   vaciarWishlistRemota,
   fetchCategorias,
+  registrarPedido,
 };
 
 

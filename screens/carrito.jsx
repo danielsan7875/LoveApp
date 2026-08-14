@@ -9,10 +9,15 @@ export default function Carrito() {
   const dispatch = useDispatch();
   const carrito = useSelector(state => state.cart.items);
 
-  const total = carrito.reduce((acc, item) => acc + (item.cantidad * item.precioMayor), 0);
+  const total = carrito.reduce((acc, item) => {
+    const precio = item.cantidad >= (item.cantidad_mayor || 0)
+      ? parseFloat(item.precioMayor)
+      : parseFloat(item.precioDetal);
+    return acc + (item.cantidad * (isNaN(precio) ? 0 : precio));
+  }, 0);
   const navigation = useNavigation();
   const DireccionPress = () => {
-    navigation.navigate("Metodoenvio");
+    navigation.navigate("Metodoenvio", { total });
   };
 
   return (

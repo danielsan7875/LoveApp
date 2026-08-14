@@ -1,19 +1,63 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, SafeAreaView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, SafeAreaView, Alert } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import Select from '../componentes/Select';
+
+const empresasNacionales = [
+  { label: 'MRW', value: 2 },
+  { label: 'ZOOM', value: 3 },
+];
 
 export default function MetodoEntrega() {
 
    const navigation = useNavigation();
+   const route = useRoute();
+   const total = route.params?.total ?? 0;
+
     const PagoPress = () => {
-      navigation.navigate("Metodopago");
+      if (!metodoSeleccionado) return;
+
+      let entrega = {};
+
+      if (metodoSeleccionado === 'tienda') {
+        entrega = {
+          id_metodoentrega: 4,
+          direccion_envio: 'Retiro en Tienda Fisica',
+          sucursal_envio: '',
+          id_delivery: null,
+        };
+      } else if (metodoSeleccionado === 'nacional') {
+        if (!empresaEnvio || !codigoSucursal) {
+          Alert.alert('Campos requeridos', 'Selecciona la empresa de encomienda e indica el código de sucursal.');
+          return;
+        }
+        entrega = {
+          id_metodoentrega: empresaEnvio,
+          direccion_envio: direccionNacional,
+          sucursal_envio: codigoSucursal,
+          id_delivery: null,
+        };
+      } else if (metodoSeleccionado === 'delivery') {
+        if (!direccionExacta) {
+          Alert.alert('Campo requerido', 'Indica la dirección exacta de entrega.');
+          return;
+        }
+        entrega = {
+          id_metodoentrega: 1,
+          direccion_envio: [zona, parroquia, sector, direccionExacta].filter(Boolean).join(', '),
+          sucursal_envio: '',
+          id_delivery: null,
+        };
+      }
+
+      navigation.navigate("Metodopago", { total, entrega });
     };
 
   // Estado para capturar la opción seleccionada: 'tienda', 'nacional' o 'delivery'
   const [metodoSeleccionado, setMetodoSeleccionado] = useState(null);
 
   // Estados para los formularios dinámicos
-  const [empresaEnvio, setEmpresaEnvio] = useState(''); // ZOOM o MRW
+  const [empresaEnvio, setEmpresaEnvio] = useState(null); // 2 (MRW) o 3 (ZOOM)
   const [codigoSucursal, setCodigoSucursal] = useState('');
   const [direccionNacional, setDireccionNacional] = useState('');
 
@@ -74,13 +118,12 @@ export default function MetodoEntrega() {
           <View style={styles.formularioContenedor}>
             <Text style={styles.tituloFormulario}>Detalles del Envío Nacional</Text>
             
-            <Text style={styles.etiquetaInput}>Empresa de encomienda (ZOOM / MRW)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej. ZOOM"
-              placeholderTextColor="#999"
+            <Select
+              label="Empresa de encomienda"
+              opciones={empresasNacionales}
               value={empresaEnvio}
-              onChangeText={setEmpresaEnvio}
+              onSelect={setEmpresaEnvio}
+              placeholder="Selecciona MRW o ZOOM"
             />
 
             <Text style={styles.etiquetaInput}>Código de la Sucursal</Text>

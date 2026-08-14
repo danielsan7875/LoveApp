@@ -99,8 +99,9 @@ const BodyHome = () => {
             id={prod.id_producto}
             foto={prod.imagenes} 
             nombre={prod.nombre}
-            precioMayor={prod.precio_mayor} 
+            precioMayor={prod.precio_mayor}
             precioDetal={prod.precio_detal}
+            cantidadMayor={prod.cantidad_mayor}
             onPress={() => handleCardPress(prod)}
           />
         ))}

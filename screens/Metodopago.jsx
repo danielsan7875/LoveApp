@@ -1,22 +1,143 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
-  TextInput, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
   SafeAreaView,
-  Clipboard // Importado de forma nativa para la función de copiar
+  Alert,
+  ActivityIndicator
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
+import { clearCart } from '../redux/cartSlice';
+import { registrarPedido } from '../services/api';
+import Select from '../componentes/Select';
+import TasaOficial from '../informacion/dolar';
+
+const BANCOS_ORIGEN = [
+  '0102-Banco De Venezuela',
+  '0156-100% Banco ',
+  '0172-Bancamiga Banco Universal,C.A',
+  '0114-Bancaribe',
+  '0171-Banco Activo',
+  '0166-Banco Agricola De Venezuela',
+  '0128-Bancon Caroni',
+  '0163-Banco Del Tesoro',
+  '0175-Banco Digital De Los Trabajadores, Banco Universal',
+  '0115-Banco Exterior',
+  '0151-Banco Fondo Comun',
+  '0173-Banco Internacional De Desarrollo',
+  '0105-Banco Mercantil',
+  '0191-Banco Nacional De Credito',
+  '0138-Banco Plaza',
+  '0137-Banco Sofitasa',
+  '0104-Banco Venezolano De Credito',
+  '0168-Bancrecer',
+  '0134-Banesco',
+  '0177-Banfanb',
+  '0146-Bangente',
+  '0174-Banplus',
+  '0108-BBVA Provincial',
+  '0157-Delsur Banco Universal',
+  '0601-Instituto Municipal De Credito Popular',
+  '0178-N58 Banco Digital Banco Microfinanciero S.A',
+  '0169-R4 Banco Microfinanciero C.A.',
+];
+
+const BANCOS_DESTINO = [
+  '0102-Banco De Venezuela',
+  '0105-Banco Mercantil',
+];
 
 export default function MetodoPago() {
 
    const navigation = useNavigation();
-      const ConfirmarPress = () => {
-        navigation.navigate("Confirmarpedido");
-      };
+   const route = useRoute();
+   const dispatch = useDispatch();
+
+   const total = route.params?.total ?? 0;
+   const entrega = route.params?.entrega ?? {};
+
+   const carrito = useSelector(state => state.cart.items);
+   const user = useSelector(state => state.auth.user);
+   const cedula = user?.cedula;
+
+   const [loading, setLoading] = useState(false);
+
+   const handleConfirmar = async () => {
+     if (!bancoOrigen || !referencia || !bancoDestino) return;
+     if (!cedula) {
+       Alert.alert('Sesión', 'No hay sesión activa. Inicia sesión de nuevo.');
+       return;
+     }
+     if (carrito.length === 0) {
+       Alert.alert('Carrito', 'Tu carrito está vacío.');
+       return;
+     }
+
+     setLoading(true);
+
+     const ahora = new Date();
+     const fecha = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')} ${String(ahora.getHours() % 12 || 12).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')} ${ahora.getHours() >= 12 ? 'PM' : 'AM'}`;
+
+     const totalBs = parseFloat(montoBsCalculado) || 0;
+
+     const datosPedido = {
+       tipo: 2,
+       fecha,
+       estado: 1,
+       precio_total_usd: total,
+       precio_total_bs: totalBs,
+       id_persona: parseInt(String(cedula).replace(/\D/g, ''), 10),
+
+       id_metodopago: 1,
+       referencia_bancaria: referencia,
+       telefono_emisor: telefonoEmisor,
+       banco_destino: bancoDestino,
+       banco: bancoOrigen,
+       monto: totalBs,
+       monto_usd: total,
+       imagen: null,
+
+       id_metodoentrega: entrega.id_metodoentrega,
+       direccion_envio: entrega.direccion_envio || '',
+       sucursal_envio: entrega.sucursal_envio || '',
+       id_delivery: entrega.id_delivery ?? null,
+
+       carrito: carrito.map(item => ({
+         id: item.id,
+         cantidad: item.cantidad,
+         cantidad_mayor: item.cantidad_mayor || 0,
+         precio_detal: parseFloat(item.precioDetal) || 0,
+         precio_mayor: parseFloat(item.precioMayor) || 0,
+       })),
+     };
+
+     try {
+       const resultado = await registrarPedido(datosPedido);
+
+       if (resultado && resultado.success) {
+         dispatch(clearCart());
+         navigation.replace('Confirmarpedido', {
+           pedido: {
+             idPedido: resultado.id_pedido,
+             total: total.toFixed(2),
+             metodoPago: 'Pago Móvil',
+             fecha,
+           },
+         });
+       } else {
+         Alert.alert('Error', resultado?.message || 'No se pudo registrar el pedido.');
+       }
+     } catch (e) {
+       Alert.alert('Error', 'Error de conexión con el servidor.');
+     } finally {
+       setLoading(false);
+     }
+   };
 
 
   // Datos fijos del Pago Móvil del negocio
@@ -28,10 +149,14 @@ export default function MetodoPago() {
 
   // Estados del Formulario de reporte de pago
   const [bancoOrigen, setBancoOrigen] = useState('');
+  const [bancoDestino, setBancoDestino] = useState('');
   const [referencia, setReferencia] = useState('');
   const [telefonoEmisor, setTelefonoEmisor] = useState('');
-  const [montoBs, setMontoBs] = useState('');
-  const [comprobante, setComprobante] = useState(null); // Aquí guardarás el archivo o uri de la imagen
+  const [comprobante, setComprobante] = useState(null);
+
+  // Tasa de dólar automática desde la API
+  const tasaCambio = TasaOficial();
+  const montoBsCalculado = tasaCambio ? (total * parseFloat(tasaCambio)).toFixed(2) : '0.00';
 
   // Estados sutiles de feedback visual para saber qué se copió
   const [copiadoCedula, setCopiadoCedula] = useState(false);
@@ -39,7 +164,6 @@ export default function MetodoPago() {
 
   // Funciones para copiar al portapapeles de manera nativa
   const copiarAlPortapapeles = (texto, tipo) => {
-    Clipboard.setString(texto);
     if (tipo === 'cedula') {
       setCopiadoCedula(true);
       setTimeout(() => setCopiadoCedula(false), 2000);
@@ -105,13 +229,21 @@ export default function MetodoPago() {
           <Text style={styles.tituloFormulario}>Reportar Reporte de Pago</Text>
 
           {/* Banco de Origen */}
-          <Text style={styles.etiquetaInput}>Banco de Origen (Desde donde envió)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej. Banesco, Provincial, Banco de Venezuela..."
-            placeholderTextColor="#999"
+          <Select
+            label="Banco de Origen (Desde donde envió)"
+            opciones={BANCOS_ORIGEN}
             value={bancoOrigen}
-            onChangeText={setBancoOrigen}
+            onSelect={setBancoOrigen}
+            placeholder="Selecciona tu banco"
+          />
+
+          {/* Banco de Destino */}
+          <Select
+            label="Banco de Destino (Donde recibe el negocio)"
+            opciones={BANCOS_DESTINO}
+            value={bancoDestino}
+            onSelect={setBancoDestino}
+            placeholder="Selecciona el banco destino"
           />
 
           {/* Referencia Bancaria */}
@@ -125,7 +257,7 @@ export default function MetodoPago() {
             onChangeText={setReferencia}
           />
 
-          {/* Fila de Teléfono emisor y Monto en Bs */}
+          {/* Fila de Teléfono emisor y Monto en Bs automático */}
           <View style={styles.filaInputs}>
             <View style={{ flex: 1.2, marginRight: 8 }}>
               <Text style={styles.etiquetaInput}>Teléfono Emisor</Text>
@@ -139,15 +271,12 @@ export default function MetodoPago() {
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.etiquetaInput}>Monto en Bs</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                placeholder="Bs. 0.00"
-                placeholderTextColor="#999"
-                value={montoBs}
-                onChangeText={setMontoBs}
-              />
+              <Text style={styles.etiquetaInput}>Monto en Bs (auto)</Text>
+              <View style={styles.inputMontoAuto}>
+                <Text style={styles.textoMontoAuto}>
+                  {tasaCambio ? `Bs. ${montoBsCalculado}` : 'Cargando...'}
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -173,13 +302,17 @@ export default function MetodoPago() {
       <View style={styles.contenedorFijoInferior}>
         <TouchableOpacity
           style={[
-            styles.botonProcesar, 
-            (!bancoOrigen || !referencia || !montoBs) && styles.botonDeshabilitado
+            styles.botonProcesar,
+            (!bancoOrigen || !referencia || !bancoDestino) && styles.botonDeshabilitado
           ]}
-          disabled={!bancoOrigen || !referencia || !montoBs}
-          onPress={ConfirmarPress}
+          disabled={!bancoOrigen || !referencia || !bancoDestino || loading}
+          onPress={handleConfirmar}
         >
-          <Text style={styles.textoBotonProcesar}>Registrar Pago y Finalizar</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.textoBotonProcesar}>Registrar Pago y Finalizar</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -409,6 +542,20 @@ const styles = StyleSheet.create({
   filaInputs: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  inputMontoAuto: {
+    backgroundColor: '#F3F3F3',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 50,
+    justifyContent: 'center',
+  },
+  textoMontoAuto: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#D81B60',
   },
   botonComprobante: {
     borderWidth: 1,
