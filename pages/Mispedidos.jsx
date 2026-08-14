@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,6 +9,7 @@ import {
   Platform
 } from 'react-native';
 import HeaderTitulo from '../componentes/Headertitulo'; 
+import { fetchPedidos } from '../services/api';
 
 import PedidoCard from '../componentes/PedidoCard';
 import PedidoDetalleModal from '../componentes/PedidoDetalleModal';
@@ -21,50 +22,29 @@ export default function BodyMisPedido() {
   const [modalVisible, setModalVisible] = useState(false);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
 
-  //  DATOS AMPLIADOS CON ESQUEMA DE PRODUCTOS PARA EL TICKET/RECIBO
-  const pedidos = [
-    {
-      id: '001',
-      tipo: 'Tienda',
-      fecha: '2026-05-15',
-      estado: 'Entregado',
-      metodoEntrega: 'Delivery',
-      metodoPago: 'Pago Movil',
-      referenciaPago: '#654954',
-      montoTotal: 45.00,
-      productos: [
-        { nombre: 'Paleta de Sombras Ultra Matte', cantidad: 1, precio: 25.00 },
-        { nombre: 'Labial Líquid Matte Long-Lasting', cantidad: 2, precio: 10.00 }
-      ]
-    },
-    {
-      id: '002',
-      tipo: 'Web',
-      fecha: '2026-05-10',
-      estado: 'Pendiente',
-      metodoEntrega: 'Retiro en tienda',
-      metodoPago: 'Pago Movil',
-      referenciaPago: '#468756',
-      montoTotal: 18.50,
-      productos: [
-        { nombre: 'Base de Maquillaje Cobertura Total', cantidad: 1, precio: 18.50 }
-      ]
-    },
-    {
-      id: '003',
-      tipo: 'Reserva',
-      fecha: '2026-05-05',
-      estado: 'En camino',
-      metodoEntrega: 'Envío por nacionales',
-      metodoPago: 'Pago móvil',
-      referenciaPago: '#9966314',
-      montoTotal: 34.00,
-      productos: [
-        { nombre: 'Máscara de Pestañas Efecto pestañas postizas', cantidad: 2, precio: 12.00 },
-        { nombre: 'Fijador de Maquillaje en Spray 100ml', cantidad: 1, precio: 10.00 }
-      ]
-    }
-  ];
+  const [pedidos, setPedidos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        const data = await fetchPedidos();
+        if (!mounted) return;
+        setPedidos(data);
+      } catch (e) {
+        console.warn('Error cargando pedidos:', e);
+        if (mounted) setError('No se pudieron cargar los pedidos');
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // 3. MANEJADOR PARA ABRIR EL DETALLE
   const handleVerDetalle = (pedido) => {
@@ -92,7 +72,12 @@ export default function BodyMisPedido() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.listContainer}>
-          {pedidos.map((pedido) => (
+          {loading && <Text>Cargando pedidos...</Text>}
+          {error && <Text>{error}</Text>}
+          {!loading && !error && pedidos.length === 0 && (
+            <Text>No tienes pedidos aún.</Text>
+          )}
+          {!loading && pedidos.map((pedido) => (
             <PedidoCard 
               key={pedido.id} 
               pedido={pedido} 

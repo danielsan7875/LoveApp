@@ -6,10 +6,20 @@ export default function PedidoCard({ pedido, onVerDetalle }) {
 
   const getEstadoEstilo = (estado) => {
     switch (estado) {
-      case 'Entregado': return { bg: '#E8F5E9', text: '#2E7D32' };
-      case 'Pendiente': return { bg: '#FFF3E0', text: '#EF6C00' };
-      case 'En camino': return { bg: '#E3F2FD', text: '#1565C0' };
-      default: return { bg: '#F5F5F5', text: '#616161' };
+      case 'Rechazado':
+        return { bg: '#FEE2E2', text: '#991B1B' };
+      case 'Verificar pago':
+        return { bg: '#FFF7ED', text: '#B45309' };
+      case 'Pago Verificado':
+        return { bg: '#E6F4EA', text: '#166534' };
+      case 'Pendiente envio':
+        return { bg: '#FEF3C7', text: '#92400E' };
+      case 'En camino':
+        return { bg: '#E3F2FD', text: '#0B5FFF' };
+      case 'Entregado':
+        return { bg: '#E8F5E9', text: '#2E7D32' };
+      default:
+        return { bg: '#F5F5F5', text: '#616161' };
     }
   };
 
@@ -32,8 +42,6 @@ export default function PedidoCard({ pedido, onVerDetalle }) {
       {/* datos */}
       <View style={styles.infoBlock}>
         <View style={styles.infoRow}>
-          <Text style={styles.label}>Tipo:</Text>
-          <Text style={styles.value}>{pedido.tipo}</Text>
         </View>
 
         <View style={styles.infoRow}>
