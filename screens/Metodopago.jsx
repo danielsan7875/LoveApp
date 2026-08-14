@@ -8,7 +8,8 @@ import {
   TextInput,
   SafeAreaView,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
@@ -16,6 +17,13 @@ import { clearCart } from '../redux/cartSlice';
 import { registrarPedido } from '../services/api';
 import Select from '../componentes/Select';
 import TasaOficial from '../informacion/dolar';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+import { Ionicons } from '@expo/vector-icons';
+import { Platform } from 'react-native';
+
+const TAMANO_MAXIMO_MB = 5;
+const TAMANO_MAXIMO_BYTES = TAMANO_MAXIMO_MB * 1024 * 1024;
 
 const BANCOS_ORIGEN = [
   '0102-Banco De Venezuela',
@@ -100,7 +108,7 @@ export default function MetodoPago() {
        banco: bancoOrigen,
        monto: totalBs,
        monto_usd: total,
-       imagen: null,
+       imagen: comprobante ? `data:${comprobante.type};base64,${comprobante.base64}` : null,
 
        id_metodoentrega: entrega.id_metodoentrega,
        direccion_envio: entrega.direccion_envio || '',
@@ -158,19 +166,104 @@ export default function MetodoPago() {
   const tasaCambio = TasaOficial();
   const montoBsCalculado = tasaCambio ? (total * parseFloat(tasaCambio)).toFixed(2) : '0.00';
 
-  // Estados sutiles de feedback visual para saber qué se copió
-  const [copiadoCedula, setCopiadoCedula] = useState(false);
-  const [copiadoTelf, setCopiadoTelf] = useState(false);
+// Estados sutiles de feedback visual para saber qué se copió
+   const [copiadoCedula, setCopiadoCedula] = useState(false);
+   const [copiadoTelf, setCopiadoTelf] = useState(false);
 
-  // Funciones para copiar al portapapeles de manera nativa
-  const copiarAlPortapapeles = (texto, tipo) => {
-    if (tipo === 'cedula') {
-      setCopiadoCedula(true);
-      setTimeout(() => setCopiadoCedula(false), 2000);
-    } else {
-      setCopiadoTelf(true);
-      setTimeout(() => setCopiadoTelf(false), 2000);
+   // Funciones para copiar al portapapeles de manera nativa
+   const copiarAlPortapapeles = (texto, tipo) => {
+     if (tipo === 'cedula') {
+       setCopiadoCedula(true);
+       setTimeout(() => setCopiadoCedula(false), 2000);
+     } else {
+       setCopiadoTelf(true);
+       setTimeout(() => setCopiadoTelf(false), 2000);
+     }
+   };
+
+const seleccionarComprobante = async () => {
+    try {
+      const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permiso.granted) {
+        Alert.alert('Permiso denegado', 'Se necesita acceso a la galería para seleccionar el comprobante.');
+        return;
+      }
+
+      const opciones = {
+        mediaTypes: ['images'],
+        allowsEditing: Platform.OS === 'web' ? false : true,
+        aspect: [4, 3],
+        quality: Platform.OS === 'web' ? 1 : 0.7,
+        base64: true,
+      };
+
+      const resultado = await ImagePicker.launchImageLibraryAsync(opciones);
+
+      if (resultado.canceled || !resultado.assets?.length) return;
+
+      const asset = resultado.assets[0];
+
+      if (asset.fileSize && asset.fileSize > TAMANO_MAXIMO_BYTES) {
+        Alert.alert(
+          'Imagen muy pesada',
+          `El comprobante no puede pesar más de ${TAMANO_MAXIMO_MB}MB. Tu imagen pesa ${(asset.fileSize / 1024 / 1024).toFixed(1)}MB.`
+        );
+        return;
+      }
+
+      let base64Data = asset.base64;
+      let mimeType = asset.mimeType || 'image/jpeg';
+
+      if (!base64Data && asset.uri) {
+        if (asset.uri.startsWith('data:')) {
+          const idx = asset.uri.indexOf(',');
+          if (idx > 0) base64Data = asset.uri.substring(idx + 1);
+          const mimeMatch = asset.uri.match(/^data:(image\/\w+);/);
+          if (mimeMatch) mimeType = mimeMatch[1];
+        } else if (Platform.OS === 'web') {
+          try {
+            const response = await fetch(asset.uri);
+            const blob = await response.blob();
+            base64Data = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result.split(',')[1]);
+              reader.readAsDataURL(blob);
+            });
+            if (blob.type) mimeType = blob.type;
+          } catch (e) {
+            // ignore
+          }
+        } else {
+          try {
+            const fileContent = await FileSystem.readAsStringAsync(asset.uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            base64Data = fileContent;
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+
+      if (!base64Data) {
+        Alert.alert('Error', 'No se pudo obtener el contenido de la imagen.');
+        return;
+      }
+
+      setComprobante({
+        uri: asset.uri,
+        name: asset.fileName || 'comprobante.jpg',
+        type: mimeType,
+        base64: base64Data,
+        size: asset.fileSize,
+      });
+    } catch (e) {
+      Alert.alert('Error', 'No se pudo seleccionar la imagen.');
     }
+  };
+
+  const quitarComprobante = () => {
+    setComprobante(null);
   };
 
   return (
@@ -281,19 +374,42 @@ export default function MetodoPago() {
           </View>
 
           {/* Botón de Adjuntar Comprobante */}
-          <Text style={styles.etiquetaInput}>Comprobante de Operación</Text>
-          <TouchableOpacity 
-            style={styles.botonComprobante}
-            onPress={() => {
-              console.log("Abrir selector de archivos o cámara");
-              // Aquí usarías librerías como `react-native-image-picker` o `expo-image-picker`
-              setComprobante({ name: 'comprobante_pago.jpg' }); 
-            }}
-          >
-            <Text style={styles.textoBotonComprobante}>
-              {comprobante ? ` ${comprobante.name}` : 'Subir imagen del comprobante'}
-            </Text>
-          </TouchableOpacity>
+          <Text style={styles.etiquetaInput}>Comprobante de Operación (Opcional)</Text>
+
+          {comprobante ? (
+            <View style={styles.comprobantePreviewContainer}>
+              <Image source={{ uri: comprobante.uri }} style={styles.comprobantePreview} resizeMode="cover" />
+              <View style={styles.comprobanteInfo}>
+                <Text style={styles.comprobanteNombre} numberOfLines={1}>{comprobante.name}</Text>
+                <Text style={styles.comprobanteTamano}>
+                  {comprobante.size ? `${(comprobante.size / 1024 / 1024).toFixed(2)} MB` : ''}
+                </Text>
+                <View style={styles.comprobanteAcciones}>
+                  <TouchableOpacity
+                    style={styles.comprobanteBtnCambiar}
+                    onPress={seleccionarComprobante}
+                  >
+                    <Text style={styles.comprobanteBtnCambiarTxt}>Cambiar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.comprobanteBtnQuitar}
+                    onPress={quitarComprobante}
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#D81B60" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.botonComprobante}
+              onPress={seleccionarComprobante}
+            >
+              <Ionicons name="cloud-upload-outline" size={28} color="#D81B60" style={{ marginBottom: 4 }} />
+              <Text style={styles.textoBotonComprobante}>Subir imagen del comprobante</Text>
+              <Text style={styles.textoHintComprobante}>Máximo {TAMANO_MAXIMO_MB}MB · JPG o PNG</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
       </ScrollView>
@@ -549,7 +665,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRadius: 10,
     paddingHorizontal: 12,
-    height: 50,
+    height: 40,
     justifyContent: 'center',
   },
   textoMontoAuto: {
@@ -603,5 +719,61 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+
+  // COMPROBANTE PREVIEW
+  comprobantePreviewContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#D81B60',
+    borderRadius: 10,
+    padding: 8,
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  comprobantePreview: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  comprobanteInfo: {
+    flex: 1,
+  },
+  comprobanteNombre: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  comprobanteTamano: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 6,
+  },
+  comprobanteAcciones: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  comprobanteBtnCambiar: {
+    backgroundColor: '#D81B60',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  comprobanteBtnCambiarTxt: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  comprobanteBtnQuitar: {
+    padding: 6,
+  },
+  textoHintComprobante: {
+    color: '#999',
+    fontSize: 11,
+    marginTop: 2,
   },
 });

@@ -4,11 +4,11 @@
     "slug": "LoveApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icono.webp",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/icono.webp",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -17,14 +17,14 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icono.webp",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.LoveApp"
     },
     "web": {
-      "favicon": "./assets/icono.webp"
+      "favicon": "./assets/icon.png"
     }
   }
 }

@@ -32,7 +32,15 @@ export default function Carrito() {
         contentContainerStyle={styles.listContent} // Espaciado interno para que el último item no choque con el botón
         renderItem={({ item }) => (
           <View style={styles.item}>
-            <Image source={item.foto[0]} style={styles.img} />
+            <Image
+              source={
+                Array.isArray(item.foto) && item.foto.length > 0
+                  ? { uri: item.foto[0]?.url_imagen || item.foto[0]?.imagen || (typeof item.foto[0] === 'string' ? item.foto[0] : undefined) }
+                  : require('../assets/b6.png')
+              }
+              style={styles.img}
+              resizeMode="contain"
+            />
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{item.nombre}</Text>
               <Text style={styles.price}>

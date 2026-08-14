@@ -9,6 +9,7 @@ import {
 
 import { Ionicons } from '@expo/vector-icons';
 import { CommonActions, useNavigation } from "@react-navigation/native";
+import CarritoIcon from './Carritolcon';
 
 const HearBarra = () => {
     const navigation = useNavigation();
@@ -17,7 +18,7 @@ const HearBarra = () => {
       navigation.navigate("Carrito");
     };
 
-     const ResetApp = () => {
+      const ResetApp = () => {
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
@@ -30,9 +31,7 @@ const HearBarra = () => {
         <TouchableOpacity onPress={ResetApp}>
             <Text style={styles.logoText}>LoveMakeup C.A</Text>
         </TouchableOpacity>
-              <TouchableOpacity onPress={CarritoPress} style={styles.cartButton}>
-                  <Ionicons name="cart-outline" size={28} color="#D81B60" />
-              </TouchableOpacity>
+              <CarritoIcon onPress={CarritoPress} />
         </View>
   );
 };

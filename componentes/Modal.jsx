@@ -29,13 +29,14 @@ export default function ModalProducto({ visible, onClose, producto }) {
   };
 
     const agregarCarrito = () => {
-    /*  dispatch(addToCart({
-        id: nombre + "_" + precioMayor,
-        nombre,
-        precioMayor,
-        precioDetal,
-        foto,
-      }));*/
+      dispatch(addToCart({
+        id: producto.id_producto ?? producto.id,
+        nombre: producto.nombre,
+        precioMayor: producto.precio_mayor,
+        precioDetal: producto.precio_detal,
+        cantidad_mayor: producto.cantidad_mayor,
+        foto: producto.imagenes || producto.foto || [],
+      }));
     };
 
   return (
