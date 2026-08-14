@@ -1136,6 +1136,47 @@ export async function registrarPedido(datosPedido) {
   }
 }
 
+export async function fetchPedidos() {
+  try {
+    const response = await apiClient.get('/catalogopedido.php');
+    const json = response.data;
+    if (json && json.respuesta === 1 && Array.isArray(json.pedidos)) {
+      const origin = API_BASE.split('/controlador/api')[0];
+      return json.pedidos.map((p) => {
+        return {
+          id: String(p.id_pedido ?? p.id ?? ''),
+          tipo: p.tipo ?? '',
+          fecha: p.fecha ?? p.created_at ?? '',
+          estado: (function (estatus) {
+            const map = {
+              '0': 'Rechazado',
+              '1': 'Verificar pago',
+              '2': 'Pago Verificado',
+              '3': 'Pendiente envio',
+              '4': 'En camino',
+              '5': 'Entregado',
+            };
+            const key = String(estatus ?? '').trim();
+            return map[key] || key || '';
+          })(p.estatus),
+          metodoEntrega: p.metodo_entrega ?? p.metodoEntrega ?? '',
+          metodoPago: p.metodo_pago ?? p.metodoPago ?? '',
+          referenciaPago: p.referencia_bancaria ?? p.tracking ?? '',
+          montoTotal: Number(p.precio_total_usd ?? p.precio_total_bs ?? p.precio_total ?? 0),
+          productos: Array.isArray(p.productos)
+            ? p.productos.map((it) => ({ nombre: it.nombre || it.nombre_producto || '', cantidad: it.cantidad || 0, precio: Number(it.precio ?? it.precio_unitario ?? 0) }))
+            : [],
+          raw: p,
+        };
+      });
+    }
+    return [];
+  } catch (e) {
+    console.warn('fetchPedidos error:', e.response?.data || e.message || e);
+    throw e;
+  }
+}
+
 export default {
   loginUser,
   logout,
@@ -1150,6 +1191,7 @@ export default {
   vaciarWishlistRemota,
   fetchCategorias,
   registrarPedido,
+  fetchPedidos,
 };
 
 

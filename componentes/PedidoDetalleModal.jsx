@@ -42,6 +42,58 @@ export default function PedidoDetalleModal({ visible, pedido, onClose }) {
               <Text style={[styles.metaValue, { color: '#EE82EE', fontWeight: 'bold' }]}>{pedido.estado}</Text>
             </View>
 
+            {/* INFORMACIÓN ADICIONAL */}
+            {pedido.nombre_cliente && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Cliente:</Text>
+                <Text style={styles.metaValue}>{pedido.nombre_cliente} {pedido.apellido_cliente || ''}</Text>
+              </View>
+            )}
+            {pedido.telefono && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Teléfono:</Text>
+                <Text style={styles.metaValue}>{pedido.telefono}</Text>
+              </View>
+            )}
+            {pedido.correo_cliente && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Correo:</Text>
+                <Text style={styles.metaValue}>{pedido.correo_cliente}</Text>
+              </View>
+            )}
+
+            {pedido.direccion && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Dirección:</Text>
+                <Text style={styles.metaValue}>{pedido.direccion}</Text>
+              </View>
+            )}
+            {pedido.sucursal && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Sucursal:</Text>
+                <Text style={styles.metaValue}>{pedido.sucursal}</Text>
+              </View>
+            )}
+
+            {pedido.metodoEntrega && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Entrega:</Text>
+                <Text style={styles.metaValue}>{pedido.metodoEntrega}</Text>
+              </View>
+            )}
+            {pedido.metodoPago && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Pago:</Text>
+                <Text style={styles.metaValue}>{pedido.metodoPago}</Text>
+              </View>
+            )}
+            {pedido.referenciaPago && (
+              <View style={styles.metaRow}>
+                <Text style={styles.metaLabel}>Ref. / Tracking:</Text>
+                <Text style={styles.metaValue}>{pedido.referenciaPago}</Text>
+              </View>
+            )}
+
             <View style={styles.dashedDivider} />
 
             {/* LISTADO DE PRODUCTOS */}
