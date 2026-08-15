@@ -35,7 +35,7 @@ export default function PedidoDetalleModal({ visible, pedido, onClose }) {
             </View>
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Fecha:</Text>
-              <Text style={styles.metaValue}>{pedido.fecha}</Text>
+              <Text style={styles.metaValue}>{pedido.fechaHora || pedido.fecha}</Text>
             </View>
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Estado:</Text>

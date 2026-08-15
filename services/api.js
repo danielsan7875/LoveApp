@@ -1136,6 +1136,51 @@ export async function registrarPedido(datosPedido) {
   }
 }
 
+function formatearFechaSolo(fecha) {
+  if (!fecha) return '';
+
+  const valor = String(fecha).trim();
+  if (!valor) return '';
+
+  const fechaSolo = valor.split(' ')[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fechaSolo)) {
+    return fechaSolo;
+  }
+
+  const fechaDate = new Date(valor);
+  if (!Number.isNaN(fechaDate.getTime())) {
+    return fechaDate.toLocaleDateString('es-VE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  }
+
+  return fechaSolo || valor;
+}
+
+function formatearFechaHora(fecha) {
+  if (!fecha) return '';
+
+  const valor = String(fecha).trim();
+  if (!valor) return '';
+
+  const fechaDate = new Date(valor);
+  if (!Number.isNaN(fechaDate.getTime())) {
+    return fechaDate.toLocaleString('es-VE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/Caracas',
+    });
+  }
+
+  return valor;
+}
+
 export async function fetchPedidos() {
   try {
     const response = await apiClient.get('/catalogopedido.php');
@@ -1143,10 +1188,13 @@ export async function fetchPedidos() {
     if (json && json.respuesta === 1 && Array.isArray(json.pedidos)) {
       const origin = API_BASE.split('/controlador/api')[0];
       return json.pedidos.map((p) => {
+        const fechaOriginal = p.fecha ?? p.created_at ?? '';
+
         return {
           id: String(p.id_pedido ?? p.id ?? ''),
           tipo: p.tipo ?? '',
-          fecha: p.fecha ?? p.created_at ?? '',
+          fecha: formatearFechaSolo(fechaOriginal),
+          fechaHora: formatearFechaHora(fechaOriginal),
           estado: (function (estatus) {
             const map = {
               '0': 'Rechazado',
