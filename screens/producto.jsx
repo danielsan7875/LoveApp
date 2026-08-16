@@ -16,7 +16,7 @@ import Cards from '../componentes/Cards.jsx';
 import ModalProducto from '../componentes/Modal';
 import Categoria from '../componentes/categoriafiltro.jsx';
 import api from '../services/api';
-
+import PopAlert from '../componentes/PopAlert.jsx';
 
 
 const Producto = ({ route }) => {
@@ -38,6 +38,15 @@ const Producto = ({ route }) => {
 
     return true;
   });
+
+  // -- Alerta Pop para avisar al carrito
+  const [alerta, setAlerta] = useState(false);
+  const mostrarAlerta = () =>{
+    setAlerta(true);
+    setTimeout(()=>setAlerta(false),2000);
+  }
+  // -- Alerta Pop 
+
 
   useEffect(() => {
     if (!isLogged) {
@@ -129,7 +138,16 @@ const Producto = ({ route }) => {
           <HearBarra />
           <LoginBarra />
 
-          
+          {alerta && (
+          <View style={styles.alertContainer}>
+            <PopAlert 
+              text="Agregado al carrito" 
+              iconName="cart" 
+              color="#ffffff" 
+              bgColor="#D81B60" 
+            />
+          </View>
+        )}
 
           <Categoria 
               categories={misCategorias} 
@@ -152,6 +170,7 @@ const Producto = ({ route }) => {
                     precioDetal={prod.precio_detal}
                     cantidadMayor={prod.cantidad_mayor}
                     onPress={() => handleCardPress(prod)}
+                    onAgregar={mostrarAlerta}
                   />
                 ))
               ) : (
@@ -196,6 +215,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
     color: '#D81B60', // Rosa oscuro
+  },
+  alertContainer: {
+    position: 'absolute',
+    top: 20,
+    alignSelf: 'center',
+    zIndex: 9999,
+    elevation: 5,
   },
 });
 

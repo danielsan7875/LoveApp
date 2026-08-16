@@ -7,10 +7,19 @@ import { obtenerWishlistRemotaThunk } from "../redux/wishlistSlice";
 import Cards from "../componentes/Cards";
 import ModalProducto from "../componentes/Modal";
 import HeaderTitulo from '../componentes/Headertitulo'; 
+import PopAlert from '../componentes/PopAlert.jsx';
 
 
 const MisDeseos = () => {
   const dispatch = useDispatch();
+
+    // -- Alerta Pop para avisar al carrito
+      const [alerta, setAlerta] = useState(false);
+      const mostrarAlerta = () =>{
+        setAlerta(true);
+        setTimeout(()=>setAlerta(false),2000);
+      }
+    // -- Alerta Pop 
   
   const { items: wishlist, status } = useSelector((state) => state.wishlist);
   const { user, isLogged } = useSelector((state) => state.auth);
@@ -32,9 +41,20 @@ const MisDeseos = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
+        <StatusBar barStyle="dark-content" backgroundColor="#000000" />
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
 
+         {alerta && (
+          <View style={styles.alertContainer}>
+            <PopAlert 
+              text="Agregado al carrito" 
+              iconName="cart" 
+              color="#ffffff" 
+              bgColor="#D81B60" 
+            />
+          </View>
+        )}
+        
         <HeaderTitulo 
           title="Mi lista de Deseos" 
           subtitle="Lo que más te gusta de nuestra tienda" 
@@ -58,6 +78,7 @@ const MisDeseos = () => {
                   precioDetal={item.precioDetal}
                   foto={item.foto}
                   onPress={() => handleCardPress(item)}
+                  onAgregar={mostrarAlerta}
                 />
               ))}
             </View>
@@ -122,6 +143,13 @@ const styles = StyleSheet.create({
   fontSize: 16,
   color: '#555',
 },
+  alertContainer: {
+    position: 'absolute',
+    top: 20,
+    alignSelf: 'center',
+    zIndex: 9999,
+    elevation: 5,
+  },
 });
 
 export default MisDeseos;

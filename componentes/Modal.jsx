@@ -4,11 +4,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { Ionicons } from '@expo/vector-icons';
 
 import { addToCart } from "../redux/cartSlice";
+import PopAlert from '../componentes/PopAlert.jsx';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function ModalProducto({ visible, onClose, producto }) {
     const dispatch = useDispatch();
+    const [alertaModal, setAlertaModal] = useState(false)
   
   const [activeTab, setActiveTab] = useState('description');
   const [activeIndex, setActiveIndex] = useState(0); // Estado para controlar el punto activo
@@ -37,11 +39,27 @@ export default function ModalProducto({ visible, onClose, producto }) {
         cantidad_mayor: producto.cantidad_mayor,
         foto: producto.imagenes || producto.foto || [],
       }));
+
+        setAlertaModal(true);
+        setTimeout(() => {
+          setAlertaModal(false);
+        }, 2000);
     };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
+
+        {alertaModal && (
+          <View style={styles.alertModalContainer}>
+            <PopAlert 
+              text="Agregado al carrito" 
+              iconName="cart" 
+              color="#ffffff" 
+              bgColor="#D81B60" 
+            />
+          </View>
+        )}
         
         {/* ENCABEZADO SUPERIOR */}
         <View style={styles.headerRow}>
@@ -390,5 +408,12 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  alertModalContainer: {
+    position: 'absolute',
+    top: 50,
+    alignSelf: 'center',
+    zIndex: 9999,
+    elevation: 10,
   },
 });

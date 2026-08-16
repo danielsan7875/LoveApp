@@ -20,7 +20,7 @@ import BannerPublicidad from '../componentes/BannerPublicidad'; // Ajusta la rut
 
 const { width } = Dimensions.get('window');
 
-const BodyHome = () => {
+const BodyHome = ({ onAgregar }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
   const [remoteProductos, setRemoteProductos] = useState([]);
@@ -103,6 +103,7 @@ const BodyHome = () => {
             precioDetal={prod.precio_detal}
             cantidadMayor={prod.cantidad_mayor}
             onPress={() => handleCardPress(prod)}
+            onAgregar={onAgregar}
           />
         ))}
       </View>

@@ -9,7 +9,7 @@ import TasaOficial from '../informacion/dolar';
 const { width } = Dimensions.get('window');
 const cardWidth = (width / 2) - 20; // Ajuste perfecto para diseño en cuadrícula de 2 columnas
 
-export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precioMayor, precioDetal, cantidadMayor, onPress }) {
+export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precioMayor, precioDetal, cantidadMayor, onPress, onAgregar }) {
   const dispatch = useDispatch();
   
 const { user, isLogged } = useSelector((state) => {
@@ -48,6 +48,8 @@ const precioBs = new Intl.NumberFormat('es-VE', {
       cantidad_mayor: cantidadMayor,
       foto,
     }));
+
+    if (onAgregar) onAgregar();
   };
 
   const toggleWishlist = () => {
