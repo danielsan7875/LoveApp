@@ -75,7 +75,9 @@ export default function BodyMisPedido() {
           {loading && <Text>Cargando pedidos...</Text>}
           {error && <Text>{error}</Text>}
           {!loading && !error && pedidos.length === 0 && (
-            <Text>No tienes pedidos aún.</Text>
+            <View style={styles.emptyStateContainer}>
+              <Text style={styles.emptyStateText}>No tienes pedidos aún.</Text>
+            </View>
           )}
           {!loading && pedidos.map((pedido) => (
             <PedidoCard 
@@ -107,5 +109,18 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 5,
     paddingVertical: 10,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    minHeight: 220,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  emptyStateText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
   }
 });
