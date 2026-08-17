@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Dimensions,
-  Image,
   Text,
   ScrollView,
   FlatList,
@@ -13,14 +12,21 @@ import Cards from '../componentes/Cards';
 import Banner from '../componentes/Banner';
 import ModalProducto from '../componentes/Modal';
 import BrandSlider from '../componentes/seccionmarca.jsx';
-import { useSelector } from 'react-redux';
+
 import api from '../services/api';
-import { promoBanners, misMarcas, banners } from '../informacion/banners';
-import BannerPublicidad from '../componentes/BannerPublicidad'; // Ajusta la ruta
+
+import {
+  promoBanners,
+  misMarcas,
+  banners
+} from '../informacion/banners';
+
+import BannerPublicidad from '../componentes/BannerPublicidad';
 
 const { width } = Dimensions.get('window');
 
 const BodyHome = ({ onAgregar }) => {
+
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
   const [remoteProductos, setRemoteProductos] = useState([]);
@@ -30,45 +36,34 @@ const BodyHome = ({ onAgregar }) => {
     setModalVisible(true);
   };
 
-   const isLogged = useSelector((state) => {
-      const usuario = state.auth.user;
-  
-      if (!state.auth.isLogged || !usuario) return false;
-  
-      if (usuario.codigo || usuario.autorizado === true) {
-        return false; 
-      }
-  
-      return true;
-    });
-
-  // Función limpia para cargar los productos desde la API con Axios
+  // Cargar productos desde la API
   const loadRemote = async () => {
     try {
-      const data = await api.fetchProductos('mas_vendidos'); 
-      if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
+      const data = await api.fetchProductos('mas_vendidos');
+      if (
+        data &&
+        data.respuesta === 1 &&
+        Array.isArray(data.productos)
+      ) {
         setRemoteProductos(data.productos);
       } else {
         setRemoteProductos([]);
       }
     } catch (e) {
-      console.warn('Fetch error en Home', e.message || e);
+      console.warn(
+        'Fetch error en Home:',
+        e.message || e
+      );
       setRemoteProductos([]);
     }
   };
 
   useEffect(() => {
-    if (!isLogged) {
-      return; 
-    }
     loadRemote();
-    
-    api.debugServerHeaders()
-      .then(r => console.log('debugServerHeaders Home', r))
-      .catch(console.error);
-  }, [isLogged]);
+  }, []);
 
   // --- RENDERIZADO DE BANNERS ---
+
   const renderBanner = ({ item }) => (
     <Banner
       title={item.title}
@@ -79,25 +74,36 @@ const BodyHome = ({ onAgregar }) => {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
 
+    <ScrollView
+      contentContainerStyle={styles.scrollViewContent}
+      showsVerticalScrollIndicator={false}
+    >
 
-      {/*  banner publicitario */}
-      <BannerPublicidad imagenes={banners} />
-      
+      {/* BANNER PUBLICITARIO */}
+
+      <BannerPublicidad
+        imagenes={banners}
+      />
+
+      {/* TITULO */}
 
       <View>
-        <Text style={styles.text}>Productos mas vendidos</Text>
+        <Text style={styles.text}>
+          Productos más vendidos
+        </Text>
       </View>
-        
-    
-      {/* --- LISTADO DE PRODUCTOS REMOTOS --- */}
+
+      {/* PRODUCTOS */}
+
       <View style={styles.cardsContainer}>
+
         {remoteProductos.map((prod) => (
+
           <Cards
             key={prod.id_producto}
             id={prod.id_producto}
-            foto={prod.imagenes} 
+            foto={prod.imagenes}
             nombre={prod.nombre}
             precioMayor={prod.precio_mayor}
             precioDetal={prod.precio_detal}
@@ -105,19 +111,27 @@ const BodyHome = ({ onAgregar }) => {
             onPress={() => handleCardPress(prod)}
             onAgregar={onAgregar}
           />
+
         ))}
+
       </View>
 
-       {/* --- SECCION MARCAS--- */}
-      <BrandSlider brands={misMarcas} title="Lo Mejor de Nuestro Catálogo" />
-        
+      {/* MARCAS */}
 
-      {/* --- MODAL CON EL CARRUSEL CORREGIDO --- */}
+      <BrandSlider
+        brands={misMarcas}
+        title="Lo Mejor de Nuestro Catálogo"
+      />
+
+      {/* MODAL */}
+
       <ModalProducto
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         producto={productoActivo}
       />
+
+      {/* BANNERS */}
 
       <FlatList
         data={promoBanners}
@@ -127,19 +141,22 @@ const BodyHome = ({ onAgregar }) => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.bannerList}
       />
+
     </ScrollView>
-      
   );
 };
 
 const styles = StyleSheet.create({
+
   scrollViewContent: {
-    paddingBottom: 80, // Espacio para el nav inferior
-  },  
+    paddingBottom: 80,
+  },
+
   bannerList: {
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
+
   text: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -147,11 +164,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     color: '#333',
   },
+
   cardsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
   },
+
 });
 
 export default BodyHome;

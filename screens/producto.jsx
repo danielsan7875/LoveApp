@@ -27,18 +27,7 @@ const Producto = ({ route }) => {
   const [todosLosProductos, setTodosLosProductos] = useState([]);
   const [resultados, setResultados] = useState([]);
 
-  const isLogged = useSelector((state) => {
-    const usuario = state.auth.user;
-
-    if (!state.auth.isLogged || !usuario) return false;
-
-    if (usuario.codigo || usuario.autorizado === true) {
-      return false; 
-    }
-
-    return true;
-  });
-
+ 
   // -- Alerta Pop para avisar al carrito
   const [alerta, setAlerta] = useState(false);
   const mostrarAlerta = () =>{
@@ -49,30 +38,35 @@ const Producto = ({ route }) => {
 
 
   useEffect(() => {
-    if (!isLogged) {
-      setTodosLosProductos([]);
-      setResultados([]);
-      return; 
-    }
-    const cargarProductosRemotos = async () => {
-      try {
-        const data = await api.fetchProductos('activos'); 
-        if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
-          setTodosLosProductos(data.productos);
-          setResultados(data.productos); 
-        } else {
-          setTodosLosProductos([]);
-          setResultados([]);
-        }
-      } catch (error) {
-        console.warn("Error cargando productos remotos en la pantalla de listado:", error);
+  const cargarProductosRemotos = async () => {
+    try {
+      const data = await api.fetchProductos('activos');
+
+      if (
+        data &&
+        data.respuesta === 1 &&
+        Array.isArray(data.productos)
+      ) {
+        setTodosLosProductos(data.productos);
+        setResultados(data.productos);
+      } else {
         setTodosLosProductos([]);
         setResultados([]);
       }
-    };
 
-    cargarProductosRemotos();
-  }, [isLogged]);
+    } catch (error) {
+      console.warn(
+        "Error cargando productos remotos:",
+        error.response?.data || error.message
+      );
+
+      setTodosLosProductos([]);
+      setResultados([]);
+    }
+  };
+
+  cargarProductosRemotos();
+}, []);
 
   
   useEffect(() => {
