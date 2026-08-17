@@ -40,17 +40,27 @@ const precioBs = new Intl.NumberFormat('es-VE', {
 }).format(precioNumerico);
 
   const agregarCarrito = () => {
-    dispatch(addToCart({
-      id: id ?? nombre + "_" + precioMayor,
-      nombre,
-      precioMayor,
-      precioDetal,
-      cantidad_mayor: cantidadMayor,
-      foto,
-    }));
+  if (!isLogged || !cedula) {
+    Alert.alert(
+      "Iniciar sesión",
+      "Debes iniciar sesión para agregar productos al carrito."
+    );
+    return;
+  }
 
-    if (onAgregar) onAgregar();
-  };
+  dispatch(addToCart({
+    id: id ?? nombre + "_" + precioMayor,
+    nombre,
+    precioMayor,
+    precioDetal,
+    cantidad_mayor: cantidadMayor,
+    foto,
+  }));
+
+  if (onAgregar) {
+    onAgregar();
+  }
+};
 
   const toggleWishlist = () => {
     if (!isLogged || !cedula) {
