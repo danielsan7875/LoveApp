@@ -105,6 +105,7 @@ const BodyHome = ({ onAgregar }) => {
             id={prod.id_producto}
             foto={prod.imagenes}
             nombre={prod.nombre}
+            nombre_marca={prod.nombre_marca}
             precioMayor={prod.precio_mayor}
             precioDetal={prod.precio_detal}
             cantidadMayor={prod.cantidad_mayor}
