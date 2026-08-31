@@ -106,7 +106,7 @@ export default function MetodoEntrega() {
   const [idDelivery, setIdDelivery] = useState(null);
   const [deliveries, setDeliveries] = useState([]);
   const [cargandoDelivery, setCargandoDelivery] = useState(false);
-  const [errorDelivery, setErrorDelivery] = useState(false);
+  const [errorDelivery, setErrorDelivery] = useState(null); // null | 'sesion' | 'red'
   const [zona, setZona] = useState('');
   const [parroquia, setParroquia] = useState('');
   const [sector, setSector] = useState('');
@@ -115,12 +115,13 @@ export default function MetodoEntrega() {
   // Cargar los deliveries activos desde la API (igual que el select de la web)
   const cargarDeliveries = useCallback(async () => {
     setCargandoDelivery(true);
-    setErrorDelivery(false);
+    setErrorDelivery(null);
     try {
       const lista = await fetchDeliveries();
       setDeliveries(lista);
     } catch (e) {
-      setErrorDelivery(true);
+      const status = e?.response?.status;
+      setErrorDelivery(status === 401 || status === 403 ? 'sesion' : 'red');
     } finally {
       setCargandoDelivery(false);
     }
@@ -226,7 +227,11 @@ export default function MetodoEntrega() {
 
             {errorDelivery && !cargandoDelivery && (
               <View style={styles.filaCarga}>
-                <Text style={styles.textoError}>No se pudieron cargar los deliveries.</Text>
+                <Text style={styles.textoError}>
+                  {errorDelivery === 'sesion'
+                    ? 'Tu sesión expiró. Cierra sesión y vuelve a iniciar sesión.'
+                    : 'No se pudieron cargar los deliveries. Revisa tu conexión.'}
+                </Text>
                 <TouchableOpacity style={styles.botonReintentar} onPress={cargarDeliveries}>
                   <Text style={styles.textoReintentar}>Reintentar</Text>
                 </TouchableOpacity>
