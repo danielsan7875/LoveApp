@@ -40,7 +40,8 @@ const zonasDelivery = [
 ];
 
 // Reglas de caracteres reutilizadas por los Inputs de validación (mismas que la web)
-const patronDireccion = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]+$/;
+const patronAgencia = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]{10,100}$/;
+const patronDireccion = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]{10,150}$/;
 const patronCodigoSucursal = /^[0-9]{5,7}$/;
 
 export default function MetodoEntrega() {
@@ -78,8 +79,8 @@ export default function MetodoEntrega() {
         }
         entrega = {
           id_metodoentrega: empresaEnvio,
-          direccion_envio: data.direccionAgencia.trim(),
-          sucursal_envio: data.codigoSucursal,
+          direccion_envio: (data.direccionAgencia || '').trim(),
+          sucursal_envio: data.codigoSucursal || '',
           id_delivery: null,
         };
       } else if (metodoSeleccionado === 'delivery') {
@@ -91,7 +92,7 @@ export default function MetodoEntrega() {
           Alert.alert('Campos requeridos', 'Selecciona zona, parroquia y sector.');
           return;
         }
-        const dirLimpia = data.direccionExacta.trim();
+        const dirLimpia = (data.direccionExacta || '').trim();
         entrega = {
           id_metodoentrega: 1,
           // Mismo formato que construye la web (controlador/Pedidoentrega.php)
@@ -231,7 +232,7 @@ export default function MetodoEntrega() {
               rules={{
                 required: 'La dirección de la agencia es obligatoria',
                 pattern: {
-                  value: new RegExp(`^${patronDireccion.source}{10,100}$`),
+                  value: patronAgencia,
                   message: 'Entre 10 y 100 caracteres (letras, números y . , # - / ( ))',
                 },
               }}
@@ -317,7 +318,7 @@ export default function MetodoEntrega() {
               rules={{
                 required: 'La dirección exacta es obligatoria',
                 pattern: {
-                  value: new RegExp(`^${patronDireccion.source}{10,150}$`),
+                  value: patronDireccion,
                   message: 'Entre 10 y 150 caracteres (letras, números y . , # - / ( ))',
                 },
               }}
