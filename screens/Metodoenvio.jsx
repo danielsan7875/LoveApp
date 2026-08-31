@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useForm } from 'react-hook-form';
 import Select from '../componentes/Select';
+import Input from '../componentes/Inputvalidacion';
 import { fetchDeliveries } from '../services/api';
 
 const empresasNacionales = [
@@ -37,8 +39,9 @@ const zonasDelivery = [
   { label: 'Centro', value: 'centro' },
 ];
 
-// Misma regla que la web: letras (con acentos), números y puntuación de direcciones reales
-const regexDireccion = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]{10,150}$/;
+// Reglas de caracteres reutilizadas por los Inputs de validación (mismas que la web)
+const patronDireccion = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]+$/;
+const patronCodigoSucursal = /^[0-9]{5,7}$/;
 
 export default function MetodoEntrega() {
 
@@ -46,7 +49,17 @@ export default function MetodoEntrega() {
    const route = useRoute();
    const total = route.params?.total ?? 0;
 
-    const PagoPress = () => {
+   // Formulario con validación (componente Inputvalidacion)
+   const {
+      control,
+      handleSubmit,
+      formState: { isSubmitted },
+   } = useForm({
+      mode: 'onTouched',
+      shouldUnregister: true, // solo valida los campos del método visible
+   });
+
+    const onContinuar = (data) => {
       if (!metodoSeleccionado) return;
 
       let entrega = {};
@@ -59,14 +72,14 @@ export default function MetodoEntrega() {
           id_delivery: null,
         };
       } else if (metodoSeleccionado === 'nacional') {
-        if (!empresaEnvio || !codigoSucursal) {
-          Alert.alert('Campos requeridos', 'Selecciona la empresa de encomienda e indica el código de sucursal.');
+        if (!empresaEnvio) {
+          Alert.alert('Campo requerido', 'Selecciona la empresa de encomienda.');
           return;
         }
         entrega = {
           id_metodoentrega: empresaEnvio,
-          direccion_envio: direccionNacional,
-          sucursal_envio: codigoSucursal,
+          direccion_envio: data.direccionAgencia.trim(),
+          sucursal_envio: data.codigoSucursal,
           id_delivery: null,
         };
       } else if (metodoSeleccionado === 'delivery') {
@@ -78,11 +91,7 @@ export default function MetodoEntrega() {
           Alert.alert('Campos requeridos', 'Selecciona zona, parroquia y sector.');
           return;
         }
-        const dirLimpia = direccionExacta.trim();
-        if (!regexDireccion.test(dirLimpia)) {
-          Alert.alert('Dirección inválida', 'Debe tener entre 10 y 150 caracteres (letras, números y signos como . , # - / ( )).');
-          return;
-        }
+        const dirLimpia = data.direccionExacta.trim();
         entrega = {
           id_metodoentrega: 1,
           // Mismo formato que construye la web (controlador/Pedidoentrega.php)
@@ -105,8 +114,6 @@ export default function MetodoEntrega() {
 
   // Estados para los formularios dinámicos
   const [empresaEnvio, setEmpresaEnvio] = useState(null); // 2 (MRW) o 3 (ZOOM)
-  const [codigoSucursal, setCodigoSucursal] = useState('');
-  const [direccionNacional, setDireccionNacional] = useState('');
 
   const [idDelivery, setIdDelivery] = useState(null);
   const [deliveries, setDeliveries] = useState([]);
@@ -115,7 +122,6 @@ export default function MetodoEntrega() {
   const [zona, setZona] = useState('');
   const [parroquia, setParroquia] = useState('');
   const [sector, setSector] = useState('');
-  const [direccionExacta, setDireccionExacta] = useState('');
 
   // Cargar los deliveries activos desde la API (igual que el select de la web)
   const cargarDeliveries = useCallback(async () => {
@@ -195,24 +201,40 @@ export default function MetodoEntrega() {
               placeholder="Selecciona MRW o ZOOM"
             />
 
-            <Text style={styles.etiquetaInput}>Código de la Sucursal</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej. SUC-1045"
-              placeholderTextColor="#999"
-              value={codigoSucursal}
-              onChangeText={setCodigoSucursal}
+            <Input
+              name="codigoSucursal"
+              label="Código de la Sucursal"
+              placeholder="Ej. 2140"
+              icon="hash-outline"
+              control={control}
+              isSubmitted={isSubmitted}
+              keyboardType="number-pad"
+              maxLength={7}
+              onChangeTextModifier={(t) => t.replace(/\D/g, '')}
+              rules={{
+                required: 'El código de sucursal es obligatorio',
+                pattern: {
+                  value: patronCodigoSucursal,
+                  message: 'Debe tener entre 5 y 7 dígitos',
+                },
+              }}
             />
 
-            <Text style={styles.etiquetaInput}>Dirección de la Agencia</Text>
-            <TextInput
-              style={[styles.input, styles.inputArea]}
-              placeholder="Escribe la dirección de la sucursal de destino..."
-              placeholderTextColor="#999"
-              multiline
-              numberOfLines={3}
-              value={direccionNacional}
-              onChangeText={setDireccionNacional}
+            <Input
+              name="direccionAgencia"
+              label="Nombre / Dirección de la Agencia"
+              placeholder="Ej. MRW Sucursal Barquisimeto Centro"
+              icon="location-outline"
+              control={control}
+              isSubmitted={isSubmitted}
+              maxLength={100}
+              rules={{
+                required: 'La dirección de la agencia es obligatoria',
+                pattern: {
+                  value: new RegExp(`^${patronDireccion.source}{10,100}$`),
+                  message: 'Entre 10 y 100 caracteres (letras, números y . , # - / ( ))',
+                },
+              }}
             />
           </View>
         )}
@@ -284,15 +306,21 @@ export default function MetodoEntrega() {
               placeholder="-- Selecciona un sector --"
             />
 
-            <Text style={styles.etiquetaInput}>Dirección Exacta (Casa, Punto de referencia)</Text>
-            <TextInput
-              style={[styles.input, styles.inputArea]}
+            <Input
+              name="direccionExacta"
+              label="Dirección Exacta (Casa, Punto de referencia)"
               placeholder="Ej. Av. Lara con Av. Los Leones, edif. X, piso 2, apto 2B"
-              placeholderTextColor="#999"
-              multiline
-              numberOfLines={3}
-              value={direccionExacta}
-              onChangeText={setDireccionExacta}
+              icon="home-outline"
+              control={control}
+              isSubmitted={isSubmitted}
+              maxLength={150}
+              rules={{
+                required: 'La dirección exacta es obligatoria',
+                pattern: {
+                  value: new RegExp(`^${patronDireccion.source}{10,150}$`),
+                  message: 'Entre 10 y 150 caracteres (letras, números y . , # - / ( ))',
+                },
+              }}
             />
           </View>
         )}
@@ -303,7 +331,7 @@ export default function MetodoEntrega() {
         <TouchableOpacity
           style={[styles.botonContinuar, !metodoSeleccionado && styles.botonDeshabilitado]}
           disabled={!metodoSeleccionado}
-          onPress={PagoPress}
+          onPress={handleSubmit(onContinuar)}
         >
           <Text style={styles.textoBotonContinuar}>Continuar</Text>
         </TouchableOpacity>
@@ -423,31 +451,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
     paddingBottom: 6,
-  },
-  etiquetaInput: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#444',
-    marginBottom: 6,
-    marginTop: 8,
-  },
-  input: {
-    backgroundColor: '#F9F9F9',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#333',
-  },
-  inputArea: {
-    textAlignVertical: 'top', // Alinea el texto arriba en Android
-    height: 70,
-  },
-  filaInputs: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   // Estados de carga/error del listado de deliveries
   filaCarga: {
