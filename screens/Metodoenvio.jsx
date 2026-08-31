@@ -1,12 +1,44 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, SafeAreaView, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Select from '../componentes/Select';
+import { fetchDeliveries } from '../services/api';
 
 const empresasNacionales = [
   { label: 'MRW', value: 2 },
   { label: 'ZOOM', value: 3 },
 ];
+
+// Mismas listas en cascada que la web (assets/js/Pedidoentrega.js)
+const parroquiasPorZona = {
+  norte: ['El Cuji', 'Tamaca'],
+  sur: ['Juan de Villegas', 'Union'],
+  este: ['Santa Rosa', 'Cabudare'],
+  oeste: ['Concepcion'],
+  centro: ['Catedral'],
+};
+
+const sectoresPorParroquia = {
+  'Catedral': ['Centro', 'Urbanizacion Santa Elena', 'Barrios La Cruz', 'Colinas del Viento'],
+  'Concepcion': ['La Playa', 'El Manzano', 'Urbanizacion El Obelisco', 'Barrio Bolivar'],
+  'El Cuji': ['Altos de El Cuji', 'La Pastora', 'El Cuji Centro', 'Barrio El Caribe'],
+  'Juan de Villegas': ['La Carucieña', 'La Paz', 'Urbanizacion Sucre', 'Barrio El Tostao'],
+  'Santa Rosa': ['Santa Rosa Centro', 'El Cercado', 'Urbanizacion El Ujano', 'Barrio El Garabatal'],
+  'Tamaca': ['Tamaca Centro', 'El Trompillo', 'Barrio El Jebe', 'Urbanizacion El Sisal'],
+  'Union': ['Barrio Union', 'San Jacinto', 'Urbanización El Pedregal', 'Barrio El Carmen'],
+  'Cabudare': ['La Piedad Norte', 'La Mora', 'El Trigal', 'Valle Hondo', 'Tarabana', 'Agua Viva', 'El Recreo', 'La Estancia', 'Las Mercedes', 'Los Pinos', 'La Mata', 'San Rafael'],
+};
+
+const zonasDelivery = [
+  { label: 'Norte', value: 'norte' },
+  { label: 'Sur', value: 'sur' },
+  { label: 'Este', value: 'este' },
+  { label: 'Oeste', value: 'oeste' },
+  { label: 'Centro', value: 'centro' },
+];
+
+// Misma regla que la web: letras (con acentos), números y puntuación de direcciones reales
+const regexDireccion = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]{10,150}$/;
 
 export default function MetodoEntrega() {
 
@@ -38,15 +70,25 @@ export default function MetodoEntrega() {
           id_delivery: null,
         };
       } else if (metodoSeleccionado === 'delivery') {
-        if (!direccionExacta) {
-          Alert.alert('Campo requerido', 'Indica la dirección exacta de entrega.');
+        if (!idDelivery) {
+          Alert.alert('Campo requerido', 'Selecciona un delivery disponible.');
+          return;
+        }
+        if (!zona || !parroquia || !sector) {
+          Alert.alert('Campos requeridos', 'Selecciona zona, parroquia y sector.');
+          return;
+        }
+        const dirLimpia = direccionExacta.trim();
+        if (!regexDireccion.test(dirLimpia)) {
+          Alert.alert('Dirección inválida', 'Debe tener entre 10 y 150 caracteres (letras, números y signos como . , # - / ( )).');
           return;
         }
         entrega = {
           id_metodoentrega: 1,
-          direccion_envio: [zona, parroquia, sector, direccionExacta].filter(Boolean).join(', '),
+          // Mismo formato que construye la web (controlador/Pedidoentrega.php)
+          direccion_envio: `Zona: ${zona}, Parroquia: ${parroquia}, Sector: ${sector}, Dirección: ${dirLimpia}`,
           sucursal_envio: '',
-          id_delivery: null,
+          id_delivery: idDelivery,
         };
       }
 
@@ -61,11 +103,32 @@ export default function MetodoEntrega() {
   const [codigoSucursal, setCodigoSucursal] = useState('');
   const [direccionNacional, setDireccionNacional] = useState('');
 
-  const [deliverySeleccionado, setDeliverySeleccionado] = useState('');
+  const [idDelivery, setIdDelivery] = useState(null);
+  const [deliveries, setDeliveries] = useState([]);
+  const [cargandoDelivery, setCargandoDelivery] = useState(false);
+  const [errorDelivery, setErrorDelivery] = useState(false);
   const [zona, setZona] = useState('');
   const [parroquia, setParroquia] = useState('');
   const [sector, setSector] = useState('');
   const [direccionExacta, setDireccionExacta] = useState('');
+
+  // Cargar los deliveries activos desde la API (igual que el select de la web)
+  const cargarDeliveries = useCallback(async () => {
+    setCargandoDelivery(true);
+    setErrorDelivery(false);
+    try {
+      const lista = await fetchDeliveries();
+      setDeliveries(lista);
+    } catch (e) {
+      setErrorDelivery(true);
+    } finally {
+      setCargandoDelivery(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarDeliveries();
+  }, [cargarDeliveries]);
 
   // Lista de métodos disponibles basada en tu imagen
   const metodos = [
@@ -153,52 +216,68 @@ export default function MetodoEntrega() {
         {metodoSeleccionado === 'delivery' && (
           <View style={styles.formularioContenedor}>
             <Text style={styles.tituloFormulario}>Detalles del Delivery</Text>
-            
-            <Text style={styles.etiquetaInput}>Seleccionar Delivery / Empresa</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej. Motorizado Interno, Yummy, etc."
-              placeholderTextColor="#999"
-              value={deliverySeleccionado}
-              onChangeText={setDeliverySeleccionado}
+
+            {cargandoDelivery && (
+              <View style={styles.filaCarga}>
+                <ActivityIndicator size="small" color="#D81B60" />
+                <Text style={styles.textoCarga}>Cargando deliveries disponibles...</Text>
+              </View>
+            )}
+
+            {errorDelivery && !cargandoDelivery && (
+              <View style={styles.filaCarga}>
+                <Text style={styles.textoError}>No se pudieron cargar los deliveries.</Text>
+                <TouchableOpacity style={styles.botonReintentar} onPress={cargarDeliveries}>
+                  <Text style={styles.textoReintentar}>Reintentar</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {!cargandoDelivery && !errorDelivery && (
+              <Select
+                label="Servicio de Delivery"
+                opciones={deliveries.map((d) => ({ label: `${d.tipo} --- ${d.nombre}`, value: d.id_delivery }))}
+                value={idDelivery}
+                onSelect={setIdDelivery}
+                placeholder="Seleccione repartidor o empresa"
+              />
+            )}
+
+            <Select
+              label="Zona"
+              opciones={zonasDelivery}
+              value={zona}
+              onSelect={(v) => {
+                setZona(v);
+                setParroquia('');
+                setSector('');
+              }}
+              placeholder="-- Selecciona una zona --"
             />
 
-            <View style={styles.filaInputs}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={styles.etiquetaInput}>Zona</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej. Norte"
-                  placeholderTextColor="#999"
-                  value={zona}
-                  onChangeText={setZona}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.etiquetaInput}>Parroquia</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej. Tamaca"
-                  placeholderTextColor="#999"
-                  value={parroquia}
-                  onChangeText={setParroquia}
-                />
-              </View>
-            </View>
+            <Select
+              label="Parroquia"
+              opciones={(parroquiasPorZona[zona] || []).map((p) => ({ label: p, value: p }))}
+              value={parroquia}
+              onSelect={(v) => {
+                setParroquia(v);
+                setSector('');
+              }}
+              placeholder="-- Selecciona una parroquia --"
+            />
 
-            <Text style={styles.etiquetaInput}>Sector</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej. Las Nueva Segovias"
-              placeholderTextColor="#999"
+            <Select
+              label="Sector / Urbanización"
+              opciones={(sectoresPorParroquia[parroquia] || []).map((s) => ({ label: s, value: s }))}
               value={sector}
-              onChangeText={setSector}
+              onSelect={setSector}
+              placeholder="-- Selecciona un sector --"
             />
 
             <Text style={styles.etiquetaInput}>Dirección Exacta (Casa, Punto de referencia)</Text>
             <TextInput
               style={[styles.input, styles.inputArea]}
-              placeholder="Indica detalladamente tu ubicación para el repartidor..."
+              placeholder="Ej. Av. Lara con Av. Los Leones, edif. X, piso 2, apto 2B"
               placeholderTextColor="#999"
               multiline
               numberOfLines={3}
@@ -359,6 +438,34 @@ const styles = StyleSheet.create({
   filaInputs: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  // Estados de carga/error del listado de deliveries
+  filaCarga: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    gap: 8,
+  },
+  textoCarga: {
+    fontSize: 13,
+    color: '#666',
+  },
+  textoError: {
+    fontSize: 13,
+    color: '#C62828',
+    flexShrink: 1,
+  },
+  botonReintentar: {
+    backgroundColor: '#FCE4EC',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  textoReintentar: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#D81B60',
   },
   // Área del botón inferior fijo
   contenedorFijoInferior: {

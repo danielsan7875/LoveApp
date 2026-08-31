@@ -945,6 +945,20 @@ export async function fetchCategorias() {
   }
 }
 
+// ------------------- DELIVERIES ACTIVOS (para el método de entrega) -------------------
+export async function fetchDeliveries() {
+  try {
+    const response = await apiClient.get('/delivery.php');
+    if (response.data && response.data.success) {
+      return response.data.deliveries ?? [];
+    }
+    return [];
+  } catch (e) {
+    console.warn('fetchDeliveries error:', e.message);
+    throw e;
+  }
+}
+
 export async function debugServerHeaders() {
   try {
     const response = await apiClient.get('/producto.php', {
