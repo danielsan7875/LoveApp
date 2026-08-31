@@ -89,6 +89,11 @@ export default function MetodoEntrega() {
           direccion_envio: `Zona: ${zona}, Parroquia: ${parroquia}, Sector: ${sector}, Dirección: ${dirLimpia}`,
           sucursal_envio: '',
           id_delivery: idDelivery,
+          // Campos crudos: la API del checkout los valida y reconstruye server-side
+          zona,
+          parroquia,
+          sector,
+          direccion: dirLimpia,
         };
       }
 

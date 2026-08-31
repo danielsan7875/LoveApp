@@ -110,10 +110,20 @@ export default function MetodoPago() {
        monto_usd: total,
        imagen: comprobante ? `data:${comprobante.type};base64,${comprobante.base64}` : null,
 
-       id_metodoentrega: entrega.id_metodoentrega,
-       direccion_envio: entrega.direccion_envio || '',
-       sucursal_envio: entrega.sucursal_envio || '',
-       id_delivery: entrega.id_delivery ?? null,
+        id_metodoentrega: entrega.id_metodoentrega,
+        direccion_envio: entrega.direccion_envio || '',
+        sucursal_envio: entrega.sucursal_envio || '',
+        id_delivery: entrega.id_delivery ?? null,
+
+        // Campos crudos que la API valida cuando el método es delivery (id_metodoentrega = 1)
+        ...(entrega.id_metodoentrega === 1
+          ? {
+              zona: entrega.zona || '',
+              parroquia: entrega.parroquia || '',
+              sector: entrega.sector || '',
+              direccion: entrega.direccion || '',
+            }
+          : {}),
 
        carrito: carrito.map(item => ({
          id: item.id,
