@@ -211,8 +211,7 @@ const seleccionarComprobante = async () => {
 
       const opciones = {
         mediaTypes: ['images'],
-        allowsEditing: Platform.OS === 'web' ? false : true,
-        aspect: [4, 3],
+        allowsEditing: false, // Sin recorte: se envía la imagen completa del comprobante
         quality: Platform.OS === 'web' ? 1 : 0.7,
         base64: true,
       };
