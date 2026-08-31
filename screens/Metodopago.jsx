@@ -362,19 +362,19 @@ const seleccionarComprobante = async () => {
           {/* Referencia Bancaria */}
           <Input
             name="referencia_bancaria"
-            label="Código de Referencia (Últimos 4 u 8 dígitos)"
+            label="Código de Referencia (Últimos 4 a 6 dígitos)"
             placeholder="Ej. 123456"
             icon="receipt-outline"
             control={control}
             isSubmitted={isSubmitted}
             keyboardType="number-pad"
-            maxLength={50}
-            onChangeTextModifier={(t) => t.replace(/[^0-9\-\s]/g, '')}
+            maxLength={6}
+            onChangeTextModifier={(t) => t.replace(/[^0-9]/g, '')}
             rules={{
               required: 'El código de referencia es obligatorio',
               pattern: {
-                value: /^[0-9\-\s]{6,50}$/,
-                message: 'Solo dígitos, entre 6 y 50 caracteres',
+                value: /^[0-9]{4,6}$/,
+                message: 'Solo dígitos, entre 4 y 6',
               },
             }}
           />
