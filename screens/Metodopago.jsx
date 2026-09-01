@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   SafeAreaView,
   Alert,
   ActivityIndicator,
@@ -13,9 +12,11 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
+import { useForm } from 'react-hook-form';
 import { clearCart } from '../redux/cartSlice';
 import { registrarPedido } from '../services/api';
 import Select from '../componentes/Select';
+import Input from '../componentes/Inputvalidacion';
 import TasaOficial from '../informacion/dolar';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -75,8 +76,19 @@ export default function MetodoPago() {
 
    const [loading, setLoading] = useState(false);
 
-   const handleConfirmar = async () => {
-     if (!bancoOrigen || !referencia || !bancoDestino) return;
+   // Formulario con validación (componente Inputvalidacion)
+   const {
+      control,
+      handleSubmit,
+      watch,
+      formState: { isSubmitted },
+   } = useForm({
+      mode: 'onTouched',
+   });
+   const referenciaValor = watch('referencia_bancaria');
+
+   const handleConfirmar = async (data) => {
+     if (!bancoOrigen || !bancoDestino) return;
      if (!cedula) {
        Alert.alert('Sesión', 'No hay sesión activa. Inicia sesión de nuevo.');
        return;
@@ -102,18 +114,28 @@ export default function MetodoPago() {
        id_persona: parseInt(String(cedula).replace(/\D/g, ''), 10),
 
        id_metodopago: 1,
-       referencia_bancaria: referencia,
-       telefono_emisor: telefonoEmisor,
+        referencia_bancaria: data.referencia_bancaria,
+        telefono_emisor: data.telefono_emisor,
        banco_destino: bancoDestino,
        banco: bancoOrigen,
        monto: totalBs,
        monto_usd: total,
        imagen: comprobante ? `data:${comprobante.type};base64,${comprobante.base64}` : null,
 
-       id_metodoentrega: entrega.id_metodoentrega,
-       direccion_envio: entrega.direccion_envio || '',
-       sucursal_envio: entrega.sucursal_envio || '',
-       id_delivery: entrega.id_delivery ?? null,
+        id_metodoentrega: entrega.id_metodoentrega,
+        direccion_envio: entrega.direccion_envio || '',
+        sucursal_envio: entrega.sucursal_envio || '',
+        id_delivery: entrega.id_delivery ?? null,
+
+        // Campos crudos que la API valida cuando el método es delivery (id_metodoentrega = 1)
+        ...(entrega.id_metodoentrega === 1
+          ? {
+              zona: entrega.zona || '',
+              parroquia: entrega.parroquia || '',
+              sector: entrega.sector || '',
+              direccion: entrega.direccion || '',
+            }
+          : {}),
 
        carrito: carrito.map(item => ({
          id: item.id,
@@ -158,8 +180,6 @@ export default function MetodoPago() {
   // Estados del Formulario de reporte de pago
   const [bancoOrigen, setBancoOrigen] = useState('');
   const [bancoDestino, setBancoDestino] = useState('');
-  const [referencia, setReferencia] = useState('');
-  const [telefonoEmisor, setTelefonoEmisor] = useState('');
   const [comprobante, setComprobante] = useState(null);
 
   // Tasa de dólar automática desde la API
@@ -191,8 +211,7 @@ const seleccionarComprobante = async () => {
 
       const opciones = {
         mediaTypes: ['images'],
-        allowsEditing: Platform.OS === 'web' ? false : true,
-        aspect: [4, 3],
+        allowsEditing: false, // Sin recorte: se envía la imagen completa del comprobante
         quality: Platform.OS === 'web' ? 1 : 0.7,
         base64: true,
       };
@@ -340,27 +359,45 @@ const seleccionarComprobante = async () => {
           />
 
           {/* Referencia Bancaria */}
-          <Text style={styles.etiquetaInput}>Código de Referencia (Últimos 4 u 8 dígitos)</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
+          <Input
+            name="referencia_bancaria"
+            label="Código de Referencia (Últimos 4 a 6 dígitos)"
             placeholder="Ej. 123456"
-            placeholderTextColor="#999"
-            value={referencia}
-            onChangeText={setReferencia}
+            icon="receipt-outline"
+            control={control}
+            isSubmitted={isSubmitted}
+            keyboardType="number-pad"
+            maxLength={6}
+            onChangeTextModifier={(t) => t.replace(/[^0-9]/g, '')}
+            rules={{
+              required: 'El código de referencia es obligatorio',
+              pattern: {
+                value: /^[0-9]{4,6}$/,
+                message: 'Solo dígitos, entre 4 y 6',
+              },
+            }}
           />
 
           {/* Fila de Teléfono emisor y Monto en Bs automático */}
           <View style={styles.filaInputs}>
             <View style={{ flex: 1.2, marginRight: 8 }}>
-              <Text style={styles.etiquetaInput}>Teléfono Emisor</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="phone-pad"
+              <Input
+                name="telefono_emisor"
+                label="Teléfono Emisor"
                 placeholder="0414..."
-                placeholderTextColor="#999"
-                value={telefonoEmisor}
-                onChangeText={setTelefonoEmisor}
+                icon="call-outline"
+                control={control}
+                isSubmitted={isSubmitted}
+                keyboardType="phone-pad"
+                maxLength={15}
+                onChangeTextModifier={(t) => t.replace(/[^0-9\-\s()]/g, '')}
+                rules={{
+                  required: 'El teléfono es obligatorio',
+                  pattern: {
+                    value: /^[0-9\-\s()]{7,15}$/,
+                    message: 'Solo dígitos, entre 7 y 15 caracteres',
+                  },
+                }}
               />
             </View>
             <View style={{ flex: 1 }}>
@@ -419,10 +456,10 @@ const seleccionarComprobante = async () => {
         <TouchableOpacity
           style={[
             styles.botonProcesar,
-            (!bancoOrigen || !referencia || !bancoDestino) && styles.botonDeshabilitado
+            (!bancoOrigen || !referenciaValor || !bancoDestino) && styles.botonDeshabilitado
           ]}
-          disabled={!bancoOrigen || !referencia || !bancoDestino || loading}
-          onPress={handleConfirmar}
+          disabled={!bancoOrigen || !referenciaValor || !bancoDestino || loading}
+          onPress={handleSubmit(handleConfirmar)}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />

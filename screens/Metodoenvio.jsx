@@ -1,12 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, SafeAreaView, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useForm } from 'react-hook-form';
 import Select from '../componentes/Select';
+import Input from '../componentes/Inputvalidacion';
+import { fetchDeliveries } from '../services/api';
 
 const empresasNacionales = [
   { label: 'MRW', value: 2 },
   { label: 'ZOOM', value: 3 },
 ];
+
+// Mismas listas en cascada que la web (assets/js/Pedidoentrega.js)
+const parroquiasPorZona = {
+  norte: ['El Cuji', 'Tamaca'],
+  sur: ['Juan de Villegas', 'Union'],
+  este: ['Santa Rosa', 'Cabudare'],
+  oeste: ['Concepcion'],
+  centro: ['Catedral'],
+};
+
+const sectoresPorParroquia = {
+  'Catedral': ['Centro', 'Urbanizacion Santa Elena', 'Barrios La Cruz', 'Colinas del Viento'],
+  'Concepcion': ['La Playa', 'El Manzano', 'Urbanizacion El Obelisco', 'Barrio Bolivar'],
+  'El Cuji': ['Altos de El Cuji', 'La Pastora', 'El Cuji Centro', 'Barrio El Caribe'],
+  'Juan de Villegas': ['La Carucieña', 'La Paz', 'Urbanizacion Sucre', 'Barrio El Tostao'],
+  'Santa Rosa': ['Santa Rosa Centro', 'El Cercado', 'Urbanizacion El Ujano', 'Barrio El Garabatal'],
+  'Tamaca': ['Tamaca Centro', 'El Trompillo', 'Barrio El Jebe', 'Urbanizacion El Sisal'],
+  'Union': ['Barrio Union', 'San Jacinto', 'Urbanización El Pedregal', 'Barrio El Carmen'],
+  'Cabudare': ['La Piedad Norte', 'La Mora', 'El Trigal', 'Valle Hondo', 'Tarabana', 'Agua Viva', 'El Recreo', 'La Estancia', 'Las Mercedes', 'Los Pinos', 'La Mata', 'San Rafael'],
+};
+
+const zonasDelivery = [
+  { label: 'Norte', value: 'norte' },
+  { label: 'Sur', value: 'sur' },
+  { label: 'Este', value: 'este' },
+  { label: 'Oeste', value: 'oeste' },
+  { label: 'Centro', value: 'centro' },
+];
+
+// Reglas de caracteres reutilizadas por los Inputs de validación (mismas que la web)
+const patronAgencia = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]{10,100}$/;
+const patronDireccion = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]{10,150}$/;
+const patronCodigoSucursal = /^[0-9]{5,7}$/;
 
 export default function MetodoEntrega() {
 
@@ -14,7 +50,17 @@ export default function MetodoEntrega() {
    const route = useRoute();
    const total = route.params?.total ?? 0;
 
-    const PagoPress = () => {
+   // Formulario con validación (componente Inputvalidacion)
+   const {
+      control,
+      handleSubmit,
+      formState: { isSubmitted },
+   } = useForm({
+      mode: 'onTouched',
+      shouldUnregister: true, // solo valida los campos del método visible
+   });
+
+    const onContinuar = (data) => {
       if (!metodoSeleccionado) return;
 
       let entrega = {};
@@ -27,26 +73,37 @@ export default function MetodoEntrega() {
           id_delivery: null,
         };
       } else if (metodoSeleccionado === 'nacional') {
-        if (!empresaEnvio || !codigoSucursal) {
-          Alert.alert('Campos requeridos', 'Selecciona la empresa de encomienda e indica el código de sucursal.');
+        if (!empresaEnvio) {
+          Alert.alert('Campo requerido', 'Selecciona la empresa de encomienda.');
           return;
         }
         entrega = {
           id_metodoentrega: empresaEnvio,
-          direccion_envio: direccionNacional,
-          sucursal_envio: codigoSucursal,
+          direccion_envio: (data.direccionAgencia || '').trim(),
+          sucursal_envio: data.codigoSucursal || '',
           id_delivery: null,
         };
       } else if (metodoSeleccionado === 'delivery') {
-        if (!direccionExacta) {
-          Alert.alert('Campo requerido', 'Indica la dirección exacta de entrega.');
+        if (!idDelivery) {
+          Alert.alert('Campo requerido', 'Selecciona un delivery disponible.');
           return;
         }
+        if (!zona || !parroquia || !sector) {
+          Alert.alert('Campos requeridos', 'Selecciona zona, parroquia y sector.');
+          return;
+        }
+        const dirLimpia = (data.direccionExacta || '').trim();
         entrega = {
           id_metodoentrega: 1,
-          direccion_envio: [zona, parroquia, sector, direccionExacta].filter(Boolean).join(', '),
+          // Mismo formato que construye la web (controlador/Pedidoentrega.php)
+          direccion_envio: `Zona: ${zona}, Parroquia: ${parroquia}, Sector: ${sector}, Dirección: ${dirLimpia}`,
           sucursal_envio: '',
-          id_delivery: null,
+          id_delivery: idDelivery,
+          // Campos crudos: la API del checkout los valida y reconstruye server-side
+          zona,
+          parroquia,
+          sector,
+          direccion: dirLimpia,
         };
       }
 
@@ -58,14 +115,33 @@ export default function MetodoEntrega() {
 
   // Estados para los formularios dinámicos
   const [empresaEnvio, setEmpresaEnvio] = useState(null); // 2 (MRW) o 3 (ZOOM)
-  const [codigoSucursal, setCodigoSucursal] = useState('');
-  const [direccionNacional, setDireccionNacional] = useState('');
 
-  const [deliverySeleccionado, setDeliverySeleccionado] = useState('');
+  const [idDelivery, setIdDelivery] = useState(null);
+  const [deliveries, setDeliveries] = useState([]);
+  const [cargandoDelivery, setCargandoDelivery] = useState(false);
+  const [errorDelivery, setErrorDelivery] = useState(null); // null | 'sesion' | 'red'
   const [zona, setZona] = useState('');
   const [parroquia, setParroquia] = useState('');
   const [sector, setSector] = useState('');
-  const [direccionExacta, setDireccionExacta] = useState('');
+
+  // Cargar los deliveries activos desde la API (igual que el select de la web)
+  const cargarDeliveries = useCallback(async () => {
+    setCargandoDelivery(true);
+    setErrorDelivery(null);
+    try {
+      const lista = await fetchDeliveries();
+      setDeliveries(lista);
+    } catch (e) {
+      const status = e?.response?.status;
+      setErrorDelivery(status === 401 || status === 403 ? 'sesion' : 'red');
+    } finally {
+      setCargandoDelivery(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    cargarDeliveries();
+  }, [cargarDeliveries]);
 
   // Lista de métodos disponibles basada en tu imagen
   const metodos = [
@@ -126,24 +202,40 @@ export default function MetodoEntrega() {
               placeholder="Selecciona MRW o ZOOM"
             />
 
-            <Text style={styles.etiquetaInput}>Código de la Sucursal</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej. SUC-1045"
-              placeholderTextColor="#999"
-              value={codigoSucursal}
-              onChangeText={setCodigoSucursal}
+            <Input
+              name="codigoSucursal"
+              label="Código de la Sucursal"
+              placeholder="Ej. 2140"
+              icon="hash-outline"
+              control={control}
+              isSubmitted={isSubmitted}
+              keyboardType="number-pad"
+              maxLength={7}
+              onChangeTextModifier={(t) => t.replace(/\D/g, '')}
+              rules={{
+                required: 'El código de sucursal es obligatorio',
+                pattern: {
+                  value: patronCodigoSucursal,
+                  message: 'Debe tener entre 5 y 7 dígitos',
+                },
+              }}
             />
 
-            <Text style={styles.etiquetaInput}>Dirección de la Agencia</Text>
-            <TextInput
-              style={[styles.input, styles.inputArea]}
-              placeholder="Escribe la dirección de la sucursal de destino..."
-              placeholderTextColor="#999"
-              multiline
-              numberOfLines={3}
-              value={direccionNacional}
-              onChangeText={setDireccionNacional}
+            <Input
+              name="direccionAgencia"
+              label="Nombre / Dirección de la Agencia"
+              placeholder="Ej. MRW Sucursal Barquisimeto Centro"
+              icon="location-outline"
+              control={control}
+              isSubmitted={isSubmitted}
+              maxLength={100}
+              rules={{
+                required: 'La dirección de la agencia es obligatoria',
+                pattern: {
+                  value: patronAgencia,
+                  message: 'Entre 10 y 100 caracteres (letras, números y . , # - / ( ))',
+                },
+              }}
             />
           </View>
         )}
@@ -153,57 +245,83 @@ export default function MetodoEntrega() {
         {metodoSeleccionado === 'delivery' && (
           <View style={styles.formularioContenedor}>
             <Text style={styles.tituloFormulario}>Detalles del Delivery</Text>
-            
-            <Text style={styles.etiquetaInput}>Seleccionar Delivery / Empresa</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej. Motorizado Interno, Yummy, etc."
-              placeholderTextColor="#999"
-              value={deliverySeleccionado}
-              onChangeText={setDeliverySeleccionado}
+
+            {cargandoDelivery && (
+              <View style={styles.filaCarga}>
+                <ActivityIndicator size="small" color="#D81B60" />
+                <Text style={styles.textoCarga}>Cargando deliveries disponibles...</Text>
+              </View>
+            )}
+
+            {errorDelivery && !cargandoDelivery && (
+              <View style={styles.filaCarga}>
+                <Text style={styles.textoError}>
+                  {errorDelivery === 'sesion'
+                    ? 'Tu sesión expiró. Cierra sesión y vuelve a iniciar sesión.'
+                    : 'No se pudieron cargar los deliveries. Revisa tu conexión.'}
+                </Text>
+                <TouchableOpacity style={styles.botonReintentar} onPress={cargarDeliveries}>
+                  <Text style={styles.textoReintentar}>Reintentar</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {!cargandoDelivery && !errorDelivery && (
+              <Select
+                label="Servicio de Delivery"
+                opciones={deliveries.map((d) => ({ label: `${d.tipo} --- ${d.nombre}`, value: d.id_delivery }))}
+                value={idDelivery}
+                onSelect={setIdDelivery}
+                placeholder="Seleccione repartidor o empresa"
+              />
+            )}
+
+            <Select
+              label="Zona"
+              opciones={zonasDelivery}
+              value={zona}
+              onSelect={(v) => {
+                setZona(v);
+                setParroquia('');
+                setSector('');
+              }}
+              placeholder="-- Selecciona una zona --"
             />
 
-            <View style={styles.filaInputs}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={styles.etiquetaInput}>Zona</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej. Norte"
-                  placeholderTextColor="#999"
-                  value={zona}
-                  onChangeText={setZona}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.etiquetaInput}>Parroquia</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ej. Tamaca"
-                  placeholderTextColor="#999"
-                  value={parroquia}
-                  onChangeText={setParroquia}
-                />
-              </View>
-            </View>
+            <Select
+              label="Parroquia"
+              opciones={(parroquiasPorZona[zona] || []).map((p) => ({ label: p, value: p }))}
+              value={parroquia}
+              onSelect={(v) => {
+                setParroquia(v);
+                setSector('');
+              }}
+              placeholder="-- Selecciona una parroquia --"
+            />
 
-            <Text style={styles.etiquetaInput}>Sector</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej. Las Nueva Segovias"
-              placeholderTextColor="#999"
+            <Select
+              label="Sector / Urbanización"
+              opciones={(sectoresPorParroquia[parroquia] || []).map((s) => ({ label: s, value: s }))}
               value={sector}
-              onChangeText={setSector}
+              onSelect={setSector}
+              placeholder="-- Selecciona un sector --"
             />
 
-            <Text style={styles.etiquetaInput}>Dirección Exacta (Casa, Punto de referencia)</Text>
-            <TextInput
-              style={[styles.input, styles.inputArea]}
-              placeholder="Indica detalladamente tu ubicación para el repartidor..."
-              placeholderTextColor="#999"
-              multiline
-              numberOfLines={3}
-              value={direccionExacta}
-              onChangeText={setDireccionExacta}
+            <Input
+              name="direccionExacta"
+              label="Dirección Exacta (Casa, Punto de referencia)"
+              placeholder="Ej. Av. Lara con Av. Los Leones, edif. X, piso 2, apto 2B"
+              icon="home-outline"
+              control={control}
+              isSubmitted={isSubmitted}
+              maxLength={150}
+              rules={{
+                required: 'La dirección exacta es obligatoria',
+                pattern: {
+                  value: patronDireccion,
+                  message: 'Entre 10 y 150 caracteres (letras, números y . , # - / ( ))',
+                },
+              }}
             />
           </View>
         )}
@@ -214,7 +332,7 @@ export default function MetodoEntrega() {
         <TouchableOpacity
           style={[styles.botonContinuar, !metodoSeleccionado && styles.botonDeshabilitado]}
           disabled={!metodoSeleccionado}
-          onPress={PagoPress}
+          onPress={handleSubmit(onContinuar)}
         >
           <Text style={styles.textoBotonContinuar}>Continuar</Text>
         </TouchableOpacity>
@@ -335,30 +453,33 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F5F5F5',
     paddingBottom: 6,
   },
-  etiquetaInput: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#444',
-    marginBottom: 6,
-    marginTop: 8,
-  },
-  input: {
-    backgroundColor: '#F9F9F9',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#333',
-  },
-  inputArea: {
-    textAlignVertical: 'top', // Alinea el texto arriba en Android
-    height: 70,
-  },
-  filaInputs: {
+  // Estados de carga/error del listado de deliveries
+  filaCarga: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    gap: 8,
+  },
+  textoCarga: {
+    fontSize: 13,
+    color: '#666',
+  },
+  textoError: {
+    fontSize: 13,
+    color: '#C62828',
+    flexShrink: 1,
+  },
+  botonReintentar: {
+    backgroundColor: '#FCE4EC',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  textoReintentar: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#D81B60',
   },
   // Área del botón inferior fijo
   contenedorFijoInferior: {
