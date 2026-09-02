@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   StyleSheet, Text, View,ImageBackground,KeyboardAvoidingView,Platform,ScrollView,TextInput,
-  TouchableOpacity,Modal,Image,
+  TouchableOpacity,Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Controller, useForm } from 'react-hook-form';
@@ -51,7 +51,7 @@ const Login = ({activarCarga , desactivarCarga}) => {
   const onSubmit = async data => {
   const { cedula, clave, tipoDoc } = data;
 
-  // 1VALIDACIÓN PREVIA DE BLOQUEO 
+  // 1 VALIDACION PREVIA DE BLOQUEO 
   if (tiempoDesbloqueo && Date.now() < tiempoDesbloqueo) {
     const milisegundosRestantes = tiempoDesbloqueo - Date.now();
     const segundosRestantes = Math.ceil(milisegundosRestantes / 1000);
@@ -59,7 +59,7 @@ const Login = ({activarCarga , desactivarCarga}) => {
     setModalMessage(`Por seguridad, tu acceso está limitado por los próximos ${segundosRestantes} segundos.`);
     setModalSuccess(false);
     setModalVisible(true);
-    return; // Detiene no envía nada al servidor
+    return; // no envía nada al servidor
   }
 
   activarCarga(); // Loader
@@ -149,25 +149,26 @@ const Login = ({activarCarga , desactivarCarga}) => {
               <View style={styles.formContainer}>
                 <Text style={styles.title}>Bienvenido/a</Text>
 
-                {/* Campo Cédula */}
+                {/* Campo Cedula */}
               <Text style={styles.labelGlobal}>Documento de Identidad</Text>
               <View style={styles.filaDocumento}>
                 
-               {/* Selector Limpio */}
+               {/* Selector  */}
                 <SelectorFormulario
                   name="tipoDoc"
                   control={control}
                   defaultValue="V"
                   opciones={[
                    { label: 'Venezolano (V)', value: 'V' },
-                   { label: 'Extranjero (E)', value: 'E' }
+                   { label: 'Extranjero (E)', value: 'E' },
+                   { label: 'Juridico (J)', value: 'J' }
                   ]}
                   ancho="25%"
                   marginRight="3%"
                   style={{ marginTop: -15 }}
                 />
 
-              {/* Campo Cédula Expandido */}
+              {/* Campo Cédula  */}
               <View style={styles.contenedorCedula}>
                 <Input
                   name="cedula"

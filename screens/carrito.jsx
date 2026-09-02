@@ -1,4 +1,5 @@
 import React from 'react';
+import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
 import { useSelector, useDispatch } from "react-redux";
 import { removeFromCart } from "../redux/cartSlice";
@@ -22,7 +23,7 @@ export default function Carrito() {
 
   return (
     <View style={styles.container}>
-      
+      <StatusBar barStyle="dark-content" backgroundColor="#000000" />
 
       <FlatList
         data={carrito}
