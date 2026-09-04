@@ -19,15 +19,11 @@ export default function ModalProducto({ visible, onClose, producto }) {
   const [activeTab, setActiveTab] = useState('description');
   const [activeIndex, setActiveIndex] = useState(0); // Estado para controlar el punto activo
 
-  const { user, isLogged } = useSelector((state) => {
-    const datosAuth = state.auth;
-
-    if (datosAuth.user?.codigo || datosAuth.user?.autorizado === true) {
-      return { user: null, isLogged: false };
-    }
-
-    return { user: datosAuth.user, isLogged: datosAuth.isLogged };
-  });
+  const authUser = useSelector((state) => state.auth.user);
+  const authIsLogged = useSelector((state) => state.auth.isLogged);
+  const usuarioNoAutorizado = authUser?.codigo || authUser?.autorizado === true;
+  const user = usuarioNoAutorizado ? null : authUser;
+  const isLogged = usuarioNoAutorizado ? false : authIsLogged;
 
   const cedula = user?.cedula;
 
