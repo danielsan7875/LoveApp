@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigation } from '@react-navigation/native';
 import { agregarWishlistThunk, eliminarWishlistThunk } from "../redux/wishlistSlice"; 
 import { addToCart } from "../redux/cartSlice";
 import { Ionicons } from '@expo/vector-icons';
 import TasaOficial from '../informacion/dolar';
+import ConfirmModal from './ConfirmModal';
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width / 2) - 20; // Ajuste perfecto para diseño en cuadrícula de 2 columnas
 
 export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precioMayor, precioDetal, cantidadMayor, onPress, onAgregar }) {
   const dispatch = useDispatch();
+  const navigation = useNavigation();
+  const [alertaLogin, setAlertaLogin] = useState(false);
   
 const { user, isLogged } = useSelector((state) => {
   const datosAuth = state.auth;
@@ -41,10 +45,7 @@ const precioBs = new Intl.NumberFormat('es-VE', {
 
   const agregarCarrito = () => {
   if (!isLogged || !cedula) {
-    Alert.alert(
-      "Iniciar sesión",
-      "Debes iniciar sesión para agregar productos al carrito."
-    );
+    setAlertaLogin(true);
     return;
   }
 
@@ -134,6 +135,20 @@ const precioBs = new Intl.NumberFormat('es-VE', {
         <Ionicons name="add-circle-outline" size={18} color="#fff" style={{ marginRight: 4 }} />
         <Text style={styles.btnText}>Agregar</Text>
       </TouchableOpacity>
+
+      {/* Alerta de sesión requerida */}
+      <ConfirmModal
+        visible={alertaLogin}
+        onCancel={() => setAlertaLogin(false)}
+        onConfirm={() => {
+          setAlertaLogin(false);
+          navigation.navigate('Login');
+        }}
+        title="Inicia sesión"
+        message="Para realizar esta acción debes iniciar sesión primero."
+        confirmText="Iniciar sesión"
+        cancelText="Cerrar"
+      />
 
     </TouchableOpacity>
   );

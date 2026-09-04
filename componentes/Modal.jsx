@@ -1,19 +1,35 @@
 import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { addToCart } from "../redux/cartSlice";
 import PopAlert from '../componentes/PopAlert.jsx';
+import ConfirmModal from './ConfirmModal';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function ModalProducto({ visible, onClose, producto }) {
     const dispatch = useDispatch();
+    const navigation = useNavigation();
     const [alertaModal, setAlertaModal] = useState(false)
+    const [alertaLogin, setAlertaLogin] = useState(false)
   
   const [activeTab, setActiveTab] = useState('description');
   const [activeIndex, setActiveIndex] = useState(0); // Estado para controlar el punto activo
+
+  const { user, isLogged } = useSelector((state) => {
+    const datosAuth = state.auth;
+
+    if (datosAuth.user?.codigo || datosAuth.user?.autorizado === true) {
+      return { user: null, isLogged: false };
+    }
+
+    return { user: datosAuth.user, isLogged: datosAuth.isLogged };
+  });
+
+  const cedula = user?.cedula;
 
   if (!producto) return null;
 
@@ -31,6 +47,11 @@ export default function ModalProducto({ visible, onClose, producto }) {
   };
 
     const agregarCarrito = () => {
+      if (!isLogged || !cedula) {
+        setAlertaLogin(true);
+        return;
+      }
+
       dispatch(addToCart({
         id: producto.id_producto ?? producto.id,
         nombre: producto.nombre,
@@ -172,6 +193,21 @@ export default function ModalProducto({ visible, onClose, producto }) {
             <Text style={styles.buyNowTxt}>Añadir al carrito</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Alerta de sesión requerida */}
+        <ConfirmModal
+          visible={alertaLogin}
+          onCancel={() => setAlertaLogin(false)}
+          onConfirm={() => {
+            setAlertaLogin(false);
+            onClose();
+            navigation.navigate('Login');
+          }}
+          title="Inicia sesión"
+          message="Para realizar esta acción debes iniciar sesión primero."
+          confirmText="Iniciar sesión"
+          cancelText="Cerrar"
+        />
 
       </View>
     </Modal>

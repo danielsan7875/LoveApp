@@ -383,19 +383,19 @@ const seleccionarComprobante = async () => {
             <View style={{ flex: 1.2, marginRight: 8 }}>
               <Input
                 name="telefono_emisor"
-                label="Teléfono Emisor"
-                placeholder="0414..."
+                label="Teléfono Emisor (11 dígitos)"
+                placeholder="04141234567"
                 icon="call-outline"
                 control={control}
                 isSubmitted={isSubmitted}
-                keyboardType="phone-pad"
-                maxLength={15}
-                onChangeTextModifier={(t) => t.replace(/[^0-9\-\s()]/g, '')}
+                keyboardType="number-pad"
+                maxLength={11}
+                onChangeTextModifier={(t) => t.replace(/[^0-9]/g, '')}
                 rules={{
                   required: 'El teléfono es obligatorio',
                   pattern: {
-                    value: /^[0-9\-\s()]{7,15}$/,
-                    message: 'Solo dígitos, entre 7 y 15 caracteres',
+                    value: /^04(12|14|16|22|24|26)[0-9]{7}$/,
+                    message: 'Teléfono inválido. Debe empezar con 0412, 0414, 0416, 0422, 0424 o 0426',
                   },
                 }}
               />
