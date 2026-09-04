@@ -1037,21 +1037,15 @@ export async function updateUserData(formData, options = {}) {
     const cedulaFormulario = normalizeCedula(formData?.cedula);
     const cedulaCambiada = !!cedulaSesion && !!cedulaFormulario && cedulaSesion !== cedulaFormulario;
     const cedulaFinal = cedulaFormulario || cedulaSesion;
-    const isClient = isClientUser(sessionUser || payload?.data || storedUser);
 
     const validation = validateProfilePayload(formData, cedulaFinal);
     if (!validation.valid) {
       return { success: false, mensaje: validation.mensaje };
     }
 
-    if (cedulaCambiada && !isClient) {
-      return {
-        success: false,
-        mensaje: 'Solo los clientes pueden cambiar la cédula. Los usuarios administrativos no pueden modificarla.',
-      };
-    }
-
-    if (cedulaCambiada && isClient) {
+    // Permitir que cualquier rol (cliente o administrador) pueda cambiar la cédula.
+    // Verificamos disponibilidad de la cédula para todos cuando haya cambio.
+    if (cedulaCambiada) {
       const cedulaCheck = await verificarCedulaDisponible(cedulaFormulario, cedulaSesion);
       if (!cedulaCheck.disponible) {
         return {

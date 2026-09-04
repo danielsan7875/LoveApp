@@ -6,8 +6,6 @@ import {
   ImageBackground,
   ScrollView,
   KeyboardAvoidingView,
-  TouchableOpacity,
-  Modal,
   Platform
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
@@ -94,21 +92,22 @@ export default function Registro({activarCarga, desactivarCarga}) {
            <Text style={styles.labelGlobal}>Documento de Identidad</Text>
               <View style={styles.filaDocumento}>
                 
-               {/* Selector Limpio */}
+               {/* Selector  */}
                 <SelectorFormulario
                   name="tipoDoc"
                   control={control}
                   defaultValue="V"
                   opciones={[
                     { label: 'Venezolano (V)', value: 'V' },
-                    { label: 'Extranjero (E)', value: 'E' }
+                    { label: 'Extranjero (E)', value: 'E' },
+                    { label: 'Juridico (J)', value: 'J' }
                   ]}
                   ancho="25%"
                   marginRight="3%"
                   style={{ marginTop: -15 }}
                 />
 
-              {/* Campo Cédula Expandido */}
+              {/* Campo Cedula  */}
               <View style={styles.contenedorCedula}>
                 <Input
                   name="cedula"
@@ -168,7 +167,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
               }}
             />
 
-            {/* Campo Teléfono */}
+            {/* Campo Telefono */}
             <Input
               name="telefono"
               label="Telefono"  
@@ -237,7 +236,7 @@ export default function Registro({activarCarga, desactivarCarga}) {
               }}
             />
 
-            {/* Botón de Envió */}
+            {/* Boton de Envio */}
             <BtnAcion
               text="REGISTRARSE"
               icon="person-add-outline"

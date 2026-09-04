@@ -4,7 +4,8 @@ import {
   StyleSheet,
   View,
   Text,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -26,6 +27,7 @@ const Producto = ({ route }) => {
 
   const [todosLosProductos, setTodosLosProductos] = useState([]);
   const [resultados, setResultados] = useState([]);
+  const [cargandoProductos, setCargandoProductos] = useState(true);
 
  
   // -- Alerta Pop para avisar al carrito
@@ -38,35 +40,37 @@ const Producto = ({ route }) => {
 
 
   useEffect(() => {
-  const cargarProductosRemotos = async () => {
-    try {
-      const data = await api.fetchProductos('activos');
+    const cargarProductosRemotos = async () => {
+      try {
+        const data = await api.fetchProductos('activos');
 
-      if (
-        data &&
-        data.respuesta === 1 &&
-        Array.isArray(data.productos)
-      ) {
-        setTodosLosProductos(data.productos);
-        setResultados(data.productos);
-      } else {
+        if (
+          data &&
+          data.respuesta === 1 &&
+          Array.isArray(data.productos)
+        ) {
+          setTodosLosProductos(data.productos);
+          setResultados(data.productos);
+        } else {
+          setTodosLosProductos([]);
+          setResultados([]);
+        }
+
+      } catch (error) {
+        console.warn(
+          "Error cargando productos remotos:",
+          error.response?.data || error.message
+        );
+
         setTodosLosProductos([]);
         setResultados([]);
+      } finally {
+        setCargandoProductos(false);
       }
+    };
 
-    } catch (error) {
-      console.warn(
-        "Error cargando productos remotos:",
-        error.response?.data || error.message
-      );
-
-      setTodosLosProductos([]);
-      setResultados([]);
-    }
-  };
-
-  cargarProductosRemotos();
-}, []);
+    cargarProductosRemotos();
+  }, []);
 
   
   useEffect(() => {
@@ -152,7 +156,9 @@ const Producto = ({ route }) => {
           <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
             <View style={styles.cardsContainer}>
 
-              {resultados.length > 0 ? (
+              {cargandoProductos ? (
+                <ActivityIndicator size="large" color="#D81B60" style={{ marginTop: 20 }} />
+              ) : resultados.length > 0 ? (
                 resultados.map((prod) => (
                   <Cards
                     key={prod.id_producto} 
