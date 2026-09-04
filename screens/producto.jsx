@@ -30,15 +30,9 @@ const Producto = ({ route }) => {
   const [resultados, setResultados] = useState([]);
   const [cargandoProductos, setCargandoProductos] = useState(true);
   const [paginaActual, setPaginaActual] = useState(1);
-  const productosPorPagina = 12;
+  const productosPorPagina = 16;
   const productosScrollRef = useRef(null);
 
-  // --- Categorías y categoría seleccionada ---
-  // IMPORTANTE: estos estados deben declararse ANTES del useEffect de filtrado,
-  // porque ese efecto los usa (tanto dentro del callback como en el arreglo
-  // de dependencias). Declararlos después causaba que el filtro por
-  // categoría (y por lo tanto la paginación derivada de "resultados")
-  // no se actualizara correctamente.
   const [misCategorias, setMisCategorias] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
@@ -106,7 +100,7 @@ const Producto = ({ route }) => {
 
     cargarCategoriasRemotas();
   }, []);
-  
+
   useEffect(() => {
     const textoBusqueda = normalizarTexto(query);
     const filtrados = todosLosProductos.filter((producto) => {
