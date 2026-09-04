@@ -12,7 +12,18 @@ import NavBarra from "../componentes/nav";
 const Tab = createBottomTabNavigator();
 
 export default function TabNavigator() {
-  const isLogged = useSelector((state) => state.auth.isLogged);
+  const isLogged = useSelector((state) => {
+  const usuario = state.auth.user;
+  const token = state.auth.token; 
+
+  if (!state.auth.isLogged || !usuario) return false;
+
+  if (usuario.codigo || usuario.autorizado === true) {
+    return false; 
+  }
+
+  return true;
+});
 
   return (
     <Tab.Navigator 

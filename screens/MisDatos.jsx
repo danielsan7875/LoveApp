@@ -1,4 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
+import React, {useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -9,21 +10,27 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 /*Pages - body*/
 import BodyMisDatos from '../pages/MisDatos';
+import Loader from '../componentes/Loader'
 
-
-const Ubicacion = () => {
+const MisDatos = () => {
+  const [cargando, setCargando] = useState(false);
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
+        <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
         <View style={styles.container}>
 
-         
-
-
-
           {/* --- BODY--- */}
-        <BodyMisDatos />
+        <BodyMisDatos
+          activarCarga={()=>setCargando(true)}
+          desactivarCarga={()=>setCargando(false)} 
+        />
+        
+        {/* -----  LOADER  ----- */}
+        <Loader 
+          visible={cargando}
+          texto="Actualizando..."
+        />
         </View>
        
     
@@ -42,12 +49,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
- logoText: {
-      fontSize: 60,
-      fontWeight: 'bold',
-      color: '#D81B60', // Rosa oscuro
-  },
 });
 
-export default Ubicacion;
+export default MisDatos;
 

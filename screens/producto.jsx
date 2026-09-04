@@ -4,7 +4,8 @@ import {
   StyleSheet,
   View,
   Text,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -14,39 +15,62 @@ import HearBarra from '../componentes/hear.jsx';
 import LoginBarra from '../componentes/loginbarra.jsx';
 import Cards from '../componentes/Cards.jsx';
 import ModalProducto from '../componentes/Modal';
-import api from '../services/api'; 
+import Categoria from '../componentes/categoriafiltro.jsx';
+import api from '../services/api';
+import PopAlert from '../componentes/PopAlert.jsx';
+
 
 const Producto = ({ route }) => {
   const { query } = route?.params || {};
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
 
-  // Estados independientes para el listado remoto total y el filtrado en pantalla
   const [todosLosProductos, setTodosLosProductos] = useState([]);
   const [resultados, setResultados] = useState([]);
+  const [cargandoProductos, setCargandoProductos] = useState(true);
 
-  const isLogged = useSelector((state) => state.auth.isLogged);
+ 
+  // -- Alerta Pop para avisar al carrito
+  const [alerta, setAlerta] = useState(false);
+  const mostrarAlerta = () =>{
+    setAlerta(true);
+    setTimeout(()=>setAlerta(false),2000);
+  }
+  // -- Alerta Pop 
+
 
   useEffect(() => {
     const cargarProductosRemotos = async () => {
       try {
-        const data = await api.fetchProductos('activos'); 
-        if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
+        const data = await api.fetchProductos('activos');
+
+        if (
+          data &&
+          data.respuesta === 1 &&
+          Array.isArray(data.productos)
+        ) {
           setTodosLosProductos(data.productos);
-          setResultados(data.productos); 
+          setResultados(data.productos);
         } else {
           setTodosLosProductos([]);
           setResultados([]);
         }
+
       } catch (error) {
-        console.warn("Error cargando productos remotos en la pantalla de listado:", error);
+        console.warn(
+          "Error cargando productos remotos:",
+          error.response?.data || error.message
+        );
+
         setTodosLosProductos([]);
         setResultados([]);
+      } finally {
+        setCargandoProductos(false);
       }
     };
 
     cargarProductosRemotos();
-  }, [isLogged]);
+  }, []);
 
   
   useEffect(() => {
@@ -67,6 +91,43 @@ const Producto = ({ route }) => {
     setModalVisible(true);
   };
 
+
+  useEffect(() => {
+    const cargarCategoriasRemotas = async () => {
+      try {
+        const data = await api.fetchCategorias();
+        if (data && data.respuesta === 1 && Array.isArray(data.categorias)) {
+          setMisCategorias(data.categorias);
+        }
+      } catch (error) {
+        console.warn("Error cargando categorías remotas:", error);
+      }
+    };
+
+    cargarCategoriasRemotas();
+  }, []);
+
+  const [misCategorias, setMisCategorias] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  const CategoriaPress = (categorianombre) => {
+  const mismaCategoria = categorianombre === selectedCategory;
+
+  if (mismaCategoria) {
+    setSelectedCategory(null);
+    setResultados(todosLosProductos);
+    return;
+  }
+
+  setSelectedCategory(categorianombre);
+
+  const filtrados = todosLosProductos.filter((producto) =>
+    producto.nombre_categoria?.toLowerCase() === categorianombre.toLowerCase()
+  );
+
+  setResultados(filtrados);
+};
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
@@ -75,27 +136,45 @@ const Producto = ({ route }) => {
           <HearBarra />
           <LoginBarra />
 
-          <Text style={styles.logoText}>
-            {query ? `Resultados: ${query}` : "Productos"}
-          </Text>
+          {alerta && (
+          <View style={styles.alertContainer}>
+            <PopAlert 
+              text="Agregado al carrito" 
+              iconName="cart" 
+              color="#ffffff" 
+              bgColor="#D81B60" 
+            />
+          </View>
+        )}
+
+          <Categoria 
+              categories={misCategorias} 
+              onSelectCategory={CategoriaPress} 
+              selectedCategory={selectedCategory}
+            />
 
           <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
             <View style={styles.cardsContainer}>
 
-              {resultados.length > 0 ? (
+              {cargandoProductos ? (
+                <ActivityIndicator size="large" color="#D81B60" style={{ marginTop: 20 }} />
+              ) : resultados.length > 0 ? (
                 resultados.map((prod) => (
                   <Cards
                     key={prod.id_producto} 
                     id={prod.id_producto}
+                    nombre_marca={prod.nombre_marca}
                     foto={prod.imagenes} 
                     nombre={prod.nombre}
-                    precioMayor={prod.precio_mayor} 
+                    precioMayor={prod.precio_mayor}
                     precioDetal={prod.precio_detal}
+                    cantidadMayor={prod.cantidad_mayor}
                     onPress={() => handleCardPress(prod)}
+                    onAgregar={mostrarAlerta}
                   />
                 ))
               ) : (
-                <Text style={{ textAlign: "center", marginTop: 40, fontSize: 16, color: '#666' }}>
+                <Text style={{ textAlign: "center", marginTop: 150, fontSize: 20, color: '#000000' }}>
                   No se encontraron productos
                 </Text>
               )}
@@ -132,10 +211,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
   logoText: {
-    fontSize: 40,
+    fontSize: 30,
     textAlign: 'center',
     fontWeight: 'bold',
     color: '#D81B60', // Rosa oscuro
+  },
+  alertContainer: {
+    position: 'absolute',
+    top: 20,
+    alignSelf: 'center',
+    zIndex: 9999,
+    elevation: 5,
   },
 });
 

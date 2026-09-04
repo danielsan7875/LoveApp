@@ -1,15 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { useSelector } from 'react-redux';
 
 export default function PedidoFinalizado({ route, navigation }) {
-  // Datos simulados (puedes recibirlos por props o route.params al navegar)
+  const pedido = route.params?.pedido ?? {};
+  const user = useSelector(state => state.auth.user);
+
   const datosPedido = {
-    idPedido: "SMT53237653",
-    fecha: "04 Jun, 2026, 01:30 AM",
-    metodoPago: "Pago Móvil",
-    total: "95.36",
-    nombre: "Daniel",
-    apellido: "Sánchez"
+    idPedido: pedido.idPedido ?? 'N/A',
+    fecha: pedido.fecha ?? '',
+    metodoPago: pedido.metodoPago ?? 'Pago Móvil',
+    total: pedido.total ?? '0.00',
+    nombre: user?.nombre ?? '',
+    apellido: user?.apellido ?? '',
   };
 
   return (

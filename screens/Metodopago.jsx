@@ -1,22 +1,173 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  ScrollView, 
-  TextInput, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
   SafeAreaView,
-  Clipboard // Importado de forma nativa para la función de copiar
+  Alert,
+  ActivityIndicator,
+  Image
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
+import { useForm } from 'react-hook-form';
+import { clearCart } from '../redux/cartSlice';
+import { registrarPedido } from '../services/api';
+import Select from '../componentes/Select';
+import Input from '../componentes/Inputvalidacion';
+import TasaOficial from '../informacion/dolar';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
+import { Ionicons } from '@expo/vector-icons';
+import { Platform } from 'react-native';
+
+const TAMANO_MAXIMO_MB = 5;
+const TAMANO_MAXIMO_BYTES = TAMANO_MAXIMO_MB * 1024 * 1024;
+
+const BANCOS_ORIGEN = [
+  '0102-Banco De Venezuela',
+  '0156-100% Banco ',
+  '0172-Bancamiga Banco Universal,C.A',
+  '0114-Bancaribe',
+  '0171-Banco Activo',
+  '0166-Banco Agricola De Venezuela',
+  '0128-Bancon Caroni',
+  '0163-Banco Del Tesoro',
+  '0175-Banco Digital De Los Trabajadores, Banco Universal',
+  '0115-Banco Exterior',
+  '0151-Banco Fondo Comun',
+  '0173-Banco Internacional De Desarrollo',
+  '0105-Banco Mercantil',
+  '0191-Banco Nacional De Credito',
+  '0138-Banco Plaza',
+  '0137-Banco Sofitasa',
+  '0104-Banco Venezolano De Credito',
+  '0168-Bancrecer',
+  '0134-Banesco',
+  '0177-Banfanb',
+  '0146-Bangente',
+  '0174-Banplus',
+  '0108-BBVA Provincial',
+  '0157-Delsur Banco Universal',
+  '0601-Instituto Municipal De Credito Popular',
+  '0178-N58 Banco Digital Banco Microfinanciero S.A',
+  '0169-R4 Banco Microfinanciero C.A.',
+];
+
+const BANCOS_DESTINO = [
+  '0102-Banco De Venezuela',
+  '0105-Banco Mercantil',
+];
 
 export default function MetodoPago() {
 
    const navigation = useNavigation();
-      const ConfirmarPress = () => {
-        navigation.navigate("Confirmarpedido");
-      };
+   const route = useRoute();
+   const dispatch = useDispatch();
+
+   const total = route.params?.total ?? 0;
+   const entrega = route.params?.entrega ?? {};
+
+   const carrito = useSelector(state => state.cart.items);
+   const user = useSelector(state => state.auth.user);
+   const cedula = user?.cedula;
+
+   const [loading, setLoading] = useState(false);
+
+   // Formulario con validación (componente Inputvalidacion)
+   const {
+      control,
+      handleSubmit,
+      watch,
+      formState: { isSubmitted },
+   } = useForm({
+      mode: 'onTouched',
+   });
+   const referenciaValor = watch('referencia_bancaria');
+
+   const handleConfirmar = async (data) => {
+     if (!bancoOrigen || !bancoDestino) return;
+     if (!cedula) {
+       Alert.alert('Sesión', 'No hay sesión activa. Inicia sesión de nuevo.');
+       return;
+     }
+     if (carrito.length === 0) {
+       Alert.alert('Carrito', 'Tu carrito está vacío.');
+       return;
+     }
+
+     setLoading(true);
+
+     const ahora = new Date();
+     const fecha = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')} ${String(ahora.getHours() % 12 || 12).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')} ${ahora.getHours() >= 12 ? 'PM' : 'AM'}`;
+
+     const totalBs = parseFloat(montoBsCalculado) || 0;
+
+     const datosPedido = {
+       tipo: 2,
+       fecha,
+       estado: 1,
+       precio_total_usd: total,
+       precio_total_bs: totalBs,
+       id_persona: parseInt(String(cedula).replace(/\D/g, ''), 10),
+
+       id_metodopago: 1,
+        referencia_bancaria: data.referencia_bancaria,
+        telefono_emisor: data.telefono_emisor,
+       banco_destino: bancoDestino,
+       banco: bancoOrigen,
+       monto: totalBs,
+       monto_usd: total,
+       imagen: comprobante ? `data:${comprobante.type};base64,${comprobante.base64}` : null,
+
+        id_metodoentrega: entrega.id_metodoentrega,
+        direccion_envio: entrega.direccion_envio || '',
+        sucursal_envio: entrega.sucursal_envio || '',
+        id_delivery: entrega.id_delivery ?? null,
+
+        // Campos crudos que la API valida cuando el método es delivery (id_metodoentrega = 1)
+        ...(entrega.id_metodoentrega === 1
+          ? {
+              zona: entrega.zona || '',
+              parroquia: entrega.parroquia || '',
+              sector: entrega.sector || '',
+              direccion: entrega.direccion || '',
+            }
+          : {}),
+
+       carrito: carrito.map(item => ({
+         id: item.id,
+         cantidad: item.cantidad,
+         cantidad_mayor: item.cantidad_mayor || 0,
+         precio_detal: parseFloat(item.precioDetal) || 0,
+         precio_mayor: parseFloat(item.precioMayor) || 0,
+       })),
+     };
+
+     try {
+       const resultado = await registrarPedido(datosPedido);
+
+       if (resultado && resultado.success) {
+         dispatch(clearCart());
+         navigation.replace('Confirmarpedido', {
+           pedido: {
+             idPedido: resultado.id_pedido,
+             total: total.toFixed(2),
+             metodoPago: 'Pago Móvil',
+             fecha,
+           },
+         });
+       } else {
+         Alert.alert('Error', resultado?.message || 'No se pudo registrar el pedido.');
+       }
+     } catch (e) {
+       Alert.alert('Error', 'Error de conexión con el servidor.');
+     } finally {
+       setLoading(false);
+     }
+   };
 
 
   // Datos fijos del Pago Móvil del negocio
@@ -28,25 +179,110 @@ export default function MetodoPago() {
 
   // Estados del Formulario de reporte de pago
   const [bancoOrigen, setBancoOrigen] = useState('');
-  const [referencia, setReferencia] = useState('');
-  const [telefonoEmisor, setTelefonoEmisor] = useState('');
-  const [montoBs, setMontoBs] = useState('');
-  const [comprobante, setComprobante] = useState(null); // Aquí guardarás el archivo o uri de la imagen
+  const [bancoDestino, setBancoDestino] = useState('');
+  const [comprobante, setComprobante] = useState(null);
 
-  // Estados sutiles de feedback visual para saber qué se copió
-  const [copiadoCedula, setCopiadoCedula] = useState(false);
-  const [copiadoTelf, setCopiadoTelf] = useState(false);
+  // Tasa de dólar automática desde la API
+  const tasaCambio = TasaOficial();
+  const montoBsCalculado = tasaCambio ? (total * parseFloat(tasaCambio)).toFixed(2) : '0.00';
 
-  // Funciones para copiar al portapapeles de manera nativa
-  const copiarAlPortapapeles = (texto, tipo) => {
-    Clipboard.setString(texto);
-    if (tipo === 'cedula') {
-      setCopiadoCedula(true);
-      setTimeout(() => setCopiadoCedula(false), 2000);
-    } else {
-      setCopiadoTelf(true);
-      setTimeout(() => setCopiadoTelf(false), 2000);
+// Estados sutiles de feedback visual para saber qué se copió
+   const [copiadoCedula, setCopiadoCedula] = useState(false);
+   const [copiadoTelf, setCopiadoTelf] = useState(false);
+
+   // Funciones para copiar al portapapeles de manera nativa
+   const copiarAlPortapapeles = (texto, tipo) => {
+     if (tipo === 'cedula') {
+       setCopiadoCedula(true);
+       setTimeout(() => setCopiadoCedula(false), 2000);
+     } else {
+       setCopiadoTelf(true);
+       setTimeout(() => setCopiadoTelf(false), 2000);
+     }
+   };
+
+const seleccionarComprobante = async () => {
+    try {
+      const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permiso.granted) {
+        Alert.alert('Permiso denegado', 'Se necesita acceso a la galería para seleccionar el comprobante.');
+        return;
+      }
+
+      const opciones = {
+        mediaTypes: ['images'],
+        allowsEditing: false, // Sin recorte: se envía la imagen completa del comprobante
+        quality: Platform.OS === 'web' ? 1 : 0.7,
+        base64: true,
+      };
+
+      const resultado = await ImagePicker.launchImageLibraryAsync(opciones);
+
+      if (resultado.canceled || !resultado.assets?.length) return;
+
+      const asset = resultado.assets[0];
+
+      if (asset.fileSize && asset.fileSize > TAMANO_MAXIMO_BYTES) {
+        Alert.alert(
+          'Imagen muy pesada',
+          `El comprobante no puede pesar más de ${TAMANO_MAXIMO_MB}MB. Tu imagen pesa ${(asset.fileSize / 1024 / 1024).toFixed(1)}MB.`
+        );
+        return;
+      }
+
+      let base64Data = asset.base64;
+      let mimeType = asset.mimeType || 'image/jpeg';
+
+      if (!base64Data && asset.uri) {
+        if (asset.uri.startsWith('data:')) {
+          const idx = asset.uri.indexOf(',');
+          if (idx > 0) base64Data = asset.uri.substring(idx + 1);
+          const mimeMatch = asset.uri.match(/^data:(image\/\w+);/);
+          if (mimeMatch) mimeType = mimeMatch[1];
+        } else if (Platform.OS === 'web') {
+          try {
+            const response = await fetch(asset.uri);
+            const blob = await response.blob();
+            base64Data = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result.split(',')[1]);
+              reader.readAsDataURL(blob);
+            });
+            if (blob.type) mimeType = blob.type;
+          } catch (e) {
+            // ignore
+          }
+        } else {
+          try {
+            const fileContent = await FileSystem.readAsStringAsync(asset.uri, {
+              encoding: FileSystem.EncodingType.Base64,
+            });
+            base64Data = fileContent;
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+
+      if (!base64Data) {
+        Alert.alert('Error', 'No se pudo obtener el contenido de la imagen.');
+        return;
+      }
+
+      setComprobante({
+        uri: asset.uri,
+        name: asset.fileName || 'comprobante.jpg',
+        type: mimeType,
+        base64: base64Data,
+        size: asset.fileSize,
+      });
+    } catch (e) {
+      Alert.alert('Error', 'No se pudo seleccionar la imagen.');
     }
+  };
+
+  const quitarComprobante = () => {
+    setComprobante(null);
   };
 
   return (
@@ -105,66 +341,112 @@ export default function MetodoPago() {
           <Text style={styles.tituloFormulario}>Reportar Reporte de Pago</Text>
 
           {/* Banco de Origen */}
-          <Text style={styles.etiquetaInput}>Banco de Origen (Desde donde envió)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Ej. Banesco, Provincial, Banco de Venezuela..."
-            placeholderTextColor="#999"
+          <Select
+            label="Banco de Origen (Desde donde envió)"
+            opciones={BANCOS_ORIGEN}
             value={bancoOrigen}
-            onChangeText={setBancoOrigen}
+            onSelect={setBancoOrigen}
+            placeholder="Selecciona tu banco"
+          />
+
+          {/* Banco de Destino */}
+          <Select
+            label="Banco de Destino (Donde recibe el negocio)"
+            opciones={BANCOS_DESTINO}
+            value={bancoDestino}
+            onSelect={setBancoDestino}
+            placeholder="Selecciona el banco destino"
           />
 
           {/* Referencia Bancaria */}
-          <Text style={styles.etiquetaInput}>Código de Referencia (Últimos 4 u 8 dígitos)</Text>
-          <TextInput
-            style={styles.input}
-            keyboardType="numeric"
+          <Input
+            name="referencia_bancaria"
+            label="Código de Referencia (Últimos 4 a 6 dígitos)"
             placeholder="Ej. 123456"
-            placeholderTextColor="#999"
-            value={referencia}
-            onChangeText={setReferencia}
+            icon="receipt-outline"
+            control={control}
+            isSubmitted={isSubmitted}
+            keyboardType="number-pad"
+            maxLength={6}
+            onChangeTextModifier={(t) => t.replace(/[^0-9]/g, '')}
+            rules={{
+              required: 'El código de referencia es obligatorio',
+              pattern: {
+                value: /^[0-9]{4,6}$/,
+                message: 'Solo dígitos, entre 4 y 6',
+              },
+            }}
           />
 
-          {/* Fila de Teléfono emisor y Monto en Bs */}
+          {/* Fila de Teléfono emisor y Monto en Bs automático */}
           <View style={styles.filaInputs}>
             <View style={{ flex: 1.2, marginRight: 8 }}>
-              <Text style={styles.etiquetaInput}>Teléfono Emisor</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="phone-pad"
-                placeholder="0414..."
-                placeholderTextColor="#999"
-                value={telefonoEmisor}
-                onChangeText={setTelefonoEmisor}
+              <Input
+                name="telefono_emisor"
+                label="Teléfono Emisor (11 dígitos)"
+                placeholder="04141234567"
+                icon="call-outline"
+                control={control}
+                isSubmitted={isSubmitted}
+                keyboardType="number-pad"
+                maxLength={11}
+                onChangeTextModifier={(t) => t.replace(/[^0-9]/g, '')}
+                rules={{
+                  required: 'El teléfono es obligatorio',
+                  pattern: {
+                    value: /^04(12|14|16|22|24|26)[0-9]{7}$/,
+                    message: 'Teléfono inválido. Debe empezar con 0412, 0414, 0416, 0422, 0424 o 0426',
+                  },
+                }}
               />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.etiquetaInput}>Monto en Bs</Text>
-              <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                placeholder="Bs. 0.00"
-                placeholderTextColor="#999"
-                value={montoBs}
-                onChangeText={setMontoBs}
-              />
+              <Text style={styles.etiquetaInput}>Monto en Bs (auto)</Text>
+              <View style={styles.inputMontoAuto}>
+                <Text style={styles.textoMontoAuto}>
+                  {tasaCambio ? `Bs. ${montoBsCalculado}` : 'Cargando...'}
+                </Text>
+              </View>
             </View>
           </View>
 
           {/* Botón de Adjuntar Comprobante */}
-          <Text style={styles.etiquetaInput}>Comprobante de Operación</Text>
-          <TouchableOpacity 
-            style={styles.botonComprobante}
-            onPress={() => {
-              console.log("Abrir selector de archivos o cámara");
-              // Aquí usarías librerías como `react-native-image-picker` o `expo-image-picker`
-              setComprobante({ name: 'comprobante_pago.jpg' }); 
-            }}
-          >
-            <Text style={styles.textoBotonComprobante}>
-              {comprobante ? ` ${comprobante.name}` : 'Subir imagen del comprobante'}
-            </Text>
-          </TouchableOpacity>
+          <Text style={styles.etiquetaInput}>Comprobante de Operación (Opcional)</Text>
+
+          {comprobante ? (
+            <View style={styles.comprobantePreviewContainer}>
+              <Image source={{ uri: comprobante.uri }} style={styles.comprobantePreview} resizeMode="cover" />
+              <View style={styles.comprobanteInfo}>
+                <Text style={styles.comprobanteNombre} numberOfLines={1}>{comprobante.name}</Text>
+                <Text style={styles.comprobanteTamano}>
+                  {comprobante.size ? `${(comprobante.size / 1024 / 1024).toFixed(2)} MB` : ''}
+                </Text>
+                <View style={styles.comprobanteAcciones}>
+                  <TouchableOpacity
+                    style={styles.comprobanteBtnCambiar}
+                    onPress={seleccionarComprobante}
+                  >
+                    <Text style={styles.comprobanteBtnCambiarTxt}>Cambiar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.comprobanteBtnQuitar}
+                    onPress={quitarComprobante}
+                  >
+                    <Ionicons name="trash-outline" size={16} color="#D81B60" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.botonComprobante}
+              onPress={seleccionarComprobante}
+            >
+              <Ionicons name="cloud-upload-outline" size={28} color="#D81B60" style={{ marginBottom: 4 }} />
+              <Text style={styles.textoBotonComprobante}>Subir imagen del comprobante</Text>
+              <Text style={styles.textoHintComprobante}>Máximo {TAMANO_MAXIMO_MB}MB · JPG o PNG</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
       </ScrollView>
@@ -173,13 +455,17 @@ export default function MetodoPago() {
       <View style={styles.contenedorFijoInferior}>
         <TouchableOpacity
           style={[
-            styles.botonProcesar, 
-            (!bancoOrigen || !referencia || !montoBs) && styles.botonDeshabilitado
+            styles.botonProcesar,
+            (!bancoOrigen || !referenciaValor || !bancoDestino) && styles.botonDeshabilitado
           ]}
-          disabled={!bancoOrigen || !referencia || !montoBs}
-          onPress={ConfirmarPress}
+          disabled={!bancoOrigen || !referenciaValor || !bancoDestino || loading}
+          onPress={handleSubmit(handleConfirmar)}
         >
-          <Text style={styles.textoBotonProcesar}>Registrar Pago y Finalizar</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.textoBotonProcesar}>Registrar Pago y Finalizar</Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -410,6 +696,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  inputMontoAuto: {
+    backgroundColor: '#F3F3F3',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 40,
+    justifyContent: 'center',
+  },
+  textoMontoAuto: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#D81B60',
+  },
   botonComprobante: {
     borderWidth: 1,
     borderColor: '#D81B60',
@@ -456,5 +756,61 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+
+  // COMPROBANTE PREVIEW
+  comprobantePreviewContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF1F2',
+    borderWidth: 1,
+    borderColor: '#D81B60',
+    borderRadius: 10,
+    padding: 8,
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  comprobantePreview: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  comprobanteInfo: {
+    flex: 1,
+  },
+  comprobanteNombre: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2,
+  },
+  comprobanteTamano: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 6,
+  },
+  comprobanteAcciones: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  comprobanteBtnCambiar: {
+    backgroundColor: '#D81B60',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  comprobanteBtnCambiarTxt: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  comprobanteBtnQuitar: {
+    padding: 6,
+  },
+  textoHintComprobante: {
+    color: '#999',
+    fontSize: 11,
+    marginTop: 2,
   },
 });

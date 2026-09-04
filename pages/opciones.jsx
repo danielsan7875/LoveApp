@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalado @expo/vector-icons
 import api from '../services/api';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { clearAuth } from '../redux/authSlice';
 import AlertModal from '../componentes/ModalAlert'; 
 import ConfirmModal from '../componentes/ConfirmModal';
@@ -34,6 +34,8 @@ export default function Opciones() {
   const [modalVisible, setModalVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const dispatch = useDispatch();
+  const user = useSelector((state) => state.auth.user);
+  const profileName = user ? `${user.nombre || ''} ${user.apellido || ''}`.trim() : 'Nombre y Apellido';
 
   const handleLogoutModalClose = () => {
     setModalVisible(false);
@@ -81,7 +83,7 @@ export default function Opciones() {
                       style={styles.profileImage}
                       resizeMode="contain"
                     />
-          <Text style={styles.profileName}>Nombre y Apellido</Text>
+          <Text style={styles.profileName}>{profileName}</Text>
         </View>
 
 

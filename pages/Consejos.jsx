@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+import BtnAcion from '../componentes/BtnAcion'; 
+import HeaderTitulo from '../componentes/Headertitulo'; 
 // Habilitar animaciones en Android
 if (Platform.OS === 'android') {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -31,22 +33,22 @@ const Consejos = () => {
   const consejos = [
   {
     title: 'Asesoría personalizada en maquillaje',
-    image: require('../assets/img/imgconsejos/asesoria_maquillaje.jpg'),
+    image: require('../assets/imgconsejos/asesoria_maquillaje.jpg'),
     description: 'Navegar entre miles de productos y técnicas puede resultar abrumador. La asesoría personalizada es clave para encontrar lo que realmente funciona para ti.',
   },
   {
-    title: 'La importancia del maquillaje de calidad',
-    image: require('../assets/img/imgconsejos/gama_maquillaje.jpg'),
+    title: 'Importancia del maquillaje de calidad',
+    image: require('../assets/imgconsejos/gama_maquillaje.jpg'),
     description: 'Elegir productos de maquillaje de calidad no es un lujo sino una inversión en tu piel y en resultados profesionales. Los productos de calidad contienen ingredientes dermatológicamente testados, libres de sustancias nocivas y con propiedades beneficiosas para la piel. Muchos incluyen protección solar, antioxidantes y activos hidratantes que cuidan tu piel mientras la embellecen.',
   },
   {
     title: 'Maquillaje y autoestima',
-    image: require('../assets/img/imgconsejos/maquillaje_autoestima.jpg'),
+    image: require('../assets/imgconsejos/maquillaje_autoestima.jpg'),
     description: 'El maquillaje va mucho más allá de la estética; es una poderosa herramienta de autoexpresión que puede impactar positivamente en nuestra percepción personal y bienestar emocional. Ver nuestra mejor versión en el espejo genera un circuito de retroalimentación positiva.',
   },
   {
     title: 'Gama en productos de maquillaje',
-    image: require('../assets/img/imgconsejos/maquillaje_calidad.jpg'),
+    image: require('../assets/imgconsejos/maquillaje_calidad.jpg'),
     description: 'El mercado del maquillaje ofrece opciones para todos los presupuestos y necesidades. Conocer las características de cada gama te ayudará a tomar decisiones informadas.',
   },
 ];
@@ -54,7 +56,11 @@ const Consejos = () => {
   return (
     <ScrollView contentContainerStyle={styles.scrollContainer}>
     <View style={styles.bodyContainer}>
-      <Text style={styles.title}>Consejos de Belleza</Text>
+
+      <HeaderTitulo 
+        title="Consejos" 
+        subtitle="Tu guía diaria de cuidado, tendencias y bienestar" 
+      />
 
       {consejos.map((item, index) => (
         <View key={index} style={styles.card}>
@@ -73,9 +79,13 @@ const Consejos = () => {
       ))}
 
       {/* Botón para ir a Productos */}
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Producto')}>
-        <Text style={styles.buttonText}>Ver productos</Text>
-      </TouchableOpacity>
+       <BtnAcion 
+          text="Ver productos" 
+          icon="bag-handle" 
+          backgroundColor="#D81B60" 
+          color="#ffffff"       
+          onPress={() => navigation.navigate('Producto')} 
+        />
     </View>
     </ScrollView>
   );
@@ -90,13 +100,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF1F2',
     padding: 20,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#D81B60',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
+  
   description: {
   marginTop: 10,
   fontSize: 16,

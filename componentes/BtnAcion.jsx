@@ -1,23 +1,61 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Cambiado a Ionicons
 
-const BtnAccion = ({ icon, color = '#333', onPress }) => {
+const BtnAcion = ({ 
+  text, 
+  icon, 
+  onPress, 
+  backgroundColor = '#D81B60', 
+  color = '#ffffff',          
+  styleCustom 
+}) => {
   return (
-    <TouchableOpacity style={styles.button} onPress={onPress}>
-      <MaterialIcons name={icon} size={20} color={color} />
+    <TouchableOpacity 
+      style={[styles.button, { backgroundColor: backgroundColor }, styleCustom]} 
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      {/* Si pasas un icono por prop, lo renderiza al lado del texto */}
+      {icon && (
+        <Ionicons 
+          name={icon} 
+          size={20} 
+          color={color} 
+          style={styles.icon} 
+        />
+      )}
+      
+      <Text style={[styles.buttonText, { color: color }]}>
+        {text}
+      </Text>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
-    marginHorizontal: 4,
-    padding: 6,
-    borderRadius: 6,
-    backgroundColor: '#f2f2f2',
-    elevation: 2,
+    flexDirection: 'row',       // Para que el icono y el texto estén alineados de lado
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginVertical: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  icon: {
+    marginRight: 8,             // Separa el icono del texto
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
 });
 
-export default BtnAccion;
+export default BtnAcion;

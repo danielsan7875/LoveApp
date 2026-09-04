@@ -1,4 +1,5 @@
 import React from 'react';
+import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
 import { useSelector, useDispatch } from "react-redux";
 import { removeFromCart } from "../redux/cartSlice";
@@ -9,15 +10,20 @@ export default function Carrito() {
   const dispatch = useDispatch();
   const carrito = useSelector(state => state.cart.items);
 
-  const total = carrito.reduce((acc, item) => acc + (item.cantidad * item.precioMayor), 0);
+  const total = carrito.reduce((acc, item) => {
+    const precio = item.cantidad >= (item.cantidad_mayor || 0)
+      ? parseFloat(item.precioMayor)
+      : parseFloat(item.precioDetal);
+    return acc + (item.cantidad * (isNaN(precio) ? 0 : precio));
+  }, 0);
   const navigation = useNavigation();
   const DireccionPress = () => {
-    navigation.navigate("Metodoenvio");
+    navigation.navigate("Metodoenvio", { total });
   };
 
   return (
     <View style={styles.container}>
-      
+      <StatusBar barStyle="dark-content" backgroundColor="#000000" />
 
       <FlatList
         data={carrito}
@@ -27,7 +33,15 @@ export default function Carrito() {
         contentContainerStyle={styles.listContent} // Espaciado interno para que el último item no choque con el botón
         renderItem={({ item }) => (
           <View style={styles.item}>
-            <Image source={item.foto[0]} style={styles.img} />
+            <Image
+              source={
+                Array.isArray(item.foto) && item.foto.length > 0
+                  ? { uri: item.foto[0]?.url_imagen || item.foto[0]?.imagen || (typeof item.foto[0] === 'string' ? item.foto[0] : undefined) }
+                  : require('../assets/b6.png')
+              }
+              style={styles.img}
+              resizeMode="contain"
+            />
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{item.nombre}</Text>
               <Text style={styles.price}>

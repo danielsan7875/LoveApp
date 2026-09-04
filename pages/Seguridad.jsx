@@ -1,105 +1,164 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
+import { useSelector } from 'react-redux';
 import { Ionicons } from '@expo/vector-icons'; 
+import { useForm, Controller } from 'react-hook-form';
 
 // --- Componentes ---
-import BtnSeguridad from '../componentes/BtnSeguridad';
-import InputSeguridad from '../componentes/InputSeguridad';
+import { changePassword } from '../services/api';
+import Input from '../componentes/Inputvalidacion'; 
+import BtnAcion from '../componentes/BtnAcion'; 
+import AlertModal from '../componentes/ModalAlert';
+import HeaderTitulo from '../componentes/Headertitulo'; 
 
 
-const BodySeguridad = () => {
-  const [ActualClave, setActualClave] = useState('');
-  const [NuevaClave, setNuevaClave] = useState('');
-  const [ConfirmarClave, setConfirmarClave] = useState('');
+const BodySeguridad = ({activarCarga, desactivarCarga}) => {
+  const isLogged = useSelector((state) => state.auth.isLogged);
 
-  const CambioClave = () => {
-    // Lógica para cambiar la clave
-    Alert.alert("Cambio de Clave", "Lógica de cambio de clave ejecutada.");
-    console.log("Clave Actual:", ActualClave);
-    console.log("Nueva Clave:", NuevaClave);
-  };
+  // MODAL ALERT STATE
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [modalSuccess, setModalSuccess] = useState(false);
 
-  const CamposClear = () => {
-    // Lógica para limpiar los campos
-    setActualClave('');
-    setNuevaClave('');
-    setConfirmarClave('');
-    Alert.alert("Campos Limpiados", "Todos los campos de clave han sido limpiados.");
+  // CONTROL FORM
+  const {
+    control,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { isSubmitted },
+  } = useForm({
+    mode: 'onTouched',
+  });
+
+  // Observamos el valor de "nuevaClave" 
+  const nuevaClave = watch('nuevaClave');
+
+  const limpiar = ()=>{
+    reset();
+  }
+  
+  // ENVÍO DEL FORMULARIO PROCESADO
+  const onSubmit = async (data) => {
+    if (!isLogged) {
+      setModalSuccess(false);
+      setModalMessage('Debes iniciar sesión para cambiar tu contraseña.');
+      setModalVisible(true);
+      return;
+    }
+
+    activarCarga(); // Loader
+
+    const result = await changePassword(data.actualClave, data.nuevaClave);
+
+    desactivarCarga(); // Loeader quitar
+
+    if (result.success) {
+      setModalSuccess(true);
+      setModalMessage(result.mensaje || "¡Contraseña actualizada con éxito!");
+      setModalVisible(true);
+      
+      reset(); // Limpiar
+    } else {
+      setModalSuccess(false);
+      setModalMessage(result.mensaje || 'No se pudo actualizar la contraseña');
+      setModalVisible(true);
+    }
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       
       {/* SECCIÓN DE CABECERA */}
-      <Text style={styles.title}>Seguridad</Text>
-      <Text style={styles.Subtitle}>Cambio de clave</Text>
+      <HeaderTitulo 
+        title="Seguridad" 
+        subtitle="Cambio de contraseña" 
+      />
 
       {/* TARJETA DE CAMBIO DE CLAVE */}
       <View style={styles.card}>
-        <InputSeguridad
-          label="Clave actual"
-          iconName="key-outline"
-          value={ActualClave}
-          onChangeText={setActualClave}
-          isSecure={true}
+       {/*  CONTRASEÑA ACTUAL */}
+        <Input
+          name="actualClave"
+          label="Contraseña Actual"  
+          placeholder="Coloca tu contraseña actual"
+          icon="key-outline"
+          control={control}
+          secureTextEntry={true}
+          isSubmitted={isSubmitted}
+          rules={{
+            required: 'La contraseña actual es obligatoria',
+            minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+            maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+          }}
         />
-        <InputSeguridad
-          label="Clave nueva"
-          iconName="lock-closed-outline"
-          value={NuevaClave}
-          onChangeText={setNuevaClave}
-          isSecure={true}
+
+        {/* CONTRASEÑA NUEVA */}
+        <Input
+          name="nuevaClave"
+          label="Contraseña Nueva"  
+          placeholder="Coloca tu nueva contraseña"
+          icon="lock-closed"
+          control={control}
+          secureTextEntry={true}
+          isSubmitted={isSubmitted}
+          rules={{
+            required: 'La nueva contraseña es obligatoria',
+            minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+            maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+          }}
         />
-        <InputSeguridad
-          label="Confirmar clave nueva"
-          iconName="lock-closed-outline"
-          value={ConfirmarClave}
-          onChangeText={setConfirmarClave}
-          isSecure={true}
+
+        {/* CONFIRMAR CONTRASEÑA NUEVA */}
+        <Input
+          name="confirmarClave"
+          label="Confirmar Contraseña Nueva"  
+          placeholder="Repite la nueva contraseña"
+          icon="lock-closed"
+          control={control}
+          secureTextEntry={true}
+          isSubmitted={isSubmitted}
+          rules={{
+            required: 'Debe confirmar la nueva contraseña',
+            validate: (val) => {
+              if (val !== nuevaClave) {
+                return 'Las contraseñas no coinciden';
+              }
+            },
+          }}
         />
       </View>
 
 
       {/* BOTONES DE ACCIÓN */}
       <View style={styles.buttonGroup}>
-        <BtnSeguridad
-          title="Cambiar Clave"
-          iconName="key"
-          onPress={CambioClave}
-          color="#2E7D32" // Verde
-          iconColor="#fff"
-          textColor="#fff"
-        />
-        <BtnSeguridad
-          title="Limpiar"
-          iconName="refresh-outline"
-          onPress={CamposClear}
-          color="#616161" // Gris
-          iconColor="#fff"
-          textColor="#fff"
-        />
+          
+          {/* Enviar Form*/}
+        <BtnAcion
+          text="Cambiar Clave"
+          icon="key"
+          backgroundColor="#2E7D32"
+          onPress={handleSubmit(onSubmit)}
+          styleCustom={{ marginBottom: 0, marginTop: 4 }}
+        /> 
+        {/* limpiar */}
+        <BtnAcion
+          text="Limpiar"
+          icon="refresh-outline"
+          backgroundColor="#666666"
+          onPress={limpiar}
+          styleCustom={{ marginBottom: 0, marginTop: 4 }}
+        /> 
+        
       </View>
-
-      {/* SECCIÓN ESTADO DE LA CUENTA */}
-      <View style={styles.statusSection}>
-        <Text style={styles.Subtitle}>Estado de la Cuenta</Text>
-
-        <View style={styles.deleteAccountBlock}>
-          <View style={styles.deleteTextWrapper}>
-            <Ionicons name="person-remove-outline" size={24} color="#000" style={{ marginRight: 8 }} />
-            <Text style={styles.deleteAccountText}>¿Deseas Eliminar la Cuenta?</Text>
-          </View>
-          <BtnSeguridad
-            title="Eliminar Cuenta"
-            iconName="close-circle"
-            onPress={CamposClear}
-            color="#F44336" // Rojo
-            iconColor="#fff"
-            textColor="#fff"
-          />
-        </View>
-      </View>
-
+      
+      {/* ALERTA */}
+      <AlertModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        message={modalMessage}
+        success={modalSuccess}
+      />
     </ScrollView>
   );
 };
@@ -114,35 +173,17 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 100,
   },
-   buttonGroup: {
+  buttonGroup: {
     marginBottom: 30,
     gap: 15,
   },
-  // --- CABECERAS ---
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#E91E63',
-    marginBottom: 5,
-    borderLeftWidth: 4,
-    borderLeftColor: '#E91E63',
-    paddingLeft: 10,
-  },
-  Subtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 20,
-    marginLeft: 14, 
-  },
-
+ 
   // --- TARJETA DE INPUTS ---
   card: {
     backgroundColor: '#fff',
     borderRadius: 15,
     padding: 20,
     marginBottom: 25,
-   
     ...Platform.select({
       ios: {
         shadowColor: '#E91E63',
@@ -158,28 +199,7 @@ const styles = StyleSheet.create({
     borderLeftColor: '#E91E63',
   },
   
-  // --- SECCIÓN DE ELIMINAR CUENTA ---
-  statusSection: {
-    marginTop: 20,
-    paddingBottom: 40,
-  },
-  deleteAccountBlock: {
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 15,
-    padding: 15,
-    backgroundColor: '#fff',
-  },
-  deleteTextWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  deleteAccountText: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: '500',
-  },
+
 });
 
 export default BodySeguridad;

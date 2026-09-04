@@ -1,42 +1,48 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet,Dimensions, Linking, Image } from 'react-native';
 
-const ContactCard = ({ platform, url, backgroundColor }) => (
-  <TouchableOpacity style={[styles.card, { backgroundColor }]} onPress={() => Linking.openURL(url)}>
-    <Text style={styles.text}>{platform}</Text>
-  </TouchableOpacity>
-);
+import BtnAcion from '../componentes/BtnAcion'; 
+
+const { width } = Dimensions.get('window');
+const BANNER_WIDTH = width - 32;
 
 const ContactCards = () => {
   return (
 
     <View style={styles.container}>
-
+      <View style={styles.imageWrapper}>
         <Image
-        source={require('../assets/cont.png')}
+        source={require('../assets/contacto.webp')}
         style={styles.image}
         resizeMode="contain"
-      />
+        />
+       </View>
         <Text style={styles.justifiedText}>
         Si necesitas asesoría, soporte técnico o tienes alguna duda, estos son nuestros canales oficiales de contacto. Estamos aquí para ayudarte.
         </Text>
 
+      <BtnAcion
+          text="Ir a Instagram"
+          icon="logo-instagram"
+          backgroundColor="#E1306C"
+          onPress={() => Linking.openURL("https://www.instagram.com/lovemakeupyk/")}
+          styleCustom={{ marginBottom: 0, marginTop: 4 }}
+      /> 
+      <BtnAcion
+          text="Ir a WhatsApp"
+          icon="logo-whatsapp"
+          backgroundColor="#25D366"
+          onPress={() => Linking.openURL("https://wa.me/584245115414")}
+          styleCustom={{ marginBottom: 0, marginTop: 4 }}
+      /> 
+      <BtnAcion
+          text="ir a Facebook"
+          icon="logo-facebook"
+          backgroundColor="#1877F2"
+          onPress={() => Linking.openURL("https://www.facebook.com/lovemakeupyk/")}
+          styleCustom={{ marginBottom: 0, marginTop: 4 }}
+      /> 
 
-      <ContactCard
-        platform="Ir a Instagram"
-        url="https://www.instagram.com/lovemakeupyk/"
-        backgroundColor="#E1306C"
-      />
-      <ContactCard
-        platform="Ir a WhatsApp"
-        url="https://wa.me/584245115414"
-        backgroundColor="#25D366"
-      />
-      <ContactCard
-        platform="ir a Facebook"
-        url="https://www.facebook.com/lovemakeupyk/"
-        backgroundColor="#1877F2"
-      />
     </View>
   );
 };
@@ -46,10 +52,10 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 15,
   },
-  card: {
-    padding: 20,
-    borderRadius: 10,
-    alignItems: 'center',
+  imageWrapper: {
+    width: BANNER_WIDTH,
+    height: 160, 
+    paddingHorizontal: 6, 
   },
   text: {
     color: '#fff',
@@ -60,13 +66,13 @@ const styles = StyleSheet.create({
   textAlign: 'justify',
   fontSize: 21,
   color: '#000000ff',
-  marginBottom: 20,
+  marginBottom: 10,
 },
  image: {
-    width: 500,
-    height: 100,
-    marginBottom: 10,
-     alignSelf: 'center',
+    width: '100%',
+    height: '100%',
+    borderRadius: 16,
+    resizeMode: 'cover',
   },
 
 });

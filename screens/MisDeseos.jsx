@@ -1,42 +1,95 @@
+import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { useSelector } from "react-redux";
-import {
-  StyleSheet,
-  Text,
-  View,
-  ScrollView
-} from 'react-native';
+import { useSelector, useDispatch } from "react-redux";
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { obtenerWishlistRemotaThunk } from "../redux/wishlistSlice"; 
 import Cards from "../componentes/Cards";
+import ModalProducto from "../componentes/Modal";
+import HeaderTitulo from '../componentes/Headertitulo'; 
+import PopAlert from '../componentes/PopAlert.jsx';
 
-
-/*Pages - body*/
 
 const MisDeseos = () => {
-  const wishlist = useSelector((state) => state.wishlist);
+  const dispatch = useDispatch();
+
+    // -- Alerta Pop para avisar al carrito
+      const [alerta, setAlerta] = useState(false);
+      const mostrarAlerta = () =>{
+        setAlerta(true);
+        setTimeout(()=>setAlerta(false),2000);
+      }
+    // -- Alerta Pop 
+  
+  const { items: wishlist, status } = useSelector((state) => state.wishlist);
+  const { user, isLogged } = useSelector((state) => state.auth);
+  const cedula = user?.cedula;
+  const [modalVisible, setModalVisible] = useState(false);
+  const [productoActivo, setProductoActivo] = useState(null);
+
+  useEffect(() => {
+    if (isLogged && cedula) {
+      dispatch(obtenerWishlistRemotaThunk(cedula));
+    }
+  }, [dispatch, isLogged, cedula]);
+
+  const handleCardPress = (item) => {
+   /* setProductoActivo({ ...item, imagenes: item.foto || item.imagenes || [] });
+    setModalVisible(true);*/
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
+        <StatusBar barStyle="dark-content" backgroundColor="#000000" />
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-          <Text style={styles.logoText}>Lista de Deseos</Text>
-      {wishlist.length === 0 ? (
-        <Text style={styles.emptyText}>No tienes productos en tu lista de deseos</Text>
-      ) : (
-        <View style={styles.cardsContainer}>
-        {wishlist.map(item => (
-          <Cards
-            key={item.id}
-            id={item.id}
-            nombre={item.nombre}
-            precioMayor={item.precioMayor}
-            precioDetal={item.precioDetal}
-            foto={item.foto}
+
+         {alerta && (
+          <View style={styles.alertContainer}>
+            <PopAlert 
+              text="Agregado al carrito" 
+              iconName="cart" 
+              color="#ffffff" 
+              bgColor="#D81B60" 
+            />
+          </View>
+        )}
+        
+        <HeaderTitulo 
+          title="Mi lista de Deseos" 
+          subtitle="Lo que más te gusta de nuestra tienda" 
+        />
+
+          {status === 'loading' && wishlist.length === 0 ? (
+            <ActivityIndicator size="large" color="#D81B60" style={{ marginTop: 20 }} />
+          ) : !isLogged ? (
+            <Text style={styles.emptyText}>Inicia sesión para ver tus deseos guardados.</Text>
+          ) : wishlist.length === 0 ? (
+            <Text style={styles.emptyText}>No tienes productos en tu lista de deseos</Text>
+          ) : (
+            <View style={styles.cardsContainer}>
+              {wishlist.map(item => (
+                <Cards
+                  key={item.id}
+                  id={item.id}
+                  id_lista={item.id_lista}
+                  nombre={item.nombre}
+                  precioMayor={item.precioMayor}
+                  precioDetal={item.precioDetal}
+                  foto={item.foto}
+                  onPress={() => handleCardPress(item)}
+                  onAgregar={mostrarAlerta}
+                />
+              ))}
+            </View>
+          )}
+
+          <ModalProducto
+            visible={modalVisible}
+            onClose={() => setModalVisible(false)}
+            producto={productoActivo}
           />
-        ))}
-        </View>
-      )}
-    </ScrollView>
+        </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -46,15 +99,16 @@ const styles = StyleSheet.create({
   
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF1F2',
+    marginTop:20,
   },
   container: {
     flex: 1,
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
   },
   contentContainer: {
-    paddingHorizontal: 12,
-    paddingBottom: 24,
+    paddingHorizontal: 4,
+    paddingBottom: 80,
   },
   cardsContainer: {
     flexDirection: 'row',
@@ -62,19 +116,40 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
   },
- logoText: {
-      fontSize:40,
-      fontWeight: 'bold',
-      color: '#D81B60', 
-      marginBottom: 20,
-      textAlign: 'center',
+   header: {
+    width: '100%',
+    marginTop:20,
+    marginBottom: 30,
+    alignItems: 'flex-start',
   },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#E91E63',
+    borderLeftWidth: 4,
+    borderLeftColor: '#E91E63',
+    paddingLeft: 10,
+  },
+  subtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginLeft: 14, 
+  },
+ 
   emptyText: {
   textAlign: 'center',
   marginTop: 40,
   fontSize: 16,
   color: '#555',
 },
+  alertContainer: {
+    position: 'absolute',
+    top: 20,
+    alignSelf: 'center',
+    zIndex: 9999,
+    elevation: 5,
+  },
 });
 
 export default MisDeseos;

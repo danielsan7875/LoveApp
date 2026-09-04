@@ -20,27 +20,27 @@ export default function OpcionesNavigator() {
       <Stack.Screen
         name="MisDeseos"
         component={MisDeseos}
-        options={{ headerShown: true, title: 'Mis Lista de Deseos' }}
+        options={{ headerShown: true, title: 'Mas Opciones' }}
       />
       <Stack.Screen
         name="MisPedido"
         component={MisPedido}
-        options={{ headerShown: true, title: 'Mis Pedidos' }}
+        options={{ headerShown: true, title: 'Mas Opciones' }}
       />
        <Stack.Screen
         name="Consejos"
         component={Consejos}
-        options={{  headerShown: true, title: 'Consejos' }}
+        options={{  headerShown: true, title: 'Mas Opciones' }}
       />
       <Stack.Screen
         name="MisDatos"
         component={MisDatos}
-        options={{ headerShown: true, title: 'Mis Datos' }}
+        options={{ headerShown: true, title: 'Mas Opciones' }}
       />
       <Stack.Screen
         name="Seguridad"
         component={Seguridad}
-        options={{ headerShown: true, title: 'Seguridad' }}
+        options={{ headerShown: true, title: 'Mas Opciones' }}
       />
        <Stack.Screen
         name="Cerrar"
