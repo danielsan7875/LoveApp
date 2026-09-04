@@ -11,13 +11,13 @@ export default function CategoryFilter({ categories, selectedCategory, onSelectC
         contentContainerStyle={styles.scrollContainer}
       >
         {categories.map((item) => {
-          const isActive = item.nombre === selectedCategory;
+          const isActive = String(item.id_categoria) === String(selectedCategory?.id_categoria);
           return (
             <TouchableOpacity
               key={item.id_categoria}
               style={[styles.badge, isActive && styles.badgeSelected]}
               activeOpacity={0.7}
-              onPress={() => onSelectCategory && onSelectCategory(item.nombre)}
+              onPress={() => onSelectCategory && onSelectCategory(item)}
             >
               <Ionicons
                 name="pricetag-outline"
