@@ -16,15 +16,11 @@ export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precio
   const navigation = useNavigation();
   const [alertaLogin, setAlertaLogin] = useState(false);
   
-const { user, isLogged } = useSelector((state) => {
-  const datosAuth = state.auth;
-
-  if (datosAuth.user?.codigo || datosAuth.user?.autorizado === true) {
-    return { user: null, isLogged: false };
-  }
-
-  return { user: datosAuth.user, isLogged: datosAuth.isLogged };
-});
+const authUser = useSelector((state) => state.auth.user);
+const authIsLogged = useSelector((state) => state.auth.isLogged);
+const usuarioNoAutorizado = authUser?.codigo || authUser?.autorizado === true;
+const user = usuarioNoAutorizado ? null : authUser;
+const isLogged = usuarioNoAutorizado ? false : authIsLogged;
 
 const cedula = user?.cedula;
 

@@ -1,11 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  TouchableOpacity
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector } from 'react-redux';
@@ -28,15 +29,28 @@ const Producto = ({ route }) => {
   const [todosLosProductos, setTodosLosProductos] = useState([]);
   const [resultados, setResultados] = useState([]);
   const [cargandoProductos, setCargandoProductos] = useState(true);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const productosPorPagina = 16;
+  const productosScrollRef = useRef(null);
 
- 
+  const [misCategorias, setMisCategorias] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  const normalizarTexto = (valor) =>
+    String(valor ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
+
+
   // -- Alerta Pop para avisar al carrito
   const [alerta, setAlerta] = useState(false);
-  const mostrarAlerta = () =>{
+  const mostrarAlerta = () => {
     setAlerta(true);
-    setTimeout(()=>setAlerta(false),2000);
+    setTimeout(() => setAlerta(false), 2000);
   }
-  // -- Alerta Pop 
+  // -- Alerta Pop
 
 
   useEffect(() => {
@@ -72,26 +86,6 @@ const Producto = ({ route }) => {
     cargarProductosRemotos();
   }, []);
 
-  
-  useEffect(() => {
-    if (!query) {
-      setResultados(todosLosProductos);
-      return;
-    }
-
-    const filtrados = todosLosProductos.filter((p) =>
-      p.nombre && p.nombre.toLowerCase().includes(query.toLowerCase())
-    );
-
-    setResultados(filtrados);
-  }, [query, todosLosProductos]);
-
-  const handleCardPress = (producto) => {
-    setProductoActivo(producto);
-    setModalVisible(true);
-  };
-
-
   useEffect(() => {
     const cargarCategoriasRemotas = async () => {
       try {
@@ -107,26 +101,52 @@ const Producto = ({ route }) => {
     cargarCategoriasRemotas();
   }, []);
 
-  const [misCategorias, setMisCategorias] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  useEffect(() => {
+    const textoBusqueda = normalizarTexto(query);
+    const filtrados = todosLosProductos.filter((producto) => {
+      const coincideBusqueda = !textoBusqueda ||
+        normalizarTexto(producto.nombre).includes(textoBusqueda);
+      const coincideCategoria = !selectedCategory ||
+        String(producto.id_categoria) === String(selectedCategory.id_categoria);
 
-  const CategoriaPress = (categorianombre) => {
-  const mismaCategoria = categorianombre === selectedCategory;
+      return coincideBusqueda && coincideCategoria;
+    });
 
-  if (mismaCategoria) {
-    setSelectedCategory(null);
-    setResultados(todosLosProductos);
-    return;
-  }
+    setResultados(filtrados);
+    setPaginaActual(1);
+    requestAnimationFrame(() => {
+      productosScrollRef.current?.scrollTo({ y: 0, animated: true });
+    });
+  }, [query, todosLosProductos, selectedCategory]);
 
-  setSelectedCategory(categorianombre);
-
-  const filtrados = todosLosProductos.filter((producto) =>
-    producto.nombre_categoria?.toLowerCase() === categorianombre.toLowerCase()
+  const totalPaginas = Math.ceil(resultados.length / productosPorPagina);
+  const productosVisibles = resultados.slice(
+    (paginaActual - 1) * productosPorPagina,
+    paginaActual * productosPorPagina
   );
 
-  setResultados(filtrados);
-};
+  const handleCardPress = (producto) => {
+    setProductoActivo(producto);
+    setModalVisible(true);
+  };
+
+  const CategoriaPress = (categoria) => {
+    const mismaCategoria = categoria.id_categoria === selectedCategory?.id_categoria;
+
+    if (mismaCategoria) {
+      setSelectedCategory(null);
+      return;
+    }
+
+    setSelectedCategory(categoria);
+  };
+
+  const cambiarPagina = (pagina) => {
+    setPaginaActual(pagina);
+    requestAnimationFrame(() => {
+      productosScrollRef.current?.scrollTo({ y: 0, animated: true });
+    });
+  };
 
   return (
     <SafeAreaProvider>
@@ -137,34 +157,38 @@ const Producto = ({ route }) => {
           <LoginBarra />
 
           {alerta && (
-          <View style={styles.alertContainer}>
-            <PopAlert 
-              text="Agregado al carrito" 
-              iconName="cart" 
-              color="#ffffff" 
-              bgColor="#D81B60" 
-            />
-          </View>
-        )}
+            <View style={styles.alertContainer}>
+              <PopAlert
+                text="Agregado al carrito"
+                iconName="cart"
+                color="#ffffff"
+                bgColor="#D81B60"
+              />
+            </View>
+          )}
 
-          <Categoria 
-              categories={misCategorias} 
-              onSelectCategory={CategoriaPress} 
-              selectedCategory={selectedCategory}
-            />
+          <Categoria
+            categories={misCategorias}
+            onSelectCategory={CategoriaPress}
+            selectedCategory={selectedCategory}
+          />
 
-          <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            ref={productosScrollRef}
+            contentContainerStyle={styles.scrollViewContent}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.cardsContainer}>
 
               {cargandoProductos ? (
                 <ActivityIndicator size="large" color="#D81B60" style={{ marginTop: 20 }} />
               ) : resultados.length > 0 ? (
-                resultados.map((prod) => (
+                productosVisibles.map((prod) => (
                   <Cards
-                    key={prod.id_producto} 
+                    key={prod.id_producto}
                     id={prod.id_producto}
                     nombre_marca={prod.nombre_marca}
-                    foto={prod.imagenes} 
+                    foto={prod.imagenes}
                     nombre={prod.nombre}
                     precioMayor={prod.precio_mayor}
                     precioDetal={prod.precio_detal}
@@ -180,6 +204,28 @@ const Producto = ({ route }) => {
               )}
 
             </View>
+
+            {totalPaginas > 1 && (
+              <View style={styles.paginationContainer}>
+                <TouchableOpacity
+                  style={[styles.paginationButton, paginaActual === 1 && styles.disabledButton]}
+                  onPress={() => cambiarPagina(Math.max(1, paginaActual - 1))}
+                  disabled={paginaActual === 1}
+                >
+                  <Text style={styles.paginationButtonText}>Anterior</Text>
+                </TouchableOpacity>
+                <Text style={styles.paginationText}>
+                  Página {paginaActual} de {totalPaginas}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.paginationButton, paginaActual === totalPaginas && styles.disabledButton]}
+                  onPress={() => cambiarPagina(Math.min(totalPaginas, paginaActual + 1))}
+                  disabled={paginaActual === totalPaginas}
+                >
+                  <Text style={styles.paginationButtonText}>Siguiente</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             <ModalProducto
               visible={modalVisible}
@@ -205,7 +251,34 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     paddingBottom: 80, // Espacio para el nav inferior
-  },  
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 20,
+    marginBottom: 16,
+  },
+  paginationButton: {
+    minWidth: 90,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#D81B60',
+  },
+  disabledButton: {
+    opacity: 0.4,
+  },
+  paginationButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  paginationText: {
+    color: '#333333',
+    fontWeight: '600',
+  },
   container: {
     flex: 1,
     backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo

@@ -24,7 +24,10 @@
       "package": "com.anonymous.LoveApp"
     },
     "web": {
-      "favicon": "./assets/icono.webp"
-    }
+      "favicon": "./assets/icon.png"
+    },
+    "plugins": [
+      "expo-status-bar"
+    ]
   }
 }
