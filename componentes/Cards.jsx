@@ -26,7 +26,7 @@ const cedula = user?.cedula;
 
   const wishlistItems = useSelector((state) => state.wishlist.items);
   const itemEnLista = wishlistItems.find(item => item.id === id);
-  const isFav = !!itemEnLista;
+  const isFav = isLogged && !!itemEnLista;
 
   const tasaCambio = TasaOficial() || 600;
 

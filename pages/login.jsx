@@ -10,6 +10,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { setToken, setUser } from '../redux/authSlice';
+import { obtenerWishlistRemotaThunk } from '../redux/wishlistSlice';
 import { registrarIntentoFallidoLogin, resetearIntentosLogin } from '../redux/seguridadSlice';
 
 import AlertModal from '../componentes/ModalAlert'; 
@@ -79,7 +80,17 @@ const Login = ({activarCarga , desactivarCarga}) => {
       try {
         const token = await getToken();
         if (token) dispatch(setToken(token));
-        if (result.user) dispatch(setUser(result.user));
+        if (result.user) {
+          dispatch(setUser(result.user));
+          if (
+            token &&
+            result.user.cedula &&
+            !result.user.codigo &&
+            result.user.autorizado !== true
+          ) {
+            dispatch(obtenerWishlistRemotaThunk(result.user.cedula));
+          }
+        }
       } catch (e) {
         console.warn('Error syncing token to redux after login', e);
       }

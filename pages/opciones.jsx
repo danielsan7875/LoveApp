@@ -50,6 +50,7 @@ export default function Opciones() {
     } catch (e) {
       console.warn('api.logout error', e);
     }
+    dispatch(clearAuth());
     setModalVisible(true);
   };
 
@@ -202,4 +203,3 @@ const styles = StyleSheet.create({
     marginLeft: 64, // Alineado con el texto (20 de padding + 24 de ícono + 20 de margen)
   },
 });
-
