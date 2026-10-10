@@ -15,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import BtnAcion from '../componentes/BtnAcion'; 
 import HeaderTitulo from '../componentes/Headertitulo'; 
 // Habilitar animaciones en Android
-if (Platform.OS === 'android') {
+if (Platform.OS === 'android' && !global.nativeFabricUIManager) {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }
