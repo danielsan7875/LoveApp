@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { useSelector, useDispatch } from "react-redux";
-import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { obtenerWishlistRemotaThunk } from "../redux/wishlistSlice"; 
 import Cards from "../componentes/Cards";
@@ -26,12 +26,26 @@ const MisDeseos = () => {
   const cedula = user?.cedula;
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (isLogged && cedula) {
       dispatch(obtenerWishlistRemotaThunk(cedula));
     }
   }, [dispatch, isLogged, cedula]);
+
+  const handleRefresh = async () => {
+    if (!isLogged || !cedula) return;
+
+    setRefreshing(true);
+    try {
+      await dispatch(obtenerWishlistRemotaThunk(cedula)).unwrap();
+    } catch (error) {
+      console.warn('Error actualizando lista de deseos:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleCardPress = (item) => {
    /* setProductoActivo({ ...item, imagenes: item.foto || item.imagenes || [] });
@@ -42,7 +56,13 @@ const MisDeseos = () => {
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" backgroundColor="#000000" />
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.contentContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+        >
 
          {alerta && (
           <View style={styles.alertContainer}>
@@ -59,11 +79,18 @@ const MisDeseos = () => {
           title="Mi lista de Deseos" 
           subtitle="Lo que más te gusta de nuestra tienda" 
         />
+        {status === 'failed' && wishlist.length > 0 && (
+          <Text style={styles.loadErrorText}>
+            No se pudo actualizar tu lista de deseos. Inténtalo de nuevo.
+          </Text>
+        )}
 
           {status === 'loading' && wishlist.length === 0 ? (
             <ActivityIndicator size="large" color="#D81B60" style={{ marginTop: 20 }} />
           ) : !isLogged ? (
             <Text style={styles.emptyText}>Inicia sesión para ver tus deseos guardados.</Text>
+          ) : status === 'failed' && wishlist.length === 0 ? (
+            <Text style={styles.emptyText}>No se pudo actualizar tu lista de deseos. Inténtalo de nuevo.</Text>
           ) : wishlist.length === 0 ? (
             <Text style={styles.emptyText}>No tienes productos en tu lista de deseos</Text>
           ) : (
@@ -143,6 +170,11 @@ const styles = StyleSheet.create({
   fontSize: 16,
   color: '#555',
 },
+  loadErrorText: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    color: '#B00020',
+  },
   alertContainer: {
     position: 'absolute',
     top: 20,
@@ -153,4 +185,3 @@ const styles = StyleSheet.create({
 });
 
 export default MisDeseos;
-

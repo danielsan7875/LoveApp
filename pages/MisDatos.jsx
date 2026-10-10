@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-import { StyleSheet, View, ScrollView, KeyboardAvoidingView, Platform, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ScrollView, RefreshControl, KeyboardAvoidingView, Platform, Text, TouchableOpacity } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -35,6 +35,8 @@ export default function BodyMisDatos({ activarCarga, desactivarCarga }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalSuccess, setModalSuccess] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [profileError, setProfileError] = useState(null);
   
   // Identificador único de sesión persistente
   const [cedulaSesion, setCedulaSesion] = useState('');
@@ -68,24 +70,43 @@ export default function BodyMisDatos({ activarCarga, desactivarCarga }) {
     }
   }, [user, applyUserToForm]);
 
+  const hydrateProfile = useCallback(async (isActive = () => true) => {
+    const result = await fetchUserProfile();
+    if (!isActive() || !result.success || !result.user) return false;
+
+    dispatch(setUser(result.user));
+    return true;
+  }, [dispatch]);
+
   // al enfocar la pantalla
   useFocusEffect(
     useCallback(() => {
       let active = true;
 
-      const hydrateProfile = async () => {
-        const result = await fetchUserProfile();
-        if (!active || !result.success || !result.user) return;
-
-        dispatch(setUser(result.user));
-      };
-
-      hydrateProfile();
+      hydrateProfile(() => active).catch((error) => {
+        console.warn('Error cargando perfil:', error);
+      });
       return () => {
         active = false;
       };
-    }, [dispatch])
+    }, [hydrateProfile])
   );
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setProfileError(null);
+    try {
+      const success = await hydrateProfile();
+      if (!success) {
+        setProfileError('No se pudieron actualizar tus datos. Inténtalo de nuevo.');
+      }
+    } catch (error) {
+      console.warn('Error actualizando perfil:', error);
+      setProfileError('No se pudieron actualizar tus datos. Inténtalo de nuevo.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // ENVÍO DE ACTUALIZACIÓN DE FORMULARIO
   const onSubmit = async (data) => {
@@ -146,12 +167,16 @@ export default function BodyMisDatos({ activarCarga, desactivarCarga }) {
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
       >
         {/* CABECERA CON TU COMPONENTE */}
         <HeaderTitulo 
           title="Datos Personales" 
           subtitle="Información personal" 
         />
+        {profileError && <Text style={styles.errorText}>{profileError}</Text>}
 
         {/* CONTENEDOR TARJETA DE INPUTS */}
         <View style={styles.card}>
@@ -346,6 +371,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 20,
     paddingBottom: 150, 
+  },
+  errorText: {
+    marginBottom: 12,
+    color: '#B00020',
   },
   header: {
     width: '100%',

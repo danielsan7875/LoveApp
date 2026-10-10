@@ -5,7 +5,8 @@ import {
   Text,
   ScrollView,
   FlatList,
-  View
+  View,
+  RefreshControl
 } from 'react-native';
 
 import Cards from '../componentes/Cards';
@@ -30,6 +31,8 @@ const BodyHome = ({ onAgregar }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
   const [remoteProductos, setRemoteProductos] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
   const handleCardPress = (producto) => {
     setProductoActivo(producto);
@@ -46,21 +49,32 @@ const BodyHome = ({ onAgregar }) => {
         Array.isArray(data.productos)
       ) {
         setRemoteProductos(data.productos);
+        setLoadError(null);
       } else {
         setRemoteProductos([]);
+        setLoadError('No se pudieron cargar los productos.');
       }
     } catch (e) {
       console.warn(
         'Fetch error en Home:',
         e.message || e
       );
-      setRemoteProductos([]);
+      setLoadError('No se pudieron actualizar los productos.');
     }
   };
 
   useEffect(() => {
     loadRemote();
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadRemote();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // --- RENDERIZADO DE BANNERS ---
 
@@ -78,6 +92,9 @@ const BodyHome = ({ onAgregar }) => {
     <ScrollView
       contentContainerStyle={styles.scrollViewContent}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
     >
 
       {/* BANNER PUBLICITARIO */}
@@ -85,6 +102,8 @@ const BodyHome = ({ onAgregar }) => {
       <BannerPublicidad
         imagenes={banners}
       />
+
+      {loadError && <Text style={styles.errorText}>{loadError}</Text>}
 
       {/* TITULO */}
 
@@ -164,6 +183,11 @@ const styles = StyleSheet.create({
     margin: 16,
     marginBottom: 4,
     color: '#333',
+  },
+  errorText: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    color: '#B00020',
   },
 
   cardsContainer: {

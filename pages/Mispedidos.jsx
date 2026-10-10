@@ -3,6 +3,7 @@ import {
   StyleSheet,
   View,
   ScrollView,
+  RefreshControl,
   StatusBar,
   Dimensions,
   Text,
@@ -24,6 +25,7 @@ export default function BodyMisPedido() {
 
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -45,6 +47,20 @@ export default function BodyMisPedido() {
       mounted = false;
     };
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setError(null);
+    try {
+      const data = await fetchPedidos();
+      setPedidos(data);
+    } catch (e) {
+      console.warn('Error actualizando pedidos:', e);
+      setError('No se pudieron actualizar los pedidos');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // 3. MANEJADOR PARA ABRIR EL DETALLE
   const handleVerDetalle = (pedido) => {
@@ -70,6 +86,9 @@ export default function BodyMisPedido() {
       <ScrollView 
         contentContainerStyle={styles.scrollViewContent} 
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
       >
         <View style={styles.listContainer}>
           {loading && <Text>Cargando pedidos...</Text>}

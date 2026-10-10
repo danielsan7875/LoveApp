@@ -1,10 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
+  RefreshControl,
   ActivityIndicator,
   TouchableOpacity
 } from 'react-native';
@@ -29,6 +30,8 @@ const Producto = ({ route }) => {
   const [todosLosProductos, setTodosLosProductos] = useState([]);
   const [resultados, setResultados] = useState([]);
   const [cargandoProductos, setCargandoProductos] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const [paginaActual, setPaginaActual] = useState(1);
   const productosPorPagina = 16;
   const productosScrollRef = useRef(null);
@@ -53,53 +56,64 @@ const Producto = ({ route }) => {
   // -- Alerta Pop
 
 
-  useEffect(() => {
-    const cargarProductosRemotos = async () => {
-      try {
-        const data = await api.fetchProductos('activos');
+  const cargarProductosRemotos = useCallback(async () => {
+    try {
+      const data = await api.fetchProductos('activos');
 
-        if (
-          data &&
-          data.respuesta === 1 &&
-          Array.isArray(data.productos)
-        ) {
-          setTodosLosProductos(data.productos);
-          setResultados(data.productos);
-        } else {
-          setTodosLosProductos([]);
-          setResultados([]);
-        }
-
-      } catch (error) {
-        console.warn(
-          "Error cargando productos remotos:",
-          error.response?.data || error.message
-        );
-
-        setTodosLosProductos([]);
-        setResultados([]);
-      } finally {
-        setCargandoProductos(false);
+      if (data && data.respuesta === 1 && Array.isArray(data.productos)) {
+        setTodosLosProductos(data.productos);
+        setResultados(data.productos);
+        return true;
       }
-    };
 
+      setTodosLosProductos([]);
+      setResultados([]);
+      return false;
+    } catch (error) {
+      console.warn(
+        "Error cargando productos remotos:",
+        error.response?.data || error.message
+      );
+      return false;
+    } finally {
+      setCargandoProductos(false);
+    }
+  }, []);
+
+  const cargarCategoriasRemotas = useCallback(async () => {
+    try {
+      const data = await api.fetchCategorias();
+      if (data && data.respuesta === 1 && Array.isArray(data.categorias)) {
+        setMisCategorias(data.categorias);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.warn("Error cargando categorías remotas:", error);
+      return false;
+    }
+  }, []);
+
+  useEffect(() => {
     cargarProductosRemotos();
-  }, []);
-
-  useEffect(() => {
-    const cargarCategoriasRemotas = async () => {
-      try {
-        const data = await api.fetchCategorias();
-        if (data && data.respuesta === 1 && Array.isArray(data.categorias)) {
-          setMisCategorias(data.categorias);
-        }
-      } catch (error) {
-        console.warn("Error cargando categorías remotas:", error);
-      }
-    };
-
     cargarCategoriasRemotas();
-  }, []);
+  }, [cargarProductosRemotos, cargarCategoriasRemotas]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setLoadError(null);
+    try {
+      const results = await Promise.all([
+        cargarProductosRemotos(),
+        cargarCategoriasRemotas(),
+      ]);
+      if (results.some((success) => !success)) {
+        setLoadError('No se pudieron actualizar todos los datos del catálogo.');
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const textoBusqueda = normalizarTexto(query);
@@ -177,8 +191,13 @@ const Producto = ({ route }) => {
             ref={productosScrollRef}
             contentContainerStyle={styles.scrollViewContent}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            }
           >
             <View style={styles.cardsContainer}>
+
+              {loadError && <Text style={styles.errorText}>{loadError}</Text>}
 
               {cargandoProductos ? (
                 <ActivityIndicator size="large" color="#D81B60" style={{ marginTop: 20 }} />
@@ -288,6 +307,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
     color: '#D81B60', // Rosa oscuro
+  },
+  errorText: {
+    width: '100%',
+    marginTop: 12,
+    textAlign: 'center',
+    color: '#B00020',
   },
   alertContainer: {
     position: 'absolute',
