@@ -27,7 +27,9 @@ const NavBarra = ({ state, navigation }) => {
           const isFocused = state.index === index;
 
           const onPress = () => {
-            if (!isFocused) {
+            if (label === "Más Opciones") {
+              navigation.navigate(label, { screen: "OpcionesHome" });
+            } else if (!isFocused) {
               navigation.navigate(label);
             }
           };
