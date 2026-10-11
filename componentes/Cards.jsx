@@ -11,7 +11,7 @@ import ConfirmModal from './ConfirmModal';
 const { width } = Dimensions.get('window');
 const cardWidth = (width / 2) - 20; // Ajuste perfecto para diseño en cuadrícula de 2 columnas
 
-export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precioMayor, precioDetal, cantidadMayor, onPress, onAgregar }) {
+export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precioMayor, precioDetal, cantidadMayor, stockDisponible, onPress, onAgregar }) {
   const dispatch = useDispatch();
   const navigation = useNavigation();
   const [alertaLogin, setAlertaLogin] = useState(false);
@@ -25,6 +25,7 @@ const isLogged = usuarioNoAutorizado ? false : authIsLogged;
 const cedula = user?.cedula;
 
   const wishlistItems = useSelector((state) => state.wishlist.items);
+  const cartItems = useSelector((state) => state.cart.items);
   const itemEnLista = wishlistItems.find(item => item.id === id);
   const isFav = isLogged && !!itemEnLista;
 
@@ -45,12 +46,30 @@ const precioBs = new Intl.NumberFormat('es-VE', {
     return;
   }
 
+  // Verificación de stock antes de agregar
+  const stock = Number(stockDisponible);
+  const idCarrito = id ?? nombre + "_" + precioMayor;
+  if (Number.isFinite(stock)) {
+    const enCarrito = cartItems.find((p) => p.id === idCarrito);
+    const cantidadActual = enCarrito ? (enCarrito.cantidad || 1) : 0;
+    if (cantidadActual + 1 > stock) {
+      Alert.alert(
+        "Stock insuficiente",
+        stock < 1
+          ? `"${nombre}" está agotado.`
+          : `Solo hay ${stock} unidad(es) disponible(s) de "${nombre}".`
+      );
+      return;
+    }
+  }
+
   dispatch(addToCart({
-    id: id ?? nombre + "_" + precioMayor,
+    id: idCarrito,
     nombre,
     precioMayor,
     precioDetal,
     cantidad_mayor: cantidadMayor,
+    stock_disponible: stockDisponible,
     foto,
   }));
 

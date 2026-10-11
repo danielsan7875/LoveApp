@@ -212,6 +212,7 @@ const Producto = ({ route }) => {
                     precioMayor={prod.precio_mayor}
                     precioDetal={prod.precio_detal}
                     cantidadMayor={prod.cantidad_mayor}
+                    stockDisponible={prod.stock_disponible}
                     onPress={() => handleCardPress(prod)}
                     onAgregar={mostrarAlerta}
                   />

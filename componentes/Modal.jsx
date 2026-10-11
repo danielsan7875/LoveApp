@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,6 +21,7 @@ export default function ModalProducto({ visible, onClose, producto }) {
 
   const authUser = useSelector((state) => state.auth.user);
   const authIsLogged = useSelector((state) => state.auth.isLogged);
+  const cartItems = useSelector((state) => state.cart.items);
   const usuarioNoAutorizado = authUser?.codigo || authUser?.autorizado === true;
   const user = usuarioNoAutorizado ? null : authUser;
   const isLogged = usuarioNoAutorizado ? false : authIsLogged;
@@ -48,12 +49,30 @@ export default function ModalProducto({ visible, onClose, producto }) {
         return;
       }
 
+      // Verificación de stock antes de agregar
+      const stock = Number(producto.stock_disponible);
+      const idCarrito = producto.id_producto ?? producto.id;
+      if (Number.isFinite(stock)) {
+        const enCarrito = cartItems.find((p) => p.id === idCarrito);
+        const cantidadActual = enCarrito ? (enCarrito.cantidad || 1) : 0;
+        if (cantidadActual + 1 > stock) {
+          Alert.alert(
+            "Stock insuficiente",
+            stock < 1
+              ? `"${producto.nombre}" está agotado.`
+              : `Solo hay ${stock} unidad(es) disponible(s) de "${producto.nombre}".`
+          );
+          return;
+        }
+      }
+
       dispatch(addToCart({
-        id: producto.id_producto ?? producto.id,
+        id: idCarrito,
         nombre: producto.nombre,
         precioMayor: producto.precio_mayor,
         precioDetal: producto.precio_detal,
         cantidad_mayor: producto.cantidad_mayor,
+        stock_disponible: producto.stock_disponible,
         foto: producto.imagenes || producto.foto || [],
       }));
 
