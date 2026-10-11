@@ -10,7 +10,7 @@ import {
   TouchableOpacity
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 /* Componentes */
 import HearBarra from '../componentes/hear.jsx';
@@ -20,9 +20,14 @@ import ModalProducto from '../componentes/Modal';
 import Categoria from '../componentes/categoriafiltro.jsx';
 import api from '../services/api';
 import PopAlert from '../componentes/PopAlert.jsx';
+import { obtenerWishlistRemotaThunk } from '../redux/wishlistSlice';
 
 
 const Producto = ({ route }) => {
+  const dispatch = useDispatch();
+  const { user, isLogged } = useSelector((state) => state.auth);
+  const cedula = user?.cedula;
+  const puedeCargarDeseos = isLogged && cedula && !user?.codigo && user?.autorizado !== true;
   const { query } = route?.params || {};
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
@@ -106,6 +111,15 @@ const Producto = ({ route }) => {
       const results = await Promise.all([
         cargarProductosRemotos(),
         cargarCategoriasRemotas(),
+        puedeCargarDeseos
+          ? dispatch(obtenerWishlistRemotaThunk(cedula))
+              .unwrap()
+              .then(() => true)
+              .catch((error) => {
+                console.warn('Error actualizando lista de deseos en Productos:', error);
+                return false;
+              })
+          : Promise.resolve(true),
       ]);
       if (results.some((success) => !success)) {
         setLoadError('No se pudieron actualizar todos los datos del catálogo.');

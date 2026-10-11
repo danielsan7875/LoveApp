@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   StyleSheet,
   Dimensions,
@@ -15,6 +16,7 @@ import ModalProducto from '../componentes/Modal';
 import BrandSlider from '../componentes/seccionmarca.jsx';
 
 import api from '../services/api';
+import { obtenerWishlistRemotaThunk } from '../redux/wishlistSlice';
 
 import {
   promoBanners,
@@ -27,6 +29,10 @@ import BannerPublicidad from '../componentes/BannerPublicidad';
 const { width } = Dimensions.get('window');
 
 const BodyHome = ({ onAgregar }) => {
+  const dispatch = useDispatch();
+  const { user, isLogged } = useSelector((state) => state.auth);
+  const cedula = user?.cedula;
+  const puedeCargarDeseos = isLogged && cedula && !user?.codigo && user?.autorizado !== true;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
@@ -50,9 +56,11 @@ const BodyHome = ({ onAgregar }) => {
       ) {
         setRemoteProductos(data.productos);
         setLoadError(null);
+        return true;
       } else {
         setRemoteProductos([]);
         setLoadError('No se pudieron cargar los productos.');
+        return false;
       }
     } catch (e) {
       console.warn(
@@ -60,6 +68,7 @@ const BodyHome = ({ onAgregar }) => {
         e.message || e
       );
       setLoadError('No se pudieron actualizar los productos.');
+      return false;
     }
   };
 
@@ -70,7 +79,21 @@ const BodyHome = ({ onAgregar }) => {
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await loadRemote();
+      const results = await Promise.all([
+        loadRemote(),
+        puedeCargarDeseos
+          ? dispatch(obtenerWishlistRemotaThunk(cedula))
+              .unwrap()
+              .then(() => true)
+              .catch((error) => {
+                console.warn('Error actualizando lista de deseos en Inicio:', error);
+                return false;
+              })
+          : Promise.resolve(true),
+      ]);
+      if (results.some((success) => !success)) {
+        setLoadError('No se pudieron actualizar todos los datos.');
+      }
     } finally {
       setRefreshing(false);
     }
