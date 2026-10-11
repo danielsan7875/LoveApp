@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function PedidoFinalizado({ route, navigation }) {
   const pedido = route.params?.pedido ?? {};
   const user = useSelector(state => state.auth.user);
+  const insets = useSafeAreaInsets();
 
   const datosPedido = {
     idPedido: pedido.idPedido ?? 'N/A',
@@ -17,13 +19,16 @@ export default function PedidoFinalizado({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.contenedorPrincipal}>
-      
-
-      <ScrollView contentContainerStyle={styles.contenidoScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={[
+          styles.contenidoScroll, 
+          { paddingTop: Math.max(insets.top, 20) + 20, paddingBottom: Math.max(insets.bottom, 20) + 100 }
+        ]} 
+        showsVerticalScrollIndicator={true}
+      >
         
-        {/*  ESTADO DEL PEDIDO */}
+        {/* ESTADO DEL PEDIDO */}
         <View style={styles.tarjetaEstado}>
-          {/* Icono de Check en Círculo Verde */}
           <View style={styles.circuloCheck}>
             <View style={styles.checkIcono}>
               <View style={[styles.lineaCheck, styles.checkCorto]} />
@@ -31,65 +36,74 @@ export default function PedidoFinalizado({ route, navigation }) {
             </View>
           </View>
           
-          <Text style={styles.tituloEstado}>¡Pedido Realizado!</Text>
-          <Text style={styles.subtituloEstado}>Su pedido está en estado: verificar pago</Text>
+          <Text style={styles.tituloEstado} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+            ¡Pedido Realizado!
+          </Text>
+          <Text style={styles.subtituloEstado} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+            Su pedido está en estado: verificar pago
+          </Text>
         </View>
 
-        {/*  DETALLES DEL CLIENTE Y COMPRA */}
+        {/* DETALLES DEL CLIENTE */}
         <View style={styles.tarjetaInfo}>
-          <Text style={styles.tituloSeccion}>Datos del Cliente</Text>
+          <Text style={styles.tituloSeccion} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+            Datos del Cliente
+          </Text>
           
           <View style={styles.filaInfo}>
-            <Text style={styles.etiqueta}>Nombre</Text>
-            <Text style={styles.valor}>{datosPedido.nombre}</Text>
+            <Text style={styles.etiqueta} allowFontScaling={true} maxFontSizeMultiplier={1.3}>Nombre</Text>
+            <Text style={styles.valor} allowFontScaling={true} maxFontSizeMultiplier={1.3}>{datosPedido.nombre}</Text>
           </View>
           
           <View style={styles.filaInfo}>
-            <Text style={styles.etiqueta}>Apellido</Text>
-            <Text style={styles.valor}>{datosPedido.apellido}</Text>
+            <Text style={styles.etiqueta} allowFontScaling={true} maxFontSizeMultiplier={1.3}>Apellido</Text>
+            <Text style={styles.valor} allowFontScaling={true} maxFontSizeMultiplier={1.3}>{datosPedido.apellido}</Text>
           </View>
         </View>
 
+        {/* DETALLES DEL PEDIDO */}
         <View style={styles.tarjetaInfo}>
-          <Text style={styles.tituloSeccion}>Detalles del Pedido</Text>
+          <Text style={styles.tituloSeccion} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+            Detalles del Pedido
+          </Text>
 
           <View style={styles.filaInfo}>
-            <Text style={styles.etiqueta}>Fecha</Text>
-            <Text style={styles.valor}>{datosPedido.fecha}</Text>
+            <Text style={styles.etiqueta} allowFontScaling={true} maxFontSizeMultiplier={1.3}>Fecha</Text>
+            <Text style={styles.valor} allowFontScaling={true} maxFontSizeMultiplier={1.3}>{datosPedido.fecha}</Text>
           </View>
 
           <View style={styles.filaInfo}>
-            <Text style={styles.etiqueta}>ID del Pedido</Text>
-            <Text style={styles.valorDestacado}>{datosPedido.idPedido}</Text>
+            <Text style={styles.etiqueta} allowFontScaling={true} maxFontSizeMultiplier={1.3}>ID del Pedido</Text>
+            <Text style={styles.valorDestacado} allowFontScaling={true} maxFontSizeMultiplier={1.3}>{datosPedido.idPedido}</Text>
           </View>
 
           <View style={styles.filaInfo}>
-            <Text style={styles.etiqueta}>Método de Pago</Text>
-            <Text style={styles.valor}>{datosPedido.metodoPago}</Text>
+            <Text style={styles.etiqueta} allowFontScaling={true} maxFontSizeMultiplier={1.3}>Método de Pago</Text>
+            <Text style={styles.valor} allowFontScaling={true} maxFontSizeMultiplier={1.3}>{datosPedido.metodoPago}</Text>
           </View>
 
-          {/* Divisor sutil antes del total general */}
           <View style={styles.divisor} />
 
           <View style={[styles.filaInfo, { marginTop: 8 }]}>
-            <Text style={styles.etiquetaTotal}>Total a Pagar</Text>
-            <Text style={styles.valorTotal}>{datosPedido.total}$</Text>
+            <Text style={styles.etiquetaTotal} allowFontScaling={true} maxFontSizeMultiplier={1.3}>Total a Pagar</Text>
+            <Text style={styles.valorTotal} allowFontScaling={true} maxFontSizeMultiplier={1.3}>{datosPedido.total}$</Text>
           </View>
         </View>
 
       </ScrollView>
 
-      {/* Botón Inferior Fijo */}
-      <View style={styles.contenedorFijoInferior}>
+      {/* Botón Inferior Fijo adaptado a la barra de navegación o gestos de Android */}
+      <View style={[styles.contenedorFijoInferior, { paddingBottom: Math.max(insets.bottom, 15) }]}>
         <TouchableOpacity
           style={styles.botonEntendido}
           onPress={() => {
-            // Te regresa al inicio de la aplicación o tienda limpio
-            console.log("Volver al inicio");
             navigation.popToTop(); 
           }}
+          activeOpacity={0.8}
         >
-          <Text style={styles.textoBotonEntendido}>Entendido</Text>
+          <Text style={styles.textoBotonEntendido} allowFontScaling={true} maxFontSizeMultiplier={1.2}>
+            Entendido
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -100,76 +114,11 @@ export default function PedidoFinalizado({ route, navigation }) {
 const styles = StyleSheet.create({
   contenedorPrincipal: {
     flex: 1,
-    backgroundColor: '#FFF1F2', // El mismo fondo rosa claro del carrito
-  },
-  encabezado: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 15,
-    paddingBottom: 15,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  tituloPantalla: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#D81B60',
-    textAlign: 'center',
-    flex: 1,
-  },
-  botonAtras: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  flechaIcono: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lineaFlecha: {
-    position: 'absolute',
-    width: 10,
-    height: 3,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 2,
-    left: 3,
-  },
-  lineaSuperior: {
-    transform: [{ rotate: '-45deg' }],
-    top: 6,
-  },
-  lineaInferior: {
-    transform: [{ rotate: '45deg' }],
-    bottom: 6,
-  },
-  lineaCuerpo: {
-    position: 'absolute',
-    width: 14,
-    height: 3,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 2,
-    left: 4,
+    backgroundColor: '#FFF1F2',
   },
   contenidoScroll: {
     paddingHorizontal: 16,
-    paddingTop: 80,
-    paddingBottom: 100,
   },
-  
-  // CONTENEDOR DEL CHECK SUPERIOR
   tarjetaEstado: {
     backgroundColor: '#FFFFFF',
     borderRadius: 20,
@@ -186,7 +135,7 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#4CD964', // Verde de éxito limpio
+    backgroundColor: '#4CD964',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -222,15 +171,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1A1A1A',
     marginBottom: 6,
+    textAlign: 'center',
   },
   subtituloEstado: {
     fontSize: 14,
-    color: '#7F8C8D', // Gris intermedio para resaltar el estado pendiente
+    color: '#7F8C8D',
     textAlign: 'center',
     fontWeight: '500',
   },
-
-  // BLOQUES DE INFORMACIÓN RESTRUCTURADOS 
   tarjetaInfo: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -253,20 +201,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginVertical: 6,
+    flexWrap: 'wrap',
+    gap: 4,
   },
   etiqueta: {
     fontSize: 14,
-    color: '#8E8E93', // Gris claro idéntico a tu mockup
+    color: '#8E8E93',
+    flexShrink: 1,
   },
   valor: {
     fontSize: 14,
     fontWeight: '500',
     color: '#1A1A1A',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   valorDestacado: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#1A1A1A',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   divisor: {
     height: 1,
@@ -277,21 +232,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#1A1A1A',
+    flexShrink: 1,
   },
   valorTotal: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#D81B60', // Resalta el precio final en rosado
+    color: '#D81B60',
+    flexShrink: 1,
+    textAlign: 'right',
   },
-
-  // Botón Inferior Fijo
   contenedorFijoInferior: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     elevation: 10,
@@ -302,7 +259,7 @@ const styles = StyleSheet.create({
   },
   botonEntendido: {
     backgroundColor: '#D81B60',
-    paddingVertical: 16,
+    paddingVertical: 15,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',

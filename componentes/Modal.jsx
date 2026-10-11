@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { useDispatch, useSelector } from "react-redux";
+import { View, Text, Image, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions, Alert } from 'react-native';
+import { useSelector } from "react-redux";
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { addToCart } from "../redux/cartSlice";
 import PopAlert from '../componentes/PopAlert.jsx';
 import ConfirmModal from './ConfirmModal';
+import AddCantidadModal from './AddCantidadModal.jsx'; 
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function ModalProducto({ visible, onClose, producto }) {
-    const dispatch = useDispatch();
-    const navigation = useNavigation();
-    const [alertaModal, setAlertaModal] = useState(false)
-    const [alertaLogin, setAlertaLogin] = useState(false)
+  const navigation = useNavigation();
+  const [alertaModal, setAlertaModal] = useState(false);
+  const [alertaLogin, setAlertaLogin] = useState(false);
+  const [modalCantidadVisible, setModalCantidadVisible] = useState(false); 
   
   const [activeTab, setActiveTab] = useState('description');
-  const [activeIndex, setActiveIndex] = useState(0); // Estado para controlar el punto activo
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const authUser = useSelector((state) => state.auth.user);
   const authIsLogged = useSelector((state) => state.auth.isLogged);
@@ -35,33 +35,38 @@ export default function ModalProducto({ visible, onClose, producto }) {
       ? producto.foto
       : [];
 
-  // Función para calcular qué foto se está mostrando actualmente
   const handleScroll = (event) => {
     const scrollPosition = event.nativeEvent.contentOffset.x;
     const index = Math.round(scrollPosition / screenWidth);
     setActiveIndex(index);
   };
 
-    const agregarCarrito = () => {
-      if (!isLogged || !cedula) {
-        setAlertaLogin(true);
-        return;
-      }
+  // 1. Al presionar "Añadir al carrito", validamos inicio de sesión y abrimos el selector de cantidad
+  const handleAgregarPress = () => {
+    if (!isLogged || !cedula) {
+      setAlertaLogin(true);
+      return;
+    }
+    setModalCantidadVisible(true);
+  };
 
-      dispatch(addToCart({
-        id: producto.id_producto ?? producto.id,
-        nombre: producto.nombre,
-        precioMayor: producto.precio_mayor,
-        precioDetal: producto.precio_detal,
-        cantidad_mayor: producto.cantidad_mayor,
-        foto: producto.imagenes || producto.foto || [],
-      }));
+  const handleExitoAgregar = (cantidadSeleccionada) => {
+    setAlertaModal(true);
+    setTimeout(() => {
+      setAlertaModal(false);
+    }, 2000);
+  };
 
-        setAlertaModal(true);
-        setTimeout(() => {
-          setAlertaModal(false);
-        }, 2000);
-    };
+  // datos para el componente de cantidad modal
+  const productoParaModal = {
+    id: producto.id_producto ?? producto.id,
+    nombre: producto.nombre,
+    precioMayor: producto.precio_mayor,
+    precioDetal: producto.precio_detal,
+    cantidadMayor: producto.cantidad_mayor,
+    stockDisponible: producto.stock_disponible,
+    foto: imagenesRemotas,
+  };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -94,7 +99,7 @@ export default function ModalProducto({ visible, onClose, producto }) {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              onScroll={handleScroll} // Detecta el movimiento
+              onScroll={handleScroll}
               scrollEventThrottle={16} 
             >
               {imagenesRemotas.length > 0 ? (
@@ -124,7 +129,7 @@ export default function ModalProducto({ visible, onClose, producto }) {
             )}
           </View>
 
-          {/* CONTENEDOR BLANCO DE INFORMACIÓN */}
+          {/* CONTENEDOR  */}
           <View style={styles.infoContainer}>
             
             <View style={styles.metaRow}>
@@ -181,14 +186,19 @@ export default function ModalProducto({ visible, onClose, producto }) {
           </View>
         </ScrollView>
 
-        {/* BARRA INFERIOR DE ACCIONES */}
+        {/* CARRITO */}
         <View style={styles.bottomActions}>
-          
-
-          <TouchableOpacity style={styles.buyNowBtn}  onPress={agregarCarrito}>
+          <TouchableOpacity style={styles.buyNowBtn} onPress={handleAgregarPress}>
             <Text style={styles.buyNowTxt}>Añadir al carrito</Text>
           </TouchableOpacity>
         </View>
+
+        <AddCantidadModal 
+          visible={modalCantidadVisible}
+          onClose={() => setModalCantidadVisible(false)}
+          producto={productoParaModal}
+          onAgregar={handleExitoAgregar}
+        />
 
         {/* Alerta de sesión requerida */}
         <ConfirmModal

@@ -7,13 +7,19 @@ import Loader from './componentes/Loader';
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
 import { initializeAuth } from './redux/authSlice';
+import { obtenerWishlistRemotaThunk } from './redux/wishlistSlice';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    
-    store.dispatch(initializeAuth());
+    store.dispatch(initializeAuth()).unwrap().then(({ token, user }) => {
+      if (token && user?.cedula && !user.codigo && user.autorizado !== true) {
+        store.dispatch(obtenerWishlistRemotaThunk(user.cedula));
+      }
+    }).catch((error) => {
+      console.warn('Error inicializando sesión:', error);
+    });
 
     const timer = setTimeout(() => {
       setIsLoading(false); 

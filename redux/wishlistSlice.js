@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { clearAuth } from "./authSlice";
 import { 
   fetchWishlistRemota, 
   agregarAWishlistRemota, 
@@ -53,19 +54,33 @@ const wishlistSlice = createSlice({
   initialState: {
     items: [],
     status: 'idle',
-    error: null
+    error: null,
+    cedula: null
   },
   reducers: {
     clearWishlist: (state) => {
       state.items = [];
+      state.cedula = null;
     }
   },
   extraReducers: (builder) => {
     builder
-      .addCase(obtenerWishlistRemotaThunk.pending, (state) => {
+      .addCase(clearAuth, (state) => {
+        state.items = [];
+        state.status = 'idle';
+        state.error = null;
+        state.cedula = null;
+      })
+      .addCase(obtenerWishlistRemotaThunk.pending, (state, action) => {
+        if (String(state.cedula) !== String(action.meta.arg)) {
+          state.items = [];
+        }
+        state.cedula = action.meta.arg;
         state.status = 'loading';
+        state.error = null;
       })
       .addCase(obtenerWishlistRemotaThunk.fulfilled, (state, action) => {
+        if (String(state.cedula) !== String(action.meta.arg)) return;
         state.status = 'idle';
         state.items = action.payload.map(item => ({
           id_lista: item.id_lista,
@@ -86,6 +101,7 @@ const wishlistSlice = createSlice({
         }));
       })
       .addCase(obtenerWishlistRemotaThunk.rejected, (state, action) => {
+        if (String(state.cedula) !== String(action.meta.arg)) return;
         state.status = 'failed';
         state.error = action.payload;
       });

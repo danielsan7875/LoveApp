@@ -68,42 +68,67 @@ const LoginBarra = () => {
       query: searchQuery
     });
   };
+
   return (
     <View style={styles.searchSection}>
-                 <View style={styles.searchInputContainer}>
-         <Ionicons name="search-outline" size={20} color="#999" style={{ marginLeft: 10 }} />
-         <TextInput
-            placeholder="Busca aquí tus productos"
-            style={styles.searchInput}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
-            returnKeyType="search"
-         />
+      <View style={styles.searchInputContainer}>
+        <Ionicons name="search-outline" size={20} color="#999" style={{ marginLeft: 10 }} />
+        <TextInput
+          placeholder="Busca aquí tus productos"
+          placeholderTextColor="#999"
+          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
+          allowFontScaling={true}
+          maxFontSizeMultiplier={1.3}
+        />
       </View>
-                <View style={styles.loginRow}>
-                    <TouchableOpacity onPress={handleLoginPress}>
-                      <Text style={styles.loginText}>
-                        <Ionicons name="person-circle" size={14} color="#D81B60" /> {isLogged ? 'Cerrar sesión' : 'Inicia sesión o regístrate'}
-                      </Text>
-                    </TouchableOpacity>
-                    <AlertModal visible={modalVisible} onClose={handleModalClose} message={'Cierre de sesión exitoso'} success={true} />
-                    <ConfirmModal visible={confirmVisible} onCancel={() => setConfirmVisible(false)} onConfirm={handleConfirmLogout} title={'Cerrar sesión'} message={'¿Estás seguro que deseas cerrar sesión?'} confirmText={'Cerrar sesión'} cancelText={'Cancelar'} />
 
-                    <View style={styles.priceBadge}>
-                        <Text style={styles.priceText}>Tasa del Día: {tasa ? `${tasa} Bs` : 'Cargando...'} </Text>
-                    </View>
-                </View>
+      <View style={styles.loginRow}>
+        <TouchableOpacity 
+          onPress={handleLoginPress} 
+          style={styles.loginTouchable}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.loginText} numberOfLines={1} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+            <Ionicons name="person-circle" size={14} color="#D81B60" /> {isLogged ? 'Cerrar sesión' : 'Inicia sesión o regístrate'}
+          </Text>
+        </TouchableOpacity>
+
+        <AlertModal 
+          visible={modalVisible} 
+          onClose={handleModalClose} 
+          message={'Cierre de sesión exitoso'} 
+          success={true} 
+        />
+
+        <ConfirmModal 
+          visible={confirmVisible} 
+          onCancel={() => setConfirmVisible(false)} 
+          onConfirm={handleConfirmLogout} 
+          title={'Cerrar sesión'} 
+          message={'¿Estás seguro que deseas cerrar sesión?'} 
+          confirmText={'Cerrar sesión'} 
+          cancelText={'Cancelar'} 
+        />
+
+        <View style={styles.priceBadge}>
+          <Text style={styles.priceText} allowFontScaling={true} maxFontSizeMultiplier={1.2}>
+            Tasa del Día: {tasa ? `${tasa} Bs` : 'Cargando...'}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 };
-      
 
 const styles = StyleSheet.create({
- searchSection: {
-      paddingHorizontal: 15,
-      paddingVertical: 10,
-      backgroundColor: '#FFF1F2',
+  searchSection: {
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    backgroundColor: '#FFF1F2',
   },
   searchInputContainer: {
     flexDirection: 'row',
@@ -113,35 +138,44 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#F8BBD0',
     paddingHorizontal: 5,
+    minHeight: 44,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 8,
+    paddingHorizontal: 6,
     fontSize: 14,
+    color: '#333',
   },
   loginRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 10,
+    flexWrap: 'wrap', // Permite acomodar elementos si la fuente es muy grande
+    gap: 8,
+  },
+  loginTouchable: {
+    flexShrink: 1,
+    marginRight: 6,
   },
   loginText: {
     color: '#D81B60',
     fontWeight: '600',
-    fontSize: 14,
+    fontSize: 13,
   },
   priceBadge: {
     backgroundColor: '#333333',
-    borderRadius: 25,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    flexShrink: 0,
   },
   priceText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: 11,
   },
 });
-
 
 export default LoginBarra;

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   StyleSheet,
   Dimensions,
   Text,
   ScrollView,
   FlatList,
-  View
+  View,
+  RefreshControl
 } from 'react-native';
 
 import Cards from '../componentes/Cards';
@@ -14,6 +16,7 @@ import ModalProducto from '../componentes/Modal';
 import BrandSlider from '../componentes/seccionmarca.jsx';
 
 import api from '../services/api';
+import { obtenerWishlistRemotaThunk } from '../redux/wishlistSlice';
 
 import {
   promoBanners,
@@ -26,10 +29,16 @@ import BannerPublicidad from '../componentes/BannerPublicidad';
 const { width } = Dimensions.get('window');
 
 const BodyHome = ({ onAgregar }) => {
+  const dispatch = useDispatch();
+  const { user, isLogged } = useSelector((state) => state.auth);
+  const cedula = user?.cedula;
+  const puedeCargarDeseos = isLogged && cedula && !user?.codigo && user?.autorizado !== true;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [productoActivo, setProductoActivo] = useState(null);
   const [remoteProductos, setRemoteProductos] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
   const handleCardPress = (producto) => {
     setProductoActivo(producto);
@@ -46,21 +55,49 @@ const BodyHome = ({ onAgregar }) => {
         Array.isArray(data.productos)
       ) {
         setRemoteProductos(data.productos);
+        setLoadError(null);
+        return true;
       } else {
         setRemoteProductos([]);
+        setLoadError('No se pudieron cargar los productos.');
+        return false;
       }
     } catch (e) {
       console.warn(
         'Fetch error en Home:',
         e.message || e
       );
-      setRemoteProductos([]);
+      setLoadError('No se pudieron actualizar los productos.');
+      return false;
     }
   };
 
   useEffect(() => {
     loadRemote();
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const results = await Promise.all([
+        loadRemote(),
+        puedeCargarDeseos
+          ? dispatch(obtenerWishlistRemotaThunk(cedula))
+              .unwrap()
+              .then(() => true)
+              .catch((error) => {
+                console.warn('Error actualizando lista de deseos en Inicio:', error);
+                return false;
+              })
+          : Promise.resolve(true),
+      ]);
+      if (results.some((success) => !success)) {
+        setLoadError('No se pudieron actualizar todos los datos.');
+      }
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // --- RENDERIZADO DE BANNERS ---
 
@@ -78,6 +115,9 @@ const BodyHome = ({ onAgregar }) => {
     <ScrollView
       contentContainerStyle={styles.scrollViewContent}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
     >
 
       {/* BANNER PUBLICITARIO */}
@@ -85,6 +125,8 @@ const BodyHome = ({ onAgregar }) => {
       <BannerPublicidad
         imagenes={banners}
       />
+
+      {loadError && <Text style={styles.errorText}>{loadError}</Text>}
 
       {/* TITULO */}
 
@@ -164,6 +206,11 @@ const styles = StyleSheet.create({
     margin: 16,
     marginBottom: 4,
     color: '#333',
+  },
+  errorText: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    color: '#B00020',
   },
 
   cardsContainer: {
