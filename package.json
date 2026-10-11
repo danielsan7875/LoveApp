@@ -17,6 +17,7 @@
     "@reduxjs/toolkit": "^2.10.1",
     "axios": "^1.13.2",
     "expo": "^57.0.19",
+    "expo-dev-client": "~57.0.19",
     "expo-file-system": "~57.0.6",
     "expo-image-picker": "~57.0.15",
     "expo-status-bar": "~57.0.1",

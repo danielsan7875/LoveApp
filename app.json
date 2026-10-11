@@ -4,7 +4,7 @@
     "slug": "LoveApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icono.webp",
+    "icon": "./assets/icono.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
@@ -28,6 +28,12 @@
     },
     "plugins": [
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "85a62aaf-5510-4752-aa22-c255bdb6e3e8"
+      }
+    },
+    "owner": "rhichardv"
   }
 }
