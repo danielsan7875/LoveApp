@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useForm } from 'react-hook-form';
 import Select from '../componentes/Select';
 import Input from '../componentes/Inputvalidacion';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { fetchDeliveries } from '../services/api';
 
 const empresasNacionales = [
@@ -11,7 +13,6 @@ const empresasNacionales = [
   { label: 'ZOOM', value: 3 },
 ];
 
-// Mismas listas en cascada que la web (assets/js/Pedidoentrega.js)
 const parroquiasPorZona = {
   norte: ['El Cuji', 'Tamaca'],
   sur: ['Juan de Villegas', 'Union'],
@@ -39,25 +40,23 @@ const zonasDelivery = [
   { label: 'Centro', value: 'centro' },
 ];
 
-// Reglas de caracteres reutilizadas por los Inputs de validación (mismas que la web)
 const patronAgencia = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]{10,100}$/;
 const patronDireccion = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü0-9\s.,#\-_()\/]{10,150}$/;
 const patronCodigoSucursal = /^[0-9]{5,7}$/;
 
 export default function MetodoEntrega() {
-
    const navigation = useNavigation();
    const route = useRoute();
    const total = route.params?.total ?? 0;
+   const insets = useSafeAreaInsets(); // Obtiene el espacio de la barra de navegación/gestos de Android/iOS
 
-   // Formulario con validación (componente Inputvalidacion)
    const {
       control,
       handleSubmit,
       formState: { isSubmitted },
    } = useForm({
       mode: 'onTouched',
-      shouldUnregister: true, // solo valida los campos del método visible
+      shouldUnregister: true,
    });
 
     const onContinuar = (data) => {
@@ -95,11 +94,9 @@ export default function MetodoEntrega() {
         const dirLimpia = (data.direccionExacta || '').trim();
         entrega = {
           id_metodoentrega: 1,
-          // Mismo formato que construye la web (controlador/Pedidoentrega.php)
           direccion_envio: `Zona: ${zona}, Parroquia: ${parroquia}, Sector: ${sector}, Dirección: ${dirLimpia}`,
           sucursal_envio: '',
           id_delivery: idDelivery,
-          // Campos crudos: la API del checkout los valida y reconstruye server-side
           zona,
           parroquia,
           sector,
@@ -110,21 +107,16 @@ export default function MetodoEntrega() {
       navigation.navigate("Metodopago", { total, entrega });
     };
 
-  // Estado para capturar la opción seleccionada: 'tienda', 'nacional' o 'delivery'
   const [metodoSeleccionado, setMetodoSeleccionado] = useState(null);
-
-  // Estados para los formularios dinámicos
-  const [empresaEnvio, setEmpresaEnvio] = useState(null); // 2 (MRW) o 3 (ZOOM)
-
+  const [empresaEnvio, setEmpresaEnvio] = useState(null);
   const [idDelivery, setIdDelivery] = useState(null);
   const [deliveries, setDeliveries] = useState([]);
   const [cargandoDelivery, setCargandoDelivery] = useState(false);
-  const [errorDelivery, setErrorDelivery] = useState(null); // null | 'sesion' | 'red'
+  const [errorDelivery, setErrorDelivery] = useState(null);
   const [zona, setZona] = useState('');
   const [parroquia, setParroquia] = useState('');
   const [sector, setSector] = useState('');
 
-  // Cargar los deliveries activos desde la API (igual que el select de la web)
   const cargarDeliveries = useCallback(async () => {
     setCargandoDelivery(true);
     setErrorDelivery(null);
@@ -143,7 +135,6 @@ export default function MetodoEntrega() {
     cargarDeliveries();
   }, [cargarDeliveries]);
 
-  // Lista de métodos disponibles basada en tu imagen
   const metodos = [
     { id: 'tienda', titulo: 'Retiro en tienda física', descripcion: 'Recoge directamente en nuestro local' },
     { id: 'nacional', titulo: 'Envíos Nacionales', descripcion: 'Envío por agencias de encomienda' },
@@ -151,13 +142,19 @@ export default function MetodoEntrega() {
   ];
 
   return (
-    <SafeAreaView style={styles.contenedorPrincipal}>
-      {/* Encabezado */}
-     
-      <ScrollView contentContainerStyle={styles.contenidoScroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.subtitulo}>Selecciona una opción</Text>
+    <View style={styles.container}>
+      <ScrollView 
+        contentContainerStyle={[
+          styles.contenidoScroll, 
+          // Suma dinámica de insets para que el contenido jamás quede oculto bajo el botón flotante inferior
+          { paddingBottom: Math.max(insets.bottom, 20) + 90 }
+        ]} 
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.subtitulo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+          Selecciona una opción
+        </Text>
 
-        {/* Mapeo de las opciones tipo Radio Button */}
         {metodos.map((metodo) => {
           const estaSeleccionado = metodoSeleccionado === metodo.id;
           return (
@@ -167,20 +164,21 @@ export default function MetodoEntrega() {
               activeOpacity={0.8}
               onPress={() => setMetodoSeleccionado(metodo.id)}
             >
-              {/* Círculo del Icono decorativo lateral */}
               <View style={[styles.circuloIcono, estaSeleccionado && styles.circuloIconoActivo]}>
-                <Text style={[styles.textoIcono, estaSeleccionado && styles.textoIconoActivo]}>
+                <Text style={styles.textoIcono}>
                   {metodo.id === 'tienda' ? 'T' : metodo.id === 'nacional' ? 'N' : 'D'}
                 </Text>
               </View>
 
-              {/* Textos del método */}
               <View style={styles.infoMetodo}>
-                <Text style={styles.tituloMetodo}>{metodo.titulo}</Text>
-                <Text style={styles.descripcionMetodo}>{metodo.descripcion}</Text>
+                <Text style={styles.tituloMetodo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                  {metodo.titulo}
+                </Text>
+                <Text style={styles.descripcionMetodo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                  {metodo.descripcion}
+                </Text>
               </View>
 
-              {/* Radio Button Customizado */}
               <View style={[styles.radioExterior, estaSeleccionado && styles.radioExteriorActivo]}>
                 {estaSeleccionado && <View style={styles.radioInterior} />}
               </View>
@@ -188,11 +186,11 @@ export default function MetodoEntrega() {
           );
         })}
 
-    
-        {/* FORMULARIO DINÁMICO: ENVÍOS NACIONALES */}
         {metodoSeleccionado === 'nacional' && (
           <View style={styles.formularioContenedor}>
-            <Text style={styles.tituloFormulario}>Detalles del Envío Nacional</Text>
+            <Text style={styles.tituloFormulario} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+              Detalles del Envío Nacional
+            </Text>
             
             <Select
               label="Empresa de encomienda"
@@ -240,22 +238,24 @@ export default function MetodoEntrega() {
           </View>
         )}
 
-
-        {/* FORMULARIO DINÁMICO: DELIVERY */}
         {metodoSeleccionado === 'delivery' && (
           <View style={styles.formularioContenedor}>
-            <Text style={styles.tituloFormulario}>Detalles del Delivery</Text>
+            <Text style={styles.tituloFormulario} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+              Detalles del Delivery
+            </Text>
 
             {cargandoDelivery && (
               <View style={styles.filaCarga}>
                 <ActivityIndicator size="small" color="#D81B60" />
-                <Text style={styles.textoCarga}>Cargando deliveries disponibles...</Text>
+                <Text style={styles.textoCarga} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                  Cargando deliveries disponibles...
+                </Text>
               </View>
             )}
 
             {errorDelivery && !cargandoDelivery && (
               <View style={styles.filaCarga}>
-                <Text style={styles.textoError}>
+                <Text style={styles.textoError} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
                   {errorDelivery === 'sesion'
                     ? 'Tu sesión expiró. Cierra sesión y vuelve a iniciar sesión.'
                     : 'No se pudieron cargar los deliveries. Revisa tu conexión.'}
@@ -327,51 +327,38 @@ export default function MetodoEntrega() {
         )}
       </ScrollView>
 
-      {/* Botón Inferior Fijo */}
-      <View style={styles.contenedorFijoInferior}>
+      {/* Botón Inferior Fijo adaptado al borde seguro y botones/gestos de Android */}
+      <View style={[styles.contenedorFijoInferior, { paddingBottom: Math.max(insets.bottom, 15) }]}>
         <TouchableOpacity
           style={[styles.botonContinuar, !metodoSeleccionado && styles.botonDeshabilitado]}
           disabled={!metodoSeleccionado}
           onPress={handleSubmit(onContinuar)}
+          activeOpacity={0.8}
         >
-          <Text style={styles.textoBotonContinuar}>Continuar</Text>
+          <Text style={styles.textoBotonContinuar} allowFontScaling={true} maxFontSizeMultiplier={1.2}>
+            Continuar
+          </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contenedorPrincipal: {
+  container: {
     flex: 1,
-    backgroundColor: '#FFF1F2', // Fondo rosado muy claro igual que tu carrito
-  },
-  encabezado: {
-    paddingTop: 50,
-    paddingBottom: 15,
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    elevation: 2,
-    alignItems: 'center',
-  },
-  tituloPantalla: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#D81B60', // Tu rosado característico
+    backgroundColor: "#FFF1F2",
   },
   contenidoScroll: {
     paddingHorizontal: 16,
     paddingTop: 20,
-    paddingBottom: 100, // Margen extra abajo para evitar que el botón tape el formulario
   },
   subtitulo: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#1A1A1A',
     marginBottom: 20,
   },
-  // Estilos de las tarjetas de selección
   tarjetaMetodo: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -384,7 +371,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   tarjetaSeleccionada: {
-    borderColor: '#D81B60', // Resalta con borde rosado al marcarse
+    borderColor: '#D81B60',
   },
   circuloIcono: {
     width: 46,
@@ -396,13 +383,12 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   circuloIconoActivo: {
-    backgroundColor: '#FCE4EC', // Rosado pastel de fondo para el icono activo
+    backgroundColor: '#FCE4EC',
   },
   textoIcono: {
-    fontSize: 20,
-  },
-  textoIconoActivo: {
-    opacity: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#D81B60',
   },
   infoMetodo: {
     flex: 1,
@@ -417,7 +403,6 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginTop: 2,
   },
-  // Radio Buttons Estilizados en CSS puro
   radioExterior: {
     width: 22,
     height: 22,
@@ -436,7 +421,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#D81B60',
   },
-  // Formularios Dinámicos
   formularioContenedor: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -453,13 +437,13 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F5F5F5',
     paddingBottom: 6,
   },
-  // Estados de carga/error del listado de deliveries
   filaCarga: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
     gap: 8,
+    flexWrap: 'wrap',
   },
   textoCarga: {
     fontSize: 13,
@@ -481,14 +465,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#D81B60',
   },
-  // Área del botón inferior fijo
   contenedorFijoInferior: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     elevation: 10,
@@ -499,13 +483,13 @@ const styles = StyleSheet.create({
   },
   botonContinuar: {
     backgroundColor: '#D81B60',
-    paddingVertical: 16,
+    paddingVertical: 15,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   botonDeshabilitado: {
-    backgroundColor: '#E0A6BC', // Tono opaco si no ha seleccionado nada
+    backgroundColor: '#E0A6BC',
   },
   textoBotonContinuar: {
     color: '#FFFFFF',

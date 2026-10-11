@@ -5,17 +5,16 @@ import { useSelector, useDispatch } from "react-redux";
 import { removeFromCart, updateCantidad, sincronizarStock } from "../redux/cartSlice";
 import { fetchProductos } from '../services/api';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Carrito() {
   const dispatch = useDispatch();
   const carrito = useSelector(state => state.cart.items);
   const carritoRef = useRef(carrito);
-  carritoRef.current = carrito; // referencia fresca para el efecto de foco
+  carritoRef.current = carrito; 
   const [actualizandoStock, setActualizandoStock] = useState(false);
 
-  // Al entrar a la pantalla, consulta el stock real de la API y lo sincroniza
-  // con los productos del carrito (ajusta cantidades que superen el stock).
+ 
   useFocusEffect(
     useCallback(() => {
       let activo = true;
@@ -54,7 +53,6 @@ export default function Carrito() {
             );
           }
         } catch (e) {
-          // Si falla la consulta, se usa el último stock conocido
         } finally {
           if (activo) setActualizandoStock(false);
         }
@@ -98,9 +96,9 @@ export default function Carrito() {
     navigation.navigate("Metodoenvio", { total });
   };
 
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#000000" />
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 20) }]}>
 
       <FlatList
         data={carrito}
@@ -215,7 +213,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF1F2",
-    paddingTop: 50,
+    paddingTop: 20,
   },
   title: {
     fontSize: 32,
@@ -225,7 +223,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   listContent: {
-    paddingBottom: 20, // Espacio al final de la lista
+    paddingBottom: 20, 
   },
   item: {
     flexDirection: 'row',
@@ -234,7 +232,7 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     borderRadius: 12,
     padding: 10,
-    elevation: 3, // Un poco más suave que 4 para que se integre mejor
+    elevation: 3, 
     alignItems: 'center',
   },
   img: {
@@ -252,7 +250,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
-  // Controles de cantidad (- / +)
+
   cantidadRow: {
     flexDirection: 'row',
     alignItems: 'center',

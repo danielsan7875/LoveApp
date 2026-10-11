@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
   View
@@ -26,7 +25,6 @@ const Inicio = () => {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FFF1F2" />
         
         <View style={styles.container}>
 

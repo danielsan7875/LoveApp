@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking, Image } from 'react-native';
-
+import { View, Text, StyleSheet, Linking, Image, Dimensions } from 'react-native';
 import BtnAcion from '../componentes/BtnAcion'; 
+
+const { width } = Dimensions.get('window');
 
 const LocationCard = () => {
   const openGoogleMaps = () => {
-    const latitude = 10.066843467538288; // Coordenadas de ejemplo (puedes cambiarlas)
+    const latitude = 10.066843467538288;
     const longitude = -69.32081153623936;
     const label = 'Nuestra ubicación';
     const url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}&query_place_id=${label}`;
@@ -16,9 +17,11 @@ const LocationCard = () => {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>📍 Nos ubicamos en:</Text>
-        <Text style={styles.address}>
-         Tienda física ubicada en la av 20 con calles 29 y 30 CC Barquisimeto plaza, Estado Lara, Venezuela. Ven y visítanos
+        <Text style={styles.title} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+         Nos ubicamos en:
+        </Text>
+        <Text style={styles.address} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+          Tienda física ubicada en la av 20 con calles 29 y 30 CC Barquisimeto plaza, Estado Lara, Venezuela. Ven y visítanos
         </Text>
        
         <BtnAcion
@@ -27,28 +30,29 @@ const LocationCard = () => {
           backgroundColor="#4285F4"
           onPress={openGoogleMaps}
         /> 
-
       </View>
       
-        <Image
-             source={require('../assets/ubi.png')}
-              style={styles.image}
-                resizeMode="contain"
-        />
+      <Image
+        source={require('../assets/ubi.png')}
+        style={styles.image}
+        resizeMode="contain"
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    padding: 16,
     alignItems: 'center',
+    width: '100%',
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
     width: '100%',
+    maxWidth: 450, 
     elevation: 3,
     shadowColor: '#000',
     shadowOpacity: 0.1,
@@ -62,20 +66,20 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   address: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#555',
     marginBottom: 20,
     textAlign: 'justify',
+    lineHeight: 22,
   },
-  
-   image: {
-    marginTop:20,
-    width: 300,
-    height: 300,
+  image: {
+    marginTop: 20,
+    width: '100%',
+    maxWidth: 280, 
+    height: width > 400 ? 280 : 220, 
     marginBottom: 10,
-     alignSelf: 'center',
+    alignSelf: 'center',
   },
 });
 
 export default LocationCard;
-

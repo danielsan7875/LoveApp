@@ -8,11 +8,14 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
-  Image
+  Image,
+  Platform,
+  KeyboardAvoidingView
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearCart } from '../redux/cartSlice';
 import { registrarPedido } from '../services/api';
 import Select from '../componentes/Select';
@@ -21,7 +24,6 @@ import TasaOficial from '../informacion/dolar';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
 
 const TAMANO_MAXIMO_MB = 5;
 const TAMANO_MAXIMO_BYTES = TAMANO_MAXIMO_MB * 1024 * 1024;
@@ -62,10 +64,10 @@ const BANCOS_DESTINO = [
 ];
 
 export default function MetodoPago() {
-
    const navigation = useNavigation();
    const route = useRoute();
    const dispatch = useDispatch();
+   const insets = useSafeAreaInsets();
 
    const total = route.params?.total ?? 0;
    const entrega = route.params?.entrega ?? {};
@@ -76,7 +78,6 @@ export default function MetodoPago() {
 
    const [loading, setLoading] = useState(false);
 
-   // Formulario con validación (componente Inputvalidacion)
    const {
       control,
       handleSubmit,
@@ -114,28 +115,27 @@ export default function MetodoPago() {
        id_persona: parseInt(String(cedula).replace(/\D/g, ''), 10),
 
        id_metodopago: 1,
-        referencia_bancaria: data.referencia_bancaria,
-        telefono_emisor: data.telefono_emisor,
+       referencia_bancaria: data.referencia_bancaria,
+       telefono_emisor: data.telefono_emisor,
        banco_destino: bancoDestino,
        banco: bancoOrigen,
        monto: totalBs,
        monto_usd: total,
        imagen: comprobante ? `data:${comprobante.type};base64,${comprobante.base64}` : null,
 
-        id_metodoentrega: entrega.id_metodoentrega,
-        direccion_envio: entrega.direccion_envio || '',
-        sucursal_envio: entrega.sucursal_envio || '',
-        id_delivery: entrega.id_delivery ?? null,
+       id_metodoentrega: entrega.id_metodoentrega,
+       direccion_envio: entrega.direccion_envio || '',
+       sucursal_envio: entrega.sucursal_envio || '',
+       id_delivery: entrega.id_delivery ?? null,
 
-        // Campos crudos que la API valida cuando el método es delivery (id_metodoentrega = 1)
-        ...(entrega.id_metodoentrega === 1
-          ? {
-              zona: entrega.zona || '',
-              parroquia: entrega.parroquia || '',
-              sector: entrega.sector || '',
-              direccion: entrega.direccion || '',
-            }
-          : {}),
+       ...(entrega.id_metodoentrega === 1
+         ? {
+             zona: entrega.zona || '',
+             parroquia: entrega.parroquia || '',
+             sector: entrega.sector || '',
+             direccion: entrega.direccion || '',
+           }
+         : {}),
 
        carrito: carrito.map(item => ({
          id: item.id,
@@ -169,39 +169,33 @@ export default function MetodoPago() {
      }
    };
 
-
-  // Datos fijos del Pago Móvil del negocio
   const datosPagoMovil = {
     banco: "Mercantil (0105)",
     cedula: "11787299",
     telefono: "04265541364"
   };
 
-  // Estados del Formulario de reporte de pago
   const [bancoOrigen, setBancoOrigen] = useState('');
   const [bancoDestino, setBancoDestino] = useState('');
   const [comprobante, setComprobante] = useState(null);
 
-  // Tasa de dólar automática desde la API
   const tasaCambio = TasaOficial();
   const montoBsCalculado = tasaCambio ? (total * parseFloat(tasaCambio)).toFixed(2) : '0.00';
 
-// Estados sutiles de feedback visual para saber qué se copió
-   const [copiadoCedula, setCopiadoCedula] = useState(false);
-   const [copiadoTelf, setCopiadoTelf] = useState(false);
+  const [copiadoCedula, setCopiadoCedula] = useState(false);
+  const [copiadoTelf, setCopiadoTelf] = useState(false);
 
-   // Funciones para copiar al portapapeles de manera nativa
-   const copiarAlPortapapeles = (texto, tipo) => {
-     if (tipo === 'cedula') {
-       setCopiadoCedula(true);
-       setTimeout(() => setCopiadoCedula(false), 2000);
-     } else {
-       setCopiadoTelf(true);
-       setTimeout(() => setCopiadoTelf(false), 2000);
-     }
-   };
+  const copiarAlPortapapeles = (texto, tipo) => {
+    if (tipo === 'cedula') {
+      setCopiadoCedula(true);
+      setTimeout(() => setCopiadoCedula(false), 2000);
+    } else {
+      setCopiadoTelf(true);
+      setTimeout(() => setCopiadoTelf(false), 2000);
+    }
+  };
 
-const seleccionarComprobante = async () => {
+  const seleccionarComprobante = async () => {
     try {
       const permiso = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permiso.granted) {
@@ -211,7 +205,7 @@ const seleccionarComprobante = async () => {
 
       const opciones = {
         mediaTypes: ['images'],
-        allowsEditing: false, // Sin recorte: se envía la imagen completa del comprobante
+        allowsEditing: false,
         quality: Platform.OS === 'web' ? 1 : 0.7,
         base64: true,
       };
@@ -249,18 +243,14 @@ const seleccionarComprobante = async () => {
               reader.readAsDataURL(blob);
             });
             if (blob.type) mimeType = blob.type;
-          } catch (e) {
-            // ignore
-          }
+          } catch (e) {}
         } else {
           try {
             const fileContent = await FileSystem.readAsStringAsync(asset.uri, {
               encoding: FileSystem.EncodingType.Base64,
             });
             base64Data = fileContent;
-          } catch (e) {
-            // ignore
-          }
+          } catch (e) {}
         }
       }
 
@@ -287,172 +277,189 @@ const seleccionarComprobante = async () => {
 
   return (
     <SafeAreaView style={styles.contenedorPrincipal}>
-      
-      <ScrollView contentContainerStyle={styles.contenidoScroll} showsVerticalScrollIndicator={false}>
-        <Text style={styles.subtitulo}>Datos de Pago Móvil</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardContainer}
+      >
+        <ScrollView 
+          contentContainerStyle={[
+            styles.contenidoScroll, 
+            { paddingBottom: Math.max(insets.bottom, 20) + 110 }
+          ]} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.subtitulo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+            Datos de Pago Móvil
+          </Text>
 
+          {/* TARJETA VISUAL */}
+          <View style={styles.tarjetaPago}>
+            <View style={styles.circuloFondo1} />
+            <View style={styles.circuloFondo2} />
 
-        {/* TARJETA VISUAL  */}
-
-        <View style={styles.tarjetaPago}>
-          {/* Círculos decorativos de fondo simulando el patrón de la imagen */}
-          <View style={styles.circuloFondo1} />
-          <View style={styles.circuloFondo2} />
-
-          {/* Fila Superior */}
-          <View style={styles.tarjetaFilaSuperior}>
-            <Text style={styles.tarjetaNombreBanco}>{datosPagoMovil.banco}</Text>
-            <View style={styles.badgePagoMovil}>
-              <Text style={styles.badgeTexto}>PAGO MÓVIL</Text>
-            </View>
-          </View>
-
-          {/* Fila del Teléfono (Equivalente al número de tarjeta grande) */}
-          <View style={styles.tarjetaSeccionDatoPrincipal}>
-            <Text style={styles.tarjetaNumeroTelf}>
-              {datosPagoMovil.telefono.replace(/(\d{4})(\d{4})(\d{})/, '$1-$3-$4')}
-            </Text>
-            <TouchableOpacity 
-              style={[styles.botonCopiar, copiadoTelf && styles.botonCopiarActivo]}
-              onPress={() => copiarAlPortapapeles(datosPagoMovil.telefono, 'telefono')}
-            >
-              <Text style={styles.textoBotonCopiar}>{copiadoTelf ? '¡Copiado!' : 'Copiar'}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Fila Inferior (Titular / Cédula) */}
-          <View style={styles.tarjetaFilaInferior}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.tarjetaEtiqueta}>CÉDULA DE IDENTIDAD</Text>
-              <Text style={styles.tarjetaValorDato}>V-{datosPagoMovil.cedula}</Text>
-            </View>
-            <TouchableOpacity 
-              style={[styles.botonCopiarSecundario, copiadoCedula && styles.botonCopiarActivo]}
-              onPress={() => copiarAlPortapapeles(datosPagoMovil.cedula, 'cedula')}
-            >
-              <Text style={styles.textoBotonCopiar}>{copiadoCedula ? '¡Copiado!' : 'Copiar '}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* FORMULARIO DE REPORTE DE TRANSFERENCIA */}
-        
-        <View style={styles.formularioContenedor}>
-          <Text style={styles.tituloFormulario}>Reportar Reporte de Pago</Text>
-
-          {/* Banco de Origen */}
-          <Select
-            label="Banco de Origen (Desde donde envió)"
-            opciones={BANCOS_ORIGEN}
-            value={bancoOrigen}
-            onSelect={setBancoOrigen}
-            placeholder="Selecciona tu banco"
-          />
-
-          {/* Banco de Destino */}
-          <Select
-            label="Banco de Destino (Donde recibe el negocio)"
-            opciones={BANCOS_DESTINO}
-            value={bancoDestino}
-            onSelect={setBancoDestino}
-            placeholder="Selecciona el banco destino"
-          />
-
-          {/* Referencia Bancaria */}
-          <Input
-            name="referencia_bancaria"
-            label="Código de Referencia (Últimos 4 a 6 dígitos)"
-            placeholder="Ej. 123456"
-            icon="receipt-outline"
-            control={control}
-            isSubmitted={isSubmitted}
-            keyboardType="number-pad"
-            maxLength={6}
-            onChangeTextModifier={(t) => t.replace(/[^0-9]/g, '')}
-            rules={{
-              required: 'El código de referencia es obligatorio',
-              pattern: {
-                value: /^[0-9]{4,6}$/,
-                message: 'Solo dígitos, entre 4 y 6',
-              },
-            }}
-          />
-
-          {/* Fila de Teléfono emisor y Monto en Bs automático */}
-          <View style={styles.filaInputs}>
-            <View style={{ flex: 1.2, marginRight: 8 }}>
-              <Input
-                name="telefono_emisor"
-                label="Teléfono Emisor (11 dígitos)"
-                placeholder="04141234567"
-                icon="call-outline"
-                control={control}
-                isSubmitted={isSubmitted}
-                keyboardType="number-pad"
-                maxLength={11}
-                onChangeTextModifier={(t) => t.replace(/[^0-9]/g, '')}
-                rules={{
-                  required: 'El teléfono es obligatorio',
-                  pattern: {
-                    value: /^04(12|14|16|22|24|26)[0-9]{7}$/,
-                    message: 'Teléfono inválido. Debe empezar con 0412, 0414, 0416, 0422, 0424 o 0426',
-                  },
-                }}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.etiquetaInput}>Monto en Bs (auto)</Text>
-              <View style={styles.inputMontoAuto}>
-                <Text style={styles.textoMontoAuto}>
-                  {tasaCambio ? `Bs. ${montoBsCalculado}` : 'Cargando...'}
-                </Text>
+            <View style={styles.tarjetaFilaSuperior}>
+              <Text style={styles.tarjetaNombreBanco} allowFontScaling={true} maxFontSizeMultiplier={1.2}>
+                {datosPagoMovil.banco}
+              </Text>
+              <View style={styles.badgePagoMovil}>
+                <Text style={styles.badgeTexto}>PAGO MÓVIL</Text>
               </View>
             </View>
+
+            <View style={styles.tarjetaSeccionDatoPrincipal}>
+              <Text style={styles.tarjetaNumeroTelf} allowFontScaling={true} maxFontSizeMultiplier={1.2}>
+                {datosPagoMovil.telefono}
+              </Text>
+              <TouchableOpacity 
+                style={[styles.botonCopiar, copiadoTelf && styles.botonCopiarActivo]}
+                onPress={() => copiarAlPortapapeles(datosPagoMovil.telefono, 'telefono')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.textoBotonCopiar}>{copiadoTelf ? '¡Copiado!' : 'Copiar'}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.tarjetaFilaInferior}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.tarjetaEtiqueta}>CÉDULA DE IDENTIDAD</Text>
+                <Text style={styles.tarjetaValorDato} allowFontScaling={true} maxFontSizeMultiplier={1.2}>
+                  V-{datosPagoMovil.cedula}
+                </Text>
+              </View>
+              <TouchableOpacity 
+                style={[styles.botonCopiarSecundario, copiadoCedula && styles.botonCopiarActivo]}
+                onPress={() => copiarAlPortapapeles(datosPagoMovil.cedula, 'cedula')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.textoBotonCopiar}>{copiadoCedula ? '¡Copiado!' : 'Copiar'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Botón de Adjuntar Comprobante */}
-          <Text style={styles.etiquetaInput}>Comprobante de Operación (Opcional)</Text>
+          {/* FORMULARIO DE REPORTE DE TRANSFERENCIA */}
+          <View style={styles.formularioContenedor}>
+            <Text style={styles.tituloFormulario} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+              Reportar Reporte de Pago
+            </Text>
 
-          {comprobante ? (
-            <View style={styles.comprobantePreviewContainer}>
-              <Image source={{ uri: comprobante.uri }} style={styles.comprobantePreview} resizeMode="cover" />
-              <View style={styles.comprobanteInfo}>
-                <Text style={styles.comprobanteNombre} numberOfLines={1}>{comprobante.name}</Text>
-                <Text style={styles.comprobanteTamano}>
-                  {comprobante.size ? `${(comprobante.size / 1024 / 1024).toFixed(2)} MB` : ''}
+            <Select
+              label="Banco de Origen (Desde donde envió)"
+              opciones={BANCOS_ORIGEN}
+              value={bancoOrigen}
+              onSelect={setBancoOrigen}
+              placeholder="Selecciona tu banco"
+            />
+
+            <Select
+              label="Banco de Destino (Donde recibe el negocio)"
+              opciones={BANCOS_DESTINO}
+              value={bancoDestino}
+              onSelect={setBancoDestino}
+              placeholder="Selecciona el banco destino"
+            />
+
+            <Input
+              name="referencia_bancaria"
+              label="Código de Referencia (Últimos 4 a 6 dígitos)"
+              placeholder="Ej. 123456"
+              icon="receipt-outline"
+              control={control}
+              isSubmitted={isSubmitted}
+              keyboardType="number-pad"
+              maxLength={6}
+              onChangeTextModifier={(t) => t.replace(/[^0-9]/g, '')}
+              rules={{
+                required: 'El código de referencia es obligatorio',
+                pattern: {
+                  value: /^[0-9]{4,6}$/,
+                  message: 'Solo dígitos, entre 4 y 6',
+                },
+              }}
+            />
+
+            <View style={styles.filaInputs}>
+              <View style={{ flex: 1.2, marginRight: 8 }}>
+                <Input
+                  name="telefono_emisor"
+                  label="Teléfono Emisor (11 dígitos)"
+                  placeholder="04141234567"
+                  icon="call-outline"
+                  control={control}
+                  isSubmitted={isSubmitted}
+                  keyboardType="number-pad"
+                  maxLength={11}
+                  onChangeTextModifier={(t) => t.replace(/[^0-9]/g, '')}
+                  rules={{
+                    required: 'El teléfono es obligatorio',
+                    pattern: {
+                      value: /^04(12|14|16|22|24|26)[0-9]{7}$/,
+                      message: 'Teléfono inválido. Debe empezar con 0412, 0414, 0416, 0422, 0424 o 0426',
+                    },
+                  }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.etiquetaInput} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                  Monto en Bs (auto)
                 </Text>
-                <View style={styles.comprobanteAcciones}>
-                  <TouchableOpacity
-                    style={styles.comprobanteBtnCambiar}
-                    onPress={seleccionarComprobante}
-                  >
-                    <Text style={styles.comprobanteBtnCambiarTxt}>Cambiar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.comprobanteBtnQuitar}
-                    onPress={quitarComprobante}
-                  >
-                    <Ionicons name="trash-outline" size={16} color="#D81B60" />
-                  </TouchableOpacity>
+                <View style={styles.inputMontoAuto}>
+                  <Text style={styles.textoMontoAuto} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                    {tasaCambio ? `Bs. ${montoBsCalculado}` : 'Cargando...'}
+                  </Text>
                 </View>
               </View>
             </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.botonComprobante}
-              onPress={seleccionarComprobante}
-            >
-              <Ionicons name="cloud-upload-outline" size={28} color="#D81B60" style={{ marginBottom: 4 }} />
-              <Text style={styles.textoBotonComprobante}>Subir imagen del comprobante</Text>
-              <Text style={styles.textoHintComprobante}>Máximo {TAMANO_MAXIMO_MB}MB · JPG o PNG</Text>
-            </TouchableOpacity>
-          )}
-        </View>
 
-      </ScrollView>
+            <Text style={styles.etiquetaInput} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+              Comprobante de Operación (Opcional)
+            </Text>
 
-      {/* Botón Inferior Fijo de Procesar */}
-      <View style={styles.contenedorFijoInferior}>
+            {comprobante ? (
+              <View style={styles.comprobantePreviewContainer}>
+                <Image source={{ uri: comprobante.uri }} style={styles.comprobantePreview} resizeMode="cover" />
+                <View style={styles.comprobanteInfo}>
+                  <Text style={styles.comprobanteNombre} numberOfLines={1}>{comprobante.name}</Text>
+                  <Text style={styles.comprobanteTamano}>
+                    {comprobante.size ? `${(comprobante.size / 1024 / 1024).toFixed(2)} MB` : ''}
+                  </Text>
+                  <View style={styles.comprobanteAcciones}>
+                    <TouchableOpacity
+                      style={styles.comprobanteBtnCambiar}
+                      onPress={seleccionarComprobante}
+                    >
+                      <Text style={styles.comprobanteBtnCambiarTxt}>Cambiar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.comprobanteBtnQuitar}
+                      onPress={quitarComprobante}
+                    >
+                      <Ionicons name="trash-outline" size={16} color="#D81B60" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.botonComprobante}
+                onPress={seleccionarComprobante}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="cloud-upload-outline" size={28} color="#D81B60" style={{ marginBottom: 4 }} />
+                <Text style={styles.textoBotonComprobante} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                  Subir imagen del comprobante
+                </Text>
+                <Text style={styles.textoHintComprobante} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                  Máximo {TAMANO_MAXIMO_MB}MB · JPG o PNG
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Botón Inferior Fijo adaptado al borde seguro y botones/gestos de Android */}
+      <View style={[styles.contenedorFijoInferior, { paddingBottom: Math.max(insets.bottom, 15) }]}>
         <TouchableOpacity
           style={[
             styles.botonProcesar,
@@ -460,15 +467,17 @@ const seleccionarComprobante = async () => {
           ]}
           disabled={!bancoOrigen || !referenciaValor || !bancoDestino || loading}
           onPress={handleSubmit(handleConfirmar)}
+          activeOpacity={0.8}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.textoBotonProcesar}>Registrar Pago y Finalizar</Text>
+            <Text style={styles.textoBotonProcesar} allowFontScaling={true} maxFontSizeMultiplier={1.2}>
+              Registrar Pago y Finalizar
+            </Text>
           )}
         </TouchableOpacity>
       </View>
-
     </SafeAreaView>
   );
 }
@@ -478,88 +487,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF1F2',
   },
-  encabezado: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 15,
-    paddingBottom: 15,
-    paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
-  tituloPantalla: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#D81B60',
-    textAlign: 'center',
+  keyboardContainer: {
     flex: 1,
-  },
-  botonAtras: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  flechaIcono: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lineaFlecha: {
-    position: 'absolute',
-    width: 10,
-    height: 3,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 2,
-    left: 3,
-  },
-  lineaSuperior: {
-    transform: [{ rotate: '-45deg' }],
-    top: 6,
-  },
-  lineaInferior: {
-    transform: [{ rotate: '45deg' }],
-    bottom: 6,
-  },
-  lineaCuerpo: {
-    position: 'absolute',
-    width: 14,
-    height: 3,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 2,
-    left: 4,
   },
   contenidoScroll: {
     paddingHorizontal: 16,
     paddingTop: 20,
-    paddingBottom: 100,
   },
   subtitulo: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#1A1A1A',
     marginBottom: 15,
   },
-  
-  // ESTILOS DE LA CARD DE PAGO MÓVIL
   tarjetaPago: {
     width: '100%',
-    height: 200,
-    backgroundColor: '#3F51B5', // Azul premium de base, dándole contraste tecnológico
+    minHeight: 190,
+    backgroundColor: '#3F51B5',
     borderRadius: 20,
-    padding: 22,
+    padding: 20,
     justifyContent: 'space-between',
-    overflow: 'hidden', // Evita que los círculos decorativos se salgan de la tarjeta
+    overflow: 'hidden',
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -589,12 +537,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 5,
   },
   tarjetaNombreBanco: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     letterSpacing: 0.5,
+    flexShrink: 1,
   },
   badgePagoMovil: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
@@ -613,17 +564,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginVertical: 10,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   tarjetaNumeroTelf: {
     color: '#FFFFFF',
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     letterSpacing: 1.5,
+    flexShrink: 1,
   },
   tarjetaFilaInferior: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'bottom',
+    alignItems: 'flex-end',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   tarjetaEtiqueta: {
     color: 'rgba(255, 255, 255, 0.6)',
@@ -634,11 +590,11 @@ const styles = StyleSheet.create({
   },
   tarjetaValorDato: {
     color: '#FFFFFF',
-    fontSize: 21,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   botonCopiar: {
-    backgroundColor: '#D81B60', // Tu rosado característico para resaltar la acción
+    backgroundColor: '#D81B60',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 10,
@@ -648,18 +604,15 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 10,
-    alignSelf: 'flex-end',
   },
   botonCopiarActivo: {
-    backgroundColor: '#4CD964', // Cambia a verde exitoso al pulsar
+    backgroundColor: '#4CD964',
   },
   textoBotonCopiar: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: 'bold',
   },
-
-  // FORMULARIO Y ENTRADAS
   formularioContenedor: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -682,19 +635,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 8,
   },
-  input: {
-    backgroundColor: '#F9F9F9',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#333',
-  },
   filaInputs: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
   },
   inputMontoAuto: {
     backgroundColor: '#F3F3F3',
@@ -702,7 +646,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRadius: 10,
     paddingHorizontal: 12,
-    height: 40,
+    height: 48,
     justifyContent: 'center',
   },
   textoMontoAuto: {
@@ -713,7 +657,7 @@ const styles = StyleSheet.create({
   botonComprobante: {
     borderWidth: 1,
     borderColor: '#D81B60',
-    borderStyle: 'dashed', // Efecto punteado moderno para adjuntar
+    borderStyle: 'dashed',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
@@ -724,16 +668,22 @@ const styles = StyleSheet.create({
     color: '#D81B60',
     fontSize: 14,
     fontWeight: '600',
+    textAlign: 'center',
   },
-
-  // Sección Inferior Fija
+  textoHintComprobante: {
+    color: '#999',
+    fontSize: 11,
+    marginTop: 2,
+    textAlign: 'center',
+  },
   contenedorFijoInferior: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     elevation: 10,
@@ -744,7 +694,7 @@ const styles = StyleSheet.create({
   },
   botonProcesar: {
     backgroundColor: '#D81B60',
-    paddingVertical: 16,
+    paddingVertical: 15,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -757,8 +707,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-
-  // COMPROBANTE PREVIEW
   comprobantePreviewContainer: {
     flexDirection: 'row',
     backgroundColor: '#FFF1F2',
@@ -770,10 +718,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   comprobantePreview: {
-    width: 80,
-    height: 80,
+    width: 70,
+    height: 70,
     borderRadius: 8,
-    marginRight: 12,
+    marginRight: 10,
   },
   comprobanteInfo: {
     flex: 1,
@@ -807,10 +755,5 @@ const styles = StyleSheet.create({
   },
   comprobanteBtnQuitar: {
     padding: 6,
-  },
-  textoHintComprobante: {
-    color: '#999',
-    fontSize: 11,
-    marginTop: 2,
   },
 });

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
-  StyleSheet, Text, View,ImageBackground,KeyboardAvoidingView,Platform,ScrollView,TextInput,
-  TouchableOpacity,Image,
+  StyleSheet, Text, View, ImageBackground, KeyboardAvoidingView, Platform, ScrollView,
+  TouchableOpacity, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Controller, useForm } from 'react-hook-form';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'; 
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -19,11 +19,11 @@ import Input from '../componentes/Inputvalidacion';
 import SelectorFormulario from '../componentes/Selectformulario'; 
 import { loginUser, getToken } from '../services/api';
 
-const Login = ({activarCarga , desactivarCarga}) => {
+const Login = ({ activarCarga, desactivarCarga }) => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const insets = useSafeAreaInsets();
 
-  // Traemos las variables globales en español desde nuestro nuevo estado de seguridad
   const intentosFallidos = useSelector((state) => state.seguridad.intentosFallidosLogin);
   const tiempoDesbloqueo = useSelector((state) => state.seguridad.tiempoDesbloqueo);
 
@@ -35,136 +35,133 @@ const Login = ({activarCarga , desactivarCarga}) => {
     navigation.navigate("Olvido");
   };
   
-  // Control for
-    const {
-      control,
-      handleSubmit,
-      reset,
-      watch,
-      formState: { errors, isSubmitted },
-    } = useForm({
-      mode: 'onTouched',
-    });
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitted },
+  } = useForm({
+    mode: 'onTouched',
+  });
 
-    const limpiarCedula = (text) => text.replace(/[^0-9]/g, '');
+  const limpiarCedula = (text) => text.replace(/[^0-9]/g, '');
 
-  // FORMULARIO
   const onSubmit = async data => {
-  const { cedula, clave, tipoDoc } = data;
+    const { cedula, clave, tipoDoc } = data;
 
-  // 1 VALIDACION PREVIA DE BLOQUEO 
-  if (tiempoDesbloqueo && Date.now() < tiempoDesbloqueo) {
-    const milisegundosRestantes = tiempoDesbloqueo - Date.now();
-    const segundosRestantes = Math.ceil(milisegundosRestantes / 1000);
-    
-    setModalMessage(`Por seguridad, tu acceso está limitado por los próximos ${segundosRestantes} segundos.`);
-    setModalSuccess(false);
-    setModalVisible(true);
-    return; // no envía nada al servidor
-  }
-
-  activarCarga(); // Loader
-
-  try {
-    const result = await loginUser(cedula, clave, tipoDoc);
-    desactivarCarga(); // Loader
-
-    if (result.success) {
-      // Si el inicio es exitoso, limpiamos inmediatamente el contador de seguridad
-      dispatch(resetearIntentosLogin());
-
-      setModalMessage(`Verificación exitosa. ¡Bienvenido, ${result.user?.nombre || ''}!`);
-      setModalSuccess(true);
+    if (tiempoDesbloqueo && Date.now() < tiempoDesbloqueo) {
+      const milisegundosRestantes = tiempoDesbloqueo - Date.now();
+      const segundosRestantes = Math.ceil(milisegundosRestantes / 1000);
+      
+      setModalMessage(`Por seguridad, tu acceso está limitado por los próximos ${segundosRestantes} segundos.`);
+      setModalSuccess(false);
       setModalVisible(true);
+      return;
+    }
 
-      try {
-        const token = await getToken();
-        if (token) dispatch(setToken(token));
-        if (result.user) {
-          dispatch(setUser(result.user));
-          if (
-            token &&
-            result.user.cedula &&
-            !result.user.codigo &&
-            result.user.autorizado !== true
-          ) {
-            dispatch(obtenerWishlistRemotaThunk(result.user.cedula));
+    activarCarga();
+
+    try {
+      const result = await loginUser(cedula, clave, tipoDoc);
+      desactivarCarga();
+
+      if (result.success) {
+        dispatch(resetearIntentosLogin());
+
+        setModalMessage(`Verificación exitosa. ¡Bienvenido, ${result.user?.nombre || ''}!`);
+        setModalSuccess(true);
+        setModalVisible(true);
+
+        try {
+          const token = await getToken();
+          if (token) dispatch(setToken(token));
+          if (result.user) {
+            dispatch(setUser(result.user));
+            if (
+              token &&
+              result.user.cedula &&
+              !result.user.codigo &&
+              result.user.autorizado !== true
+            ) {
+              dispatch(obtenerWishlistRemotaThunk(result.user.cedula));
+            }
           }
+        } catch (e) {
+          console.warn('Error syncing token to redux after login', e);
         }
-      } catch (e) {
-        console.warn('Error syncing token to redux after login', e);
-      }
 
-      reset();
-      setTimeout(() => {
-        setModalVisible(false);
-        navigation.replace('MainTabs');
-      }, 2000);
+        reset();
+        setTimeout(() => {
+          setModalVisible(false);
+          navigation.replace('MainTabs');
+        }, 2000);
 
-    } else {
-      dispatch(registrarIntentoFallidoLogin());
-
-      const intentosRestantes = 5 - (intentosFallidos + 1);
-
-      if (intentosRestantes <= 0) {
-        setModalMessage(`${result.mensaje}\n\nHas alcanzado el máximo de intentos permitidos. El acceso se ha bloqueado por 2 minutos.`);
       } else {
-        setModalMessage(result.mensaje);
+        dispatch(registrarIntentoFallidoLogin());
+
+        if (5 - (intentosFallidos + 1) <= 0) {
+          setModalMessage(`${result.mensaje}\n\nHas alcanzado el máximo de intentos permitidos. El acceso se ha bloqueado por 2 minutos.`);
+        } else {
+          setModalMessage(result.mensaje);
+        }
+
+        setModalSuccess(false);
+        setModalVisible(true);
       }
 
+    } catch (error) {
+      desactivarCarga(); 
+      console.error("Error en el proceso de login:", error);
+      
+      setModalMessage("Ocurrió un error inesperado al conectar con el servidor.");
       setModalSuccess(false);
       setModalVisible(true);
     }
-
-  } catch (error) {
-    desactivarCarga(); 
-    console.error("Error en el proceso de login:", error);
-    
-    setModalMessage("Ocurrió un error inesperado al conectar con el servidor.");
-    setModalSuccess(false);
-    setModalVisible(true);
-  }
-};
+  };
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [modalSuccess, setModalSuccess] = useState(false);
 
   return (
-      <SafeAreaView style={styles.container}>
-         {/* imagen de fondo */}
-        <ImageBackground
-          source={require('../assets/portada.jpg')}
-          style={styles.backgroundImage}
-          resizeMode="cover"
+    
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ImageBackground
+        source={require('../assets/portada.jpg')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingContainer}
         >
-           {/* para el TECLADO */}
-          <KeyboardAvoidingView
-       
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={styles.keyboardAvoidingContainer}
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
           >
-            <ScrollView contentContainerStyle={{ flexGrow: 3, justifyContent: 'space-between' }}>
-
-              {/* Contenedor del logo y nombre de la marca */}
-              <View style={styles.logoContainer}>
-                <View style={styles.logoBackground}>
-                  <Image
-                    source={require('../assets/logo2.png')} 
-                    style={styles.logoImage}
-                    resizeMode="contain"
-                  />
-                </View>
+            {/* Contenedor del logo y nombre de la marca */}
+            <View style={styles.logoContainer}>
+              <View style={styles.logoBackground}>
+                <Image
+                  source={require('../assets/logo2.png')} 
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
               </View>
+            </View>
 
-              <View style={styles.formContainer}>
-                <Text style={styles.title}>Bienvenido/a</Text>
+            {/* Contenedor blanco con padding inferior dinámico basado en la barra de navegación/gestos del dispositivo */}
+            <View style={[styles.formContainer, { paddingBottom: Math.max(insets.bottom, 24) + 15 }]}>
+              <Text style={styles.title} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                Bienvenido/a
+              </Text>
 
-                {/* Campo Cedula */}
-              <Text style={styles.labelGlobal}>Documento de Identidad</Text>
+              {/* Campo Cedula */}
+              <Text style={styles.labelGlobal} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                Documento de Identidad
+              </Text>
               <View style={styles.filaDocumento}>
-                
-               {/* Selector  */}
                 <SelectorFormulario
                   name="tipoDoc"
                   control={control}
@@ -179,105 +176,105 @@ const Login = ({activarCarga , desactivarCarga}) => {
                   style={{ marginTop: -15 }}
                 />
 
-              {/* Campo Cédula  */}
-              <View style={styles.contenedorCedula}>
-                <Input
-                  name="cedula"
-                  label="" 
-                  placeholder="Ej: 12333444"
-                  icon="card"
-                  control={control}
-                  keyboardType="numeric"
-                  isSubmitted={isSubmitted}
-                  onChangeTextModifier={limpiarCedula}
-                  rules={{
-                    required: 'La cédula es requerida',
-                    pattern: {
-                      value: /^\d{7,8}$/,
-                      message: 'Debe tener entre 7 y 8 dígitos numéricos',
-                    }
-                  }}
-                />
-              </View>
-            </View>
-                
-                {/* Campo Contraseña */}
-                <Input
-                  name="clave"
-                  label="Contraseña"
-                  placeholder="Contraseña"
-                  icon="lock-closed"
-                  control={control}
-                  secureTextEntry={true}
-                  isSubmitted={isSubmitted}
-                  rules={{
-                    required: 'La contraseña es requerida',
-                    minLength: { value: 8, message: 'Mínimo 8 caracteres' },
-                    maxLength: { value: 16, message: 'Máximo 16 caracteres' },
-                  }}
-                />
-
-                {/* Botón Ingresar */}
-                <BtnAcion 
-                  text="INGRESAR" 
-                  icon="log-out" 
-                  backgroundColor="#EE82EE" 
-                  color="#ffffff"       
-                  onPress={handleSubmit(onSubmit)} 
-                />
-
-                  {/* ALERTA  */}
-                  <AlertModal
-                    visible={modalVisible}
-                    onClose={() => setModalVisible(false)}
-                    message={modalMessage}
-                    success={modalSuccess}
+                <View style={styles.contenedorCedula}>
+                  <Input
+                    name="cedula"
+                    label="" 
+                    placeholder="Ej: 12333444"
+                    icon="card"
+                    control={control}
+                    keyboardType="numeric"
+                    isSubmitted={isSubmitted}
+                    onChangeTextModifier={limpiarCedula}
+                    rules={{
+                      required: 'La cédula es requerida',
+                      pattern: {
+                        value: /^\d{7,8}$/,
+                        message: 'Debe tener entre 7 y 8 dígitos numéricos',
+                      }
+                    }}
                   />
-
-                {/* Footer */}
-                <View style={styles.footerLinksContainer}>
-                  <TouchableOpacity onPress={OlvidoPress}>
-                    <Text style={styles.footerLink}>¿Olvidaste tu contraseña?</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity onPress={RegistrarPress}>
-                    <Text style={styles.registerLink}>Registrarse</Text>
-                  </TouchableOpacity>
                 </View>
               </View>
-            </ScrollView>
+                
+              {/* Campo Contraseña */}
+              <Input
+                name="clave"
+                label="Contraseña"
+                placeholder="Contraseña"
+                icon="lock-closed"
+                control={control}
+                secureTextEntry={true}
+                isSubmitted={isSubmitted}
+                rules={{
+                  required: 'La contraseña es requerida',
+                  minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+                  maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+                }}
+              />
 
-          </KeyboardAvoidingView>
-        </ImageBackground>
-        
-       
-      </SafeAreaView>
+              {/* Botón Ingresar */}
+              <BtnAcion 
+                text="INGRESAR" 
+                icon="log-out" 
+                backgroundColor="#EE82EE" 
+                color="#ffffff"       
+                onPress={handleSubmit(onSubmit)} 
+              />
+
+              {/* ALERTA */}
+              <AlertModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                message={modalMessage}
+                success={modalSuccess}
+              />
+
+              {/* Footer */}
+              <View style={styles.footerLinksContainer}>
+                <TouchableOpacity onPress={OlvidoPress} style={styles.footerTouchable}>
+                  <Text style={styles.footerLink} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                    ¿Olvidaste tu contraseña?
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity onPress={RegistrarPress} style={styles.footerTouchable}>
+                  <Text style={styles.registerLink} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                    Registrarse +
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </ImageBackground>
+    </SafeAreaView>
   );
 };
 
-// --- Estilos de la pantalla intactos ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#FFFFFF', // Fondo blanco para que combine con el formulario al llegar al borde inferior
   },
   backgroundImage: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   keyboardAvoidingContainer: {
     flex: 1,
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'space-between', 
-        paddingBottom: 80,
+    justifyContent: 'space-between',
   },
   logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1, 
-    minHeight: 180, 
-    paddingTop: Platform.OS === 'ios' ? 20 : 40,
+    minHeight: 160, 
+    paddingTop: 20,
     paddingBottom: 20,
   },
   logoBackground: {
@@ -289,45 +286,56 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    width: 130,
-    height: 130,
+    width: 120,
+    height: 120,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoImage: {
-    width: 110,
-    height: 110,
+    width: 100,
+    height: 100,
   },
   formContainer: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    paddingHorizontal: 30,
-    paddingTop: 45,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 35, 
+    borderTopLeftRadius: 35,
+    borderTopRightRadius: 35,
+    paddingHorizontal: 24,
+    paddingTop: 35,
+    // El padding inferior ahora es dinámico gracias a insets.bottom, garantizando cubrir hasta el final sin estorbar los gestos/botones
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 10,
   },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   footerLinksContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 25,
+    alignItems: 'center',
+    marginTop: 20,
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  footerTouchable: {
+    flexShrink: 1,
   },
   footerLink: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#000000',
   },
   registerLink: {
     color: '#EE82EE',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 14,
   },
   labelGlobal: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#333',
     marginBottom: 5,
@@ -338,6 +346,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     justifyContent: 'space-between',
     width: '100%',
+    marginBottom: 5,
   },
   contenedorCedula: {
     flex: 1,
