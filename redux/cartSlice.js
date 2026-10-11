@@ -8,8 +8,8 @@ const cartSlice = createSlice({
   reducers: {
     addToCart: (state, action) => {
       const item = action.payload;
-
-      // Si el producto no tiene ID, generar uno
+      
+      const cantidadAñadir = Number(item.cantidad) || 1;
       if (!item.id) {
         item.id = Math.random().toString(36).substr(2, 9);
       }
@@ -19,23 +19,23 @@ const cartSlice = createSlice({
       const hayLimite = Number.isFinite(stock);
 
       if (existing) {
-        const nueva = (existing.cantidad || 1) + 1;
-        // Verificación de stock: no permitir superar las unidades disponibles
+        const nueva = (existing.cantidad || 1) + cantidadAñadir;
+
         if (hayLimite && nueva > stock) {
-          return;
+          return; 
         }
         existing.cantidad = nueva;
         if (hayLimite) {
           existing.stock_disponible = stock;
         }
       } else {
-        // Si el producto no tiene stock, no se agrega
+        
         if (hayLimite && stock < 1) {
           return;
         }
         state.items.push({
           ...item,
-          cantidad: 1,
+          cantidad: cantidadAñadir, 
         });
       }
     },

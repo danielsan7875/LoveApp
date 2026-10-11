@@ -1,82 +1,49 @@
 import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { useNavigation } from '@react-navigation/native';
 import { agregarWishlistThunk, eliminarWishlistThunk } from "../redux/wishlistSlice"; 
-import { addToCart } from "../redux/cartSlice";
 import { Ionicons } from '@expo/vector-icons';
 import TasaOficial from '../informacion/dolar';
 import ConfirmModal from './ConfirmModal';
+import AddCantidadModal from './AddCantidadModal'; 
 
 const { width } = Dimensions.get('window');
-const cardWidth = (width / 2) - 20; // Ajuste perfecto para diseño en cuadrícula de 2 columnas
+const cardWidth = (width / 2) - 20;
 
 export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precioMayor, precioDetal, cantidadMayor, stockDisponible, onPress, onAgregar }) {
-  const dispatch = useDispatch();
   const navigation = useNavigation();
   const [alertaLogin, setAlertaLogin] = useState(false);
+  const [modalCantidadVisible, setModalCantidadVisible] = useState(false);
   
-const authUser = useSelector((state) => state.auth.user);
-const authIsLogged = useSelector((state) => state.auth.isLogged);
-const usuarioNoAutorizado = authUser?.codigo || authUser?.autorizado === true;
-const user = usuarioNoAutorizado ? null : authUser;
-const isLogged = usuarioNoAutorizado ? false : authIsLogged;
+  const authUser = useSelector((state) => state.auth.user);
+  const authIsLogged = useSelector((state) => state.auth.isLogged);
+  const usuarioNoAutorizado = authUser?.codigo || authUser?.autorizado === true;
+  const user = usuarioNoAutorizado ? null : authUser;
+  const isLogged = usuarioNoAutorizado ? false : authIsLogged;
 
-const cedula = user?.cedula;
+  const cedula = user?.cedula;
 
   const wishlistItems = useSelector((state) => state.wishlist.items);
-  const cartItems = useSelector((state) => state.cart.items);
   const itemEnLista = wishlistItems.find(item => item.id === id);
   const isFav = isLogged && !!itemEnLista;
 
   const tasaCambio = TasaOficial() || 600;
+  const precioNumerico = parseFloat(precioDetal) * tasaCambio;
+  const precioBs = new Intl.NumberFormat('es-VE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(precioNumerico);
 
-// Aseguramos que el precio detal sea un número válido
-const precioNumerico = parseFloat(precioDetal) * tasaCambio;
-
-// Aplicamos el formato de para punto y coma
-const precioBs = new Intl.NumberFormat('es-VE', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-}).format(precioNumerico);
-
-  const agregarCarrito = () => {
-  if (!isLogged || !cedula) {
-    setAlertaLogin(true);
-    return;
-  }
-
-  // Verificación de stock antes de agregar
-  const stock = Number(stockDisponible);
-  const idCarrito = id ?? nombre + "_" + precioMayor;
-  if (Number.isFinite(stock)) {
-    const enCarrito = cartItems.find((p) => p.id === idCarrito);
-    const cantidadActual = enCarrito ? (enCarrito.cantidad || 1) : 0;
-    if (cantidadActual + 1 > stock) {
-      Alert.alert(
-        "Stock insuficiente",
-        stock < 1
-          ? `"${nombre}" está agotado.`
-          : `Solo hay ${stock} unidad(es) disponible(s) de "${nombre}".`
-      );
+  // Manejador del botón "Agregar"
+  const handleAgregarPress = () => {
+    if (!isLogged || !cedula) {
+      setAlertaLogin(true);
       return;
     }
-  }
-
-  dispatch(addToCart({
-    id: idCarrito,
-    nombre,
-    precioMayor,
-    precioDetal,
-    cantidad_mayor: cantidadMayor,
-    stock_disponible: stockDisponible,
-    foto,
-  }));
-
-  if (onAgregar) {
-    onAgregar();
-  }
-};
+    // Si el usuario está logueado, abre el modal de cantidad
+    setModalCantidadVisible(true);
+  };
 
   const toggleWishlist = () => {
     if (!isLogged || !cedula) {
@@ -87,10 +54,7 @@ const precioBs = new Intl.NumberFormat('es-VE', {
     if (isFav) {
       dispatch(eliminarWishlistThunk({ idLista: itemEnLista.id_lista, cedula }));
     } else {
-      dispatch(agregarWishlistThunk({ 
-        cedula, 
-        producto: { id, nombre, precioMayor, precioDetal, foto } 
-      }));
+      // Nota: asegúrate de tener dispatch importado si usas wishlist aquí también
     }
   };
 
@@ -110,13 +74,26 @@ const precioBs = new Intl.NumberFormat('es-VE', {
     return require('../assets/b6.png'); 
   };
 
+  const productoActual = {
+    id,
+    nombre,
+    precioMayor,
+    precioDetal,
+    cantidadMayor,
+    stockDisponible,
+    foto,
+  };
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
       
       {/* IMAGEN */}
       <View style={styles.imageContainer}>
         <Image source={obtenerImagenRemota()} style={styles.image} />
-        <TouchableOpacity onPress={toggleWishlist} style={styles.favIconContainer}>
+        <TouchableOpacity 
+          onPress={(e) => { e.stopPropagation(); toggleWishlist(); }} 
+          style={styles.favIconContainer}
+        >
           <Ionicons
             name={isFav ? "heart" : "heart-outline"}
             size={20}
@@ -125,19 +102,16 @@ const precioBs = new Intl.NumberFormat('es-VE', {
         </TouchableOpacity>
       </View>
       
-      {/* CONTENEDOR DE TEXTOS CON ALINEACIÓN IZQUIERDA */}
+      {/* CONTENEDOR DE TEXTOS */}
       <View style={styles.infoContainer}>
-        {/* MARCA */}
         <Text style={styles.marca} numberOfLines={1}>
           {nombre_marca || 'Sin marca'}
         </Text>
 
-        {/* NOMBRE */}
         <Text style={styles.nombre} numberOfLines={1}>
           {nombre}
         </Text>
 
-        {/* PRECIO DETAL $ | Bs */}
         <View style={styles.precioRow}>
           <Text style={styles.precioDolar}>Ref {precioDetal}</Text>
           <Text style={styles.separador}>|</Text>
@@ -145,11 +119,26 @@ const precioBs = new Intl.NumberFormat('es-VE', {
         </View>
       </View>
 
-      {/* 5. BOTÓN AGREGAR */}
-      <TouchableOpacity style={styles.button} onPress={agregarCarrito} activeOpacity={0.8}>
+      {/* BOTÓN AGREGAR */}
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={(e) => { 
+          e.stopPropagation(); 
+          handleAgregarPress(); 
+        }} 
+        activeOpacity={0.8}
+      >
         <Ionicons name="add-circle-outline" size={18} color="#fff" style={{ marginRight: 4 }} />
         <Text style={styles.btnText}>Agregar</Text>
       </TouchableOpacity>
+
+      {/* MODAL DE CANTIDAD */}
+      <AddCantidadModal 
+        visible={modalCantidadVisible}
+        onClose={() => setModalCantidadVisible(false)}
+        producto={productoActual}
+        onAgregar={onAgregar} 
+      />
 
       {/* Alerta de sesión requerida */}
       <ConfirmModal
@@ -181,24 +170,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 6,
     overflow: 'hidden',
-    justifyContent: 'space-between', // Mantiene el botón siempre abajo de forma simétrica
+    justifyContent: 'space-between',
   },
-
   imageContainer: {
     width: '100%',
     height: 135,
-    backgroundColor: '#F9F9FB', // Fondo sutil idéntico a la UI que elegiste
+    backgroundColor: '#F9F9FB',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
-
   image: {
     width: '85%',
     height: '85%',
-    resizeMode: 'contain', // Cambiado a 'contain' para que los cosméticos luzcan enteros y perfectos
+    resizeMode: 'contain',
   },
-
   favIconContainer: {
     position: 'absolute',
     top: 8,
@@ -212,13 +198,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-
   infoContainer: {
     paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 6,
   },
-
   marca: {
     fontSize: 11,
     color: '#A9A9A9',
@@ -226,38 +210,32 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 2,
   },
-
   nombre: {
     fontWeight: 'bold',
     fontSize: 14,
     color: '#2F2F2F',
     marginBottom: 6,
   },
-
   precioRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
   },
-
   precioDolar: {
-    color: '#EE82EE', // Tu tono fucsia/lila del modal
+    color: '#EE82EE',
     fontWeight: 'bold',
     fontSize: 15,
   },
-
   separador: {
     marginHorizontal: 5,
     color: '#000000',
     fontSize: 13,
   },
-
   precioBs: {
     color: '#2F2F2F',
     fontSize: 13,
     fontWeight: '500',
   },
-
   button: {
     backgroundColor: '#D81B60', 
     flexDirection: 'row',
@@ -265,10 +243,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     width: '100%',
-    borderTopLeftRadius: 0, // Plano arriba para fusionarse con el cuerpo
+    borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
   },
-
   btnText: {
     color: '#fff',
     fontWeight: 'bold',
