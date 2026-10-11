@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigation } from '@react-navigation/native';
 import { agregarWishlistThunk, eliminarWishlistThunk } from "../redux/wishlistSlice"; 
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ const { width } = Dimensions.get('window');
 const cardWidth = (width / 2) - 20;
 
 export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precioMayor, precioDetal, cantidadMayor, stockDisponible, onPress, onAgregar }) {
+  const dispatch = useDispatch();
   const navigation = useNavigation();
   const [alertaLogin, setAlertaLogin] = useState(false);
   const [modalCantidadVisible, setModalCantidadVisible] = useState(false);
@@ -23,10 +24,11 @@ export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precio
   const isLogged = usuarioNoAutorizado ? false : authIsLogged;
 
   const cedula = user?.cedula;
+  const productId = id ?? id_producto;
 
   const wishlistItems = useSelector((state) => state.wishlist.items);
-  const itemEnLista = wishlistItems.find(item => item.id === id);
-  const isFav = isLogged && !!itemEnLista;
+  const itemEnLista = wishlistItems.find(item => String(item.id ?? item.id_producto) === String(productId));
+  const isFav = !!itemEnLista;
 
   const tasaCambio = TasaOficial() || 600;
   const precioNumerico = parseFloat(precioDetal) * tasaCambio;
@@ -52,9 +54,13 @@ export default function Cards({ id, id_lista, foto, nombre, nombre_marca, precio
     }
 
     if (isFav) {
-      dispatch(eliminarWishlistThunk({ idLista: itemEnLista.id_lista, cedula }));
+      const idListaAEliminar = itemEnLista?.id_lista ?? itemEnLista?.id;
+      dispatch(eliminarWishlistThunk({ idLista: idListaAEliminar, cedula }));
     } else {
-      // Nota: asegúrate de tener dispatch importado si usas wishlist aquí también
+      dispatch(agregarWishlistThunk({ 
+        cedula, 
+        producto: { id: productId, nombre, precioMayor, precioDetal, foto } 
+      }));
     }
   };
 
