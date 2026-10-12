@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { registerForNotifications } from './notifications';
 
 const API_BASE = 'https://lovemakeuptienda.com/controlador/api';
 const TOKEN_KEY = 'jwt_token';
@@ -472,6 +473,7 @@ export async function loginUser(usuario, clave, tipoDoc) {
 
     if (json && (json.respuesta === 1 || json.respuesta === 2) && json.token) {
       await saveToken(json.token);
+      await registerForNotifications();
       return { success: true, user: json.usuario, respuesta: json.respuesta };
 
       const payload = decodeJwtPayload(json.token);

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "21010118583",
+    "project_id": "lovemakeup-push",
+    "storage_bucket": "lovemakeup-push.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:21010118583:android:2ec67430c70b129c1dda32",
+        "android_client_info": {
+          "package_name": "com.anonymous.LoveApp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDa-6LHkPiOBI3gH7n0FEXjNk2yneA8gEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
