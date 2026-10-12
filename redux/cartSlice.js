@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { clearAuth } from "./authSlice";
 
 const cartSlice = createSlice({
   name: "cart",
@@ -92,6 +93,13 @@ const cartSlice = createSlice({
     clearCart: (state) => {
       state.items = [];
     },
+  },
+  // Al cerrar sesión (clearAuth) se vacía el carrito,
+  // sin importar desde qué pantalla se haga logout.
+  extraReducers: (builder) => {
+    builder.addCase(clearAuth, (state) => {
+      state.items = [];
+    });
   },
 });
 
