@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useForm } from 'react-hook-form';
 import Select from '../componentes/Select';
@@ -48,7 +48,7 @@ export default function MetodoEntrega() {
    const navigation = useNavigation();
    const route = useRoute();
    const total = route.params?.total ?? 0;
-   const insets = useSafeAreaInsets(); // Obtiene el espacio de la barra de navegación/gestos de Android/iOS
+   const insets = useSafeAreaInsets();
 
    const {
       control,
@@ -143,189 +143,194 @@ export default function MetodoEntrega() {
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={[
-          styles.contenidoScroll, 
-          // Suma dinámica de insets para que el contenido jamás quede oculto bajo el botón flotante inferior
-          { paddingBottom: Math.max(insets.bottom, 20) + 90 }
-        ]} 
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardContainer}
       >
-        <Text style={styles.subtitulo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
-          Selecciona una opción
-        </Text>
+        <ScrollView 
+          contentContainerStyle={[
+            styles.contenidoScroll, 
+            { paddingBottom: Math.max(insets.bottom, 20) + 110 }
+          ]} 
+          showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.subtitulo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+            Selecciona una opción
+          </Text>
 
-        {metodos.map((metodo) => {
-          const estaSeleccionado = metodoSeleccionado === metodo.id;
-          return (
-            <TouchableOpacity
-              key={metodo.id}
-              style={[styles.tarjetaMetodo, estaSeleccionado && styles.tarjetaSeleccionada]}
-              activeOpacity={0.8}
-              onPress={() => setMetodoSeleccionado(metodo.id)}
-            >
-              <View style={[styles.circuloIcono, estaSeleccionado && styles.circuloIconoActivo]}>
-                <Text style={styles.textoIcono}>
-                  {metodo.id === 'tienda' ? 'T' : metodo.id === 'nacional' ? 'N' : 'D'}
-                </Text>
-              </View>
+          {metodos.map((metodo) => {
+            const estaSeleccionado = metodoSeleccionado === metodo.id;
+            return (
+              <TouchableOpacity
+                key={metodo.id}
+                style={[styles.tarjetaMetodo, estaSeleccionado && styles.tarjetaSeleccionada]}
+                activeOpacity={0.8}
+                onPress={() => setMetodoSeleccionado(metodo.id)}
+              >
+                <View style={[styles.circuloIcono, estaSeleccionado && styles.circuloIconoActivo]}>
+                  <Text style={styles.textoIcono}>
+                    {metodo.id === 'tienda' ? 'T' : metodo.id === 'nacional' ? 'N' : 'D'}
+                  </Text>
+                </View>
 
-              <View style={styles.infoMetodo}>
-                <Text style={styles.tituloMetodo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
-                  {metodo.titulo}
-                </Text>
-                <Text style={styles.descripcionMetodo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
-                  {metodo.descripcion}
-                </Text>
-              </View>
+                <View style={styles.infoMetodo}>
+                  <Text style={styles.tituloMetodo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                    {metodo.titulo}
+                  </Text>
+                  <Text style={styles.descripcionMetodo} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                    {metodo.descripcion}
+                  </Text>
+                </View>
 
-              <View style={[styles.radioExterior, estaSeleccionado && styles.radioExteriorActivo]}>
-                {estaSeleccionado && <View style={styles.radioInterior} />}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
+                <View style={[styles.radioExterior, estaSeleccionado && styles.radioExteriorActivo]}>
+                  {estaSeleccionado && <View style={styles.radioInterior} />}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
 
-        {metodoSeleccionado === 'nacional' && (
-          <View style={styles.formularioContenedor}>
-            <Text style={styles.tituloFormulario} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
-              Detalles del Envío Nacional
-            </Text>
-            
-            <Select
-              label="Empresa de encomienda"
-              opciones={empresasNacionales}
-              value={empresaEnvio}
-              onSelect={setEmpresaEnvio}
-              placeholder="Selecciona MRW o ZOOM"
-            />
-
-            <Input
-              name="codigoSucursal"
-              label="Código de la Sucursal"
-              placeholder="Ej. 2140"
-              icon="hash-outline"
-              control={control}
-              isSubmitted={isSubmitted}
-              keyboardType="number-pad"
-              maxLength={7}
-              onChangeTextModifier={(t) => t.replace(/\D/g, '')}
-              rules={{
-                required: 'El código de sucursal es obligatorio',
-                pattern: {
-                  value: patronCodigoSucursal,
-                  message: 'Debe tener entre 5 y 7 dígitos',
-                },
-              }}
-            />
-
-            <Input
-              name="direccionAgencia"
-              label="Nombre / Dirección de la Agencia"
-              placeholder="Ej. MRW Sucursal Barquisimeto Centro"
-              icon="location-outline"
-              control={control}
-              isSubmitted={isSubmitted}
-              maxLength={100}
-              rules={{
-                required: 'La dirección de la agencia es obligatoria',
-                pattern: {
-                  value: patronAgencia,
-                  message: 'Entre 10 y 100 caracteres (letras, números y . , # - / ( ))',
-                },
-              }}
-            />
-          </View>
-        )}
-
-        {metodoSeleccionado === 'delivery' && (
-          <View style={styles.formularioContenedor}>
-            <Text style={styles.tituloFormulario} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
-              Detalles del Delivery
-            </Text>
-
-            {cargandoDelivery && (
-              <View style={styles.filaCarga}>
-                <ActivityIndicator size="small" color="#D81B60" />
-                <Text style={styles.textoCarga} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
-                  Cargando deliveries disponibles...
-                </Text>
-              </View>
-            )}
-
-            {errorDelivery && !cargandoDelivery && (
-              <View style={styles.filaCarga}>
-                <Text style={styles.textoError} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
-                  {errorDelivery === 'sesion'
-                    ? 'Tu sesión expiró. Cierra sesión y vuelve a iniciar sesión.'
-                    : 'No se pudieron cargar los deliveries. Revisa tu conexión.'}
-                </Text>
-                <TouchableOpacity style={styles.botonReintentar} onPress={cargarDeliveries}>
-                  <Text style={styles.textoReintentar}>Reintentar</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {!cargandoDelivery && !errorDelivery && (
+          {metodoSeleccionado === 'nacional' && (
+            <View style={styles.formularioContenedor}>
+              <Text style={styles.tituloFormulario} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                Detalles del Envío Nacional
+              </Text>
+              
               <Select
-                label="Servicio de Delivery"
-                opciones={deliveries.map((d) => ({ label: `${d.tipo} --- ${d.nombre}`, value: d.id_delivery }))}
-                value={idDelivery}
-                onSelect={setIdDelivery}
-                placeholder="Seleccione repartidor o empresa"
+                label="Empresa de encomienda"
+                opciones={empresasNacionales}
+                value={empresaEnvio}
+                onSelect={setEmpresaEnvio}
+                placeholder="Selecciona MRW o ZOOM"
               />
-            )}
 
-            <Select
-              label="Zona"
-              opciones={zonasDelivery}
-              value={zona}
-              onSelect={(v) => {
-                setZona(v);
-                setParroquia('');
-                setSector('');
-              }}
-              placeholder="-- Selecciona una zona --"
-            />
+              <Input
+                name="codigoSucursal"
+                label="Código de la Sucursal"
+                placeholder="Ej. 2140"
+                icon="hash-outline"
+                control={control}
+                isSubmitted={isSubmitted}
+                keyboardType="number-pad"
+                maxLength={7}
+                onChangeTextModifier={(t) => t.replace(/\D/g, '')}
+                rules={{
+                  required: 'El código de sucursal es obligatorio',
+                  pattern: {
+                    value: patronCodigoSucursal,
+                    message: 'Debe tener entre 5 y 7 dígitos',
+                  },
+                }}
+              />
 
-            <Select
-              label="Parroquia"
-              opciones={(parroquiasPorZona[zona] || []).map((p) => ({ label: p, value: p }))}
-              value={parroquia}
-              onSelect={(v) => {
-                setParroquia(v);
-                setSector('');
-              }}
-              placeholder="-- Selecciona una parroquia --"
-            />
+              <Input
+                name="direccionAgencia"
+                label="Nombre / Dirección de la Agencia"
+                placeholder="Ej. MRW Sucursal Barquisimeto Centro"
+                icon="location-outline"
+                control={control}
+                isSubmitted={isSubmitted}
+                maxLength={100}
+                rules={{
+                  required: 'La dirección de la agencia es obligatoria',
+                  pattern: {
+                    value: patronAgencia,
+                    message: 'Entre 10 y 100 caracteres (letras, números y . , # - / ( ))',
+                  },
+                }}
+              />
+            </View>
+          )}
 
-            <Select
-              label="Sector / Urbanización"
-              opciones={(sectoresPorParroquia[parroquia] || []).map((s) => ({ label: s, value: s }))}
-              value={sector}
-              onSelect={setSector}
-              placeholder="-- Selecciona un sector --"
-            />
+          {metodoSeleccionado === 'delivery' && (
+            <View style={styles.formularioContenedor}>
+              <Text style={styles.tituloFormulario} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                Detalles del Delivery
+              </Text>
 
-            <Input
-              name="direccionExacta"
-              label="Dirección Exacta (Casa, Punto de referencia)"
-              placeholder="Ej. Av. Lara con Av. Los Leones, edif. X, piso 2, apto 2B"
-              icon="home-outline"
-              control={control}
-              isSubmitted={isSubmitted}
-              maxLength={150}
-              rules={{
-                required: 'La dirección exacta es obligatoria',
-                pattern: {
-                  value: patronDireccion,
-                  message: 'Entre 10 y 150 caracteres (letras, números y . , # - / ( ))',
-                },
-              }}
-            />
-          </View>
-        )}
-      </ScrollView>
+              {cargandoDelivery && (
+                <View style={styles.filaCarga}>
+                  <ActivityIndicator size="small" color="#D81B60" />
+                  <Text style={styles.textoCarga} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                    Cargando deliveries disponibles...
+                  </Text>
+                </View>
+              )}
+
+              {errorDelivery && !cargandoDelivery && (
+                <View style={styles.filaCarga}>
+                  <Text style={styles.textoError} allowFontScaling={true} maxFontSizeMultiplier={1.3}>
+                    {errorDelivery === 'sesion'
+                      ? 'Tu sesión expiró. Cierra sesión y vuelve a iniciar sesión.'
+                      : 'No se pudieron cargar los deliveries. Revisa tu conexión.'}
+                  </Text>
+                  <TouchableOpacity style={styles.botonReintentar} onPress={cargarDeliveries}>
+                    <Text style={styles.textoReintentar}>Reintentar</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {!cargandoDelivery && !errorDelivery && (
+                <Select
+                  label="Servicio de Delivery"
+                  opciones={deliveries.map((d) => ({ label: `${d.tipo} --- ${d.nombre}`, value: d.id_delivery }))}
+                  value={idDelivery}
+                  onSelect={setIdDelivery}
+                  placeholder="Seleccione repartidor o empresa"
+                />
+              )}
+
+              <Select
+                label="Zona"
+                opciones={zonasDelivery}
+                value={zona}
+                onSelect={(v) => {
+                  setZona(v);
+                  setParroquia('');
+                  setSector('');
+                }}
+                placeholder="-- Selecciona una zona --"
+              />
+
+              <Select
+                label="Parroquia"
+                opciones={(parroquiasPorZona[zona] || []).map((p) => ({ label: p, value: p }))}
+                value={parroquia}
+                onSelect={(v) => {
+                  setParroquia(v);
+                  setSector('');
+                }}
+                placeholder="-- Selecciona una parroquia --"
+              />
+
+              <Select
+                label="Sector / Urbanización"
+                opciones={(sectoresPorParroquia[parroquia] || []).map((s) => ({ label: s, value: s }))}
+                value={sector}
+                onSelect={setSector}
+                placeholder="-- Selecciona un sector --"
+              />
+
+              <Input
+                name="direccionExacta"
+                label="Dirección Exacta (Casa, Punto de referencia)"
+                placeholder="Ej. Av. Lara con Av. Los Leones, edif. X, piso 2, apto 2B"
+                icon="home-outline"
+                control={control}
+                isSubmitted={isSubmitted}
+                maxLength={150}
+                rules={{
+                  required: 'La dirección exacta es obligatoria',
+                  pattern: {
+                    value: patronDireccion,
+                    message: 'Entre 10 y 150 caracteres (letras, números y . , # - / ( ))',
+                  },
+                }}
+              />
+            </View>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Botón Inferior Fijo adaptado al borde seguro y botones/gestos de Android */}
       <View style={[styles.contenedorFijoInferior, { paddingBottom: Math.max(insets.bottom, 15) }]}>
@@ -348,6 +353,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF1F2",
+  },
+  keyboardContainer: {
+    flex: 1,
   },
   contenidoScroll: {
     paddingHorizontal: 16,
