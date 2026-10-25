@@ -11,38 +11,63 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
   
 const NavBarra = ({ state, navigation }) => {
-  const icons = {
-    Inicio: "home-outline",
-    Producto: "bag-handle",
-    Ubicacion: "storefront",
-    Contacto: "chatbox-ellipses-outline",
-    "Más Opciones": "reorder-four",
+  const tabConfig = {
+    Inicio: {
+      icon: "home",
+      label: "Inicio",
+    },
+    Producto: {
+      icon: "bag-handle",
+      label: "Productos",
+    },
+    Asesor : {
+      icon: "chatbubbles", 
+      label: "Asesor IA",
+    },
+    Contacto: {
+      icon: "chatbox-ellipses", 
+      label: "Contacto",
+    },
+    "Más Opciones": {
+      icon: "reorder-four",
+      label: "Mas Opciones",
+    },
   };
 
   return (
     <SafeAreaView edges={["bottom"]} style={styles.safeAreaBottom}>
       <View style={styles.bottomNav}>
         {state.routes.map((route, index) => {
-          const label = route.name;
+          const routeName = route.name;
           const isFocused = state.index === index;
 
+          const config = tabConfig[routeName] || {
+            icon: "ellipse",
+            label: routeName,
+          };
+
           const onPress = () => {
-            if (label === "Más Opciones") {
-              navigation.navigate(label, { screen: "OpcionesHome" });
+            if (routeName === "Más Opciones") {
+              navigation.navigate(routeName, { screen: "OpcionesHome" });
             } else if (!isFocused) {
-              navigation.navigate(label);
+              navigation.navigate(routeName);
             }
           };
 
           return (
-            <TouchableOpacity key={label} style={styles.navItem} onPress={onPress}>
+            <TouchableOpacity 
+              key={routeName} 
+              style={styles.navItem} 
+              onPress={onPress}
+              activeOpacity={0.7}
+            >
               <Ionicons
-                name={icons[label]}
-                size={24}
+                name={isFocused ? config.icon : `${config.icon}`} 
+                size={23}
                 color={isFocused ? "#D81B60" : "#666"}
               />
-              <Text style={[styles.navText, isFocused && { color: "#D81B60" }]}>
-                {label}
+              <Text style={[styles.navText, isFocused && styles.navTextActive]}>
+                {config.label}
               </Text>
             </TouchableOpacity>
           );
@@ -70,20 +95,20 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#FFF1F2', // Un rosado muy claro de fondo
+    backgroundColor: '#FFF1F2', 
   },
   scrollViewContent: {
-    paddingBottom: 80, // Espacio para el nav inferior
+    paddingBottom: 80,
   },
 
-  // Category Grid
+  
   row: {
     flex: 1,
     justifyContent: 'space-between',
     paddingHorizontal: 15,
   },
  
-  // Bottom Nav
+
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, StatusBar } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons'; // Asegúrate de tener instalado @expo/vector-icons
+import { Ionicons } from '@expo/vector-icons';
 import api from '../services/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearAuth } from '../redux/authSlice';
@@ -22,7 +22,7 @@ const MenuItem = ({ iconName, text, route, onPress }) => {
       style={styles.menuItem}
       onPress={handlePress}
     >
-      <Ionicons name={iconName} size={24} color="#FF69B4" style={styles.icon} />
+      <Ionicons name={iconName} size={24} color="#D81B60" style={styles.icon} />
       <Text style={styles.menuText}>{text}</Text>
       <Ionicons name="chevron-forward" size={20} color="#ccc" />
     </TouchableOpacity>
@@ -63,7 +63,6 @@ export default function Opciones() {
     { iconName: 'megaphone', text: 'Consejos', route: 'Consejos' },
     { iconName: 'person-circle', text: 'Mis Datos', route: 'MisDatos' },
     { iconName: 'lock-open', text: 'Seguridad', route: 'Seguridad'},
-
   ];
 
    const menuItems3 = [
@@ -72,23 +71,31 @@ export default function Opciones() {
 
 
   return (
-   
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
       <ScrollView contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
      
-        <View style={styles.profileSection}>
+        {/* Sección de Perfil Moderna con Color Sólido e Ícono de Persona */}
+        <View style={styles.profileCard}>
+          <View style={styles.profileBannerColor} />
+
+          <View style={styles.profileInfoContainer}>
+            <View style={styles.avatarWrapper}>
               <Image
-                      source={require('../assets/logo.png')} // Asegúrate que el logo esté en assets
-                      style={styles.profileImage}
-                      resizeMode="contain"
-                    />
-          <Text style={styles.profileName}>{profileName}</Text>
+                source={require('../assets/logo.png')}
+                style={styles.profileImage}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.nameRow}>
+              <Ionicons name="person" size={18} color="#D81B60" style={styles.nameIcon} />
+              <Text style={styles.profileName}>{profileName}</Text>
+            </View>
+          </View>
         </View>
 
-
-        {/*|||||||||||||| Primera Tarjeta de Menú |||||||||||||||||||*/}
+        {/* Primera Tarjeta de Menú */}
          <View style={styles.card}>
             {menuItems1.map((item, index) => (
               <React.Fragment key={index}>
@@ -98,7 +105,7 @@ export default function Opciones() {
             ))}
         </View>
 
-        {/*|||||||||||||||||||| Segunda Tarjeta de Menú |||||||||||||||||| */}
+        {/* Segunda Tarjeta de Menú */}
        <View style={styles.card}>
             {menuItems2.map((item, index) => (
               <React.Fragment key={index}>
@@ -107,9 +114,8 @@ export default function Opciones() {
               </React.Fragment>
             ))}
         </View>
-
         
-        {/*|||||||||||||||||| Tercero Tarjeta de Menú |||||||||||||||*/}
+        {/* Tercera Tarjeta de Menú */}
         <View style={styles.card}>
             {menuItems3.map((item, index) => (
               <React.Fragment key={index}>
@@ -125,6 +131,7 @@ export default function Opciones() {
               </React.Fragment>
             ))}
         </View>
+
         <AlertModal visible={modalVisible} onClose={handleLogoutModalClose} message={'Cierre de sesión exitoso'} success={true} />
         <ConfirmModal visible={confirmVisible} onCancel={() => setConfirmVisible(false)} onConfirm={handleConfirmLogout} title={'Cerrar sesión'} message={'¿Estás seguro que deseas cerrar sesión?'} confirmText={'Cerrar sesión'} cancelText={'Cancelar'} />
       </ScrollView>
@@ -132,39 +139,71 @@ export default function Opciones() {
   );
 }
 
-// |||||||||||||||||||||||| Hoja de Estilos ||||||||||||||||||||||||||
+
 const styles = StyleSheet.create({
-    scrollViewContent: {
-    paddingBottom: 80, // Espacio para el nav inferior
+  scrollViewContent: {
+    paddingBottom: 80,
   },  
   container: {
     flex: 1,
-    backgroundColor: '#FFF1F2', // Un gris claro para el fondo
+    backgroundColor: '#FFF1F2',
     paddingTop: 10,
   },
-  profileSection: {
-    alignItems: 'center',
-    marginBottom: 30,
+  
+
+  profileCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+  },
+  profileBannerColor: {
+    width: '100%',
+    height: 100,
+    backgroundColor: '#D81B60', 
+  },
+  profileInfoContainer: {
     paddingHorizontal: 20,
+    paddingBottom: 20,
+    alignItems: 'flex-start',
+  },
+  avatarWrapper: {
+    marginTop: -40,
+    marginBottom: 10,
+    borderRadius: 45,
+    padding: 3,
+    backgroundColor: '#ffffff', 
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 15,
-    borderWidth: 3,
-    borderColor: 'white',
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  nameIcon: {
+    marginRight: 6,
   },
   profileName: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000ff',
+    color: '#1F2937',
   },
-  profileHandle: {
-    fontSize: 16,
-    color: '#888',
-    marginTop: 4,
-  },
+
+  /* Estilos de las tarjetas de menú */
    menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -177,7 +216,7 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: 16,
     color: '#080808ff',
-    flex: 1, // Ocupa el espacio disponible para empujar la flecha al final
+    flex: 1,
   },
   card: {
     backgroundColor: '#ffffff',
@@ -185,21 +224,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     paddingVertical: 10,
-    // Sombra para iOS
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
     shadowRadius: 3.84,
-    // Sombra para Android
-    elevation: 5,
   },
-  
   divider: {
     height: 1,
     backgroundColor: '#f0f0f0',
-    marginLeft: 64, // Alineado con el texto (20 de padding + 24 de ícono + 20 de margen)
+    marginLeft: 64,
   },
 });

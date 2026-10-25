@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import OpcionesNavigator from "./OpcNavigator";
 import BodyHome from "../screens/home";
 import BodyProducto from "../screens/producto";
+import BodyAsesor from "../screens/Asesor";
 import BodyUbicacion from "../screens/ubicacion";
 import BodyContacto from "../screens/contacto";
 
@@ -32,8 +33,9 @@ export default function TabNavigator() {
     >
       <Tab.Screen name="Inicio" component={BodyHome} options={{ headerShown: false, title: 'Inicio | LoveMakeup C.A' }} />
       <Tab.Screen name="Producto" component={BodyProducto} options={{ headerShown: false, title: 'Producto | LoveMakeup C.A' }} />
-      <Tab.Screen name="Ubicacion" component={BodyUbicacion} options={{ headerShown: false, title: 'Ubicacion | LoveMakeup C.A ' }} />
       <Tab.Screen name="Contacto" component={BodyContacto} options={{ headerShown: false, title: 'Contacto | LoveMakeup C.A' }} />
+      
+      <Tab.Screen name="Asesor" component={BodyAsesor} options={{ headerShown: false, title: 'Asesor IA | LoveMakeup C.A' }} />
       {isLogged && (
         <Tab.Screen name="Más Opciones" component={OpcionesNavigator} options={{ headerShown: false, title: 'Mas Opciones' }}/>
       )}
