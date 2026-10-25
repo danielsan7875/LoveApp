@@ -110,8 +110,6 @@ const Asesor = () => {
       selectionLimit: espaciosDisponibles, 
       quality: 0.8,
     });
-    
-  
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const MAX_SIZE_MB = 8;
@@ -136,6 +134,40 @@ const Asesor = () => {
         const nuevasImagenes = [...imagenesSeleccionadas, ...imagenesValidas].slice(0, 3);
         setValue('imagenes', nuevasImagenes);
       }
+    }
+  };
+
+  // Función para tomar foto directamente con la cámara
+  const tomarFotoCamara = async () => {
+    if (imagenesSeleccionadas.length >= 3) {
+      alert('Solo puedes adjuntar un máximo de 3 imágenes.');
+      return;
+    }
+
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert('Se requieren permisos para acceder a la cámara.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: false,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      const MAX_SIZE_MB = 8;
+      const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
+
+      if (asset.fileSize && asset.fileSize > MAX_SIZE_BYTES) {
+        alert(`La foto tomada supera el límite de ${MAX_SIZE_MB}MB y no fue agregada.`);
+        return;
+      }
+
+      const nuevasImagenes = [...imagenesSeleccionadas, asset.uri].slice(0, 3);
+      setValue('imagenes', nuevasImagenes);
     }
   };
 
@@ -339,7 +371,7 @@ const Asesor = () => {
                 </View>
 
                 <Text style={styles.cardDescription}>
-                  ¡Hola! Soy Angel tu asesor de belleza, especializado en productos de cosmética y cuidado personal. mis recomendaciones son basadas en intelengia artificinal experta en el area de produtos cosmeticos
+                  ¡Hola! Soy Angel tu asesor de belleza, especializado en productos de cosmética y cuidado personal. Mis recomendaciones son basadas en inteligencia artificial experta en el área de productos cosméticos.
                 </Text>
 
                 <View style={styles.featuresList}>
@@ -367,10 +399,10 @@ const Asesor = () => {
             </View>
           </Modal>
 
-          {/* Sección inferior: Previsualización, Input, Botones y Aviso */}
+          {/*  */}
           <View style={styles.inputAreaContainer}>
             
-            {/* Previsualización de imágenes seleccionadas con botón X */}
+         
             {imagenesSeleccionadas.length > 0 && (
               <View style={styles.previewContainer}>
                 {imagenesSeleccionadas.map((uri, index) => (
@@ -388,12 +420,20 @@ const Asesor = () => {
             )}
 
             <View style={styles.inputRow}>
+              {/* Icono de Cámara */}
+              <TouchableOpacity 
+                style={styles.iconButton} 
+                onPress={tomarFotoCamara}
+              >
+                <Ionicons name="camera" size={24} color="#D81B60" />
+              </TouchableOpacity>
+
               {/* Icono de Galería */}
               <TouchableOpacity 
                 style={styles.iconButton} 
                 onPress={seleccionarImagenGaleria}
               >
-                <Ionicons name="image-outline" size={24} color="#D81B60" />
+                <Ionicons name="image" size={24} color="#D81B60" />
               </TouchableOpacity>
 
               {/* Barra para escribir controlada por React Hook Form */}
@@ -424,7 +464,7 @@ const Asesor = () => {
 
             {/* Aviso inferior */}
             <Text style={styles.disclaimerText}>
-              Las respuestas pueden tener errores.
+              Las respuestas son basadas en IA, pueden tener errores.
             </Text>
           </View>
         </KeyboardAvoidingView>
@@ -452,13 +492,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#FCE7F3',
   },
 
-  /* Aro de historia tipo Instagram para el avatar */
   storyRingContainer: {
     width: 46,
     height: 46,
     borderRadius: 23,
     borderWidth: 2,
-    borderColor: '#D81B60', // Rosa destacado estilo Instagram Story
+    borderColor: '#D81B60', 
     padding: 2,
     justifyContent: 'center',
     alignItems: 'center',
@@ -624,7 +663,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
 
-  /* Modal Tipo Card de Información del Asesor */
   cardModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
