@@ -189,8 +189,8 @@ const Login = ({ activarCarga, desactivarCarga }) => {
                     rules={{
                       required: 'La cédula es requerida',
                       pattern: {
-                        value: /^\d{7,8}$/,
-                        message: 'Debe tener entre 7 y 8 dígitos numéricos',
+                        value: /^\d{7,9}$/,
+                        message: 'Debe tener entre 7 y 9 dígitos numéricos',
                       }
                     }}
                   />
@@ -207,9 +207,11 @@ const Login = ({ activarCarga, desactivarCarga }) => {
                 secureTextEntry={true}
                 isSubmitted={isSubmitted}
                 rules={{
-                  required: 'La contraseña es requerida',
-                  minLength: { value: 8, message: 'Mínimo 8 caracteres' },
-                  maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+                  required: 'La Contraseña es requerida',
+                  pattern: {
+                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!#*\$.?,=])[A-Za-z\d!#*\$.?,=]{8,16}$/,
+                    message: 'Debe tener entre 8 a 16 caracteres',
+                  }
                 }}
               />
 

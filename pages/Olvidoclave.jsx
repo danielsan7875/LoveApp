@@ -88,7 +88,7 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
       <View style={styles.bloqueCentral}>
         <TituloGrande
           title="Restablecer contraseña"
-          description="Ingresa tu nueva contraseña. Asegurate de cumplir con todos los parámetros de seguridad requeridos."
+          description="Ingresa tu nueva contraseña. Asegurate de cumplir con todos los parámetros de seguridad requeridos. Mayusculas, minúsculas, números y caracteres especiales."
         />
       
           {/* Campo Contraseña */}
@@ -101,9 +101,11 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
             secureTextEntry={true}
             isSubmitted={isSubmitted}
             rules={{
-              required: 'La contraseña es requerida',
-              minLength: { value: 8, message: 'Mínimo 8 caracteres' },
-              maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+                required: 'La Contraseña es requerida',
+                pattern: {
+                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!#*\$.?,=])[A-Za-z\d!#*\$.?,=]{8,16}$/,
+                  message: 'Debe tener entre 8 a 16 caracteres ',
+                }
             }}
           />
 
@@ -117,9 +119,13 @@ export default function BodyOlvido({ activarCarga, desactivarCarga }) {
             secureTextEntry={true}
             isSubmitted={isSubmitted}
             rules={{
-              required: 'Debe confirmar su contraseña',
-              validate: (value) => value === clave || 'Las contraseñas no coinciden',
-            }}
+                required: 'La Contraseña es requerida',
+                pattern: {
+                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!#*\$.?,=])[A-Za-z\d!#*\$.?,=]{8,16}$/,
+                  message: 'Debe tener entre 8 a 16 caracteres ',
+                  validate: (value) => value === clave || 'Las contraseñas no coinciden'
+                }
+            }} 
           />
 
         {/* Botón Restablecer Contraseña */}

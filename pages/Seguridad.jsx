@@ -86,10 +86,12 @@ const BodySeguridad = ({activarCarga, desactivarCarga}) => {
           control={control}
           secureTextEntry={true}
           isSubmitted={isSubmitted}
-          rules={{
+           rules={{
             required: 'La contraseña actual es obligatoria',
-            minLength: { value: 8, message: 'Mínimo 8 caracteres' },
-            maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+            pattern: {
+              value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!#*\$.?,=])[A-Za-z\d!#*\$.?,=]{8,16}$/,
+              message: 'Debe tener entre 8 a 16 caracteres',
+            }
           }}
         />
 
@@ -104,8 +106,10 @@ const BodySeguridad = ({activarCarga, desactivarCarga}) => {
           isSubmitted={isSubmitted}
           rules={{
             required: 'La nueva contraseña es obligatoria',
-            minLength: { value: 8, message: 'Mínimo 8 caracteres' },
-            maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+            pattern: {
+              value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!#*\$.?,=])[A-Za-z\d!#*\$.?,=]{8,16}$/,
+              message: 'Debe tener entre 8 a 16 caracteres',
+            }
           }}
         />
 
@@ -118,14 +122,15 @@ const BodySeguridad = ({activarCarga, desactivarCarga}) => {
           control={control}
           secureTextEntry={true}
           isSubmitted={isSubmitted}
-          rules={{
-            required: 'Debe confirmar la nueva contraseña',
-            validate: (val) => {
-              if (val !== nuevaClave) {
+            rules={{
+                required: 'Debe confirmar su contraseña',
+                value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!#*\$.?,=])[A-Za-z\d!#*\$.?,=]{8,16}$/,
+                message: 'Debe tener entre 8 a 16 caracteres',
+                validate: (val) => { 
+                  if (val !== nuevaClave) {
                 return 'Las contraseñas no coinciden';
-              }
-            },
-          }}
+              }}
+            }}
         />
       </View>
 

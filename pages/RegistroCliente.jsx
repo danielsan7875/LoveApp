@@ -215,9 +215,11 @@ export default function Registro({activarCarga, desactivarCarga}) {
               secureTextEntry={true}
               isSubmitted={isSubmitted}
               rules={{
-                required: 'La contraseña es requerida',
-                minLength: { value: 8, message: 'Mínimo 8 caracteres' },
-                maxLength: { value: 16, message: 'Máximo 16 caracteres' },
+                required: 'La Contraseña es requerida',
+                pattern: {
+                  value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!#*\$.?,=])[A-Za-z\d!#*\$.?,=]{8,16}$/,
+                  message: 'Debe tener entre 8 a 16 caracteres',
+                }
               }}
             />
 
@@ -232,6 +234,8 @@ export default function Registro({activarCarga, desactivarCarga}) {
               isSubmitted={isSubmitted}
               rules={{
                 required: 'Debe confirmar su contraseña',
+                value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!#*\$.?,=])[A-Za-z\d!#*\$.?,=]{8,16}$/,
+                message: 'Debe tener entre 8 a 16 caracteres',
                 validate: (value) => value === clave || 'Las contraseñas no coinciden',
               }}
             />
