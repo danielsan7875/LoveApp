@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { Platform } from 'react-native';
 import { registerForNotifications } from './notifications';
 
 const API_BASE = 'https://lovemakeuptienda.com/controlador/api';
@@ -442,9 +443,26 @@ const apiClient = axios.create({
   },
 });
 
+function getClientDeviceInfo() {
+  const constants = Platform.constants || {};
+
+  return {
+    platform: Platform.OS,
+    model: constants.Model || constants.model || constants.interfaceIdiom || 'unknown',
+    brand: constants.Brand || constants.Manufacturer || 'unknown',
+    osVersion: String(constants.Release || constants.osVersion || Platform.Version),
+  };
+}
+
 // Interceptor para inyectar el token automáticamente en cada petición
 apiClient.interceptors.request.use(
   async (config) => {
+    const deviceInfo = getClientDeviceInfo();
+    config.headers['X-Client-Platform'] = deviceInfo.platform;
+    config.headers['X-Client-Model'] = deviceInfo.model;
+    config.headers['X-Client-Brand'] = deviceInfo.brand;
+    config.headers['X-Client-OS-Version'] = deviceInfo.osVersion;
+
     const token = await getToken();
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
