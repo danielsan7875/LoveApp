@@ -4,6 +4,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import MainNavigator from "./route/MainNavigator";
 import Loader from './componentes/Loader';
+import EstadoConexion from './componentes/EstadoConexion';
 
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
@@ -76,6 +77,7 @@ const App = () => {
           <MainNavigator />
         </NavigationContainer>
 
+        <EstadoConexion />
         <Loader visible={isLoading} texto="LoveMakeup C.A" />
       </SafeAreaProvider>
     </Provider>

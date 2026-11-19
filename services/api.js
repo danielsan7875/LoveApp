@@ -2,10 +2,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { Platform } from 'react-native';
 import { registerForNotifications } from './notifications';
+import {
+  finalizarSeguimientoPeticion,
+  iniciarSeguimientoPeticion,
+} from './estadoConexion';
 
 const API_BASE = 'https://lovemakeuptienda.com/controlador/api';
 const TOKEN_KEY = 'jwt_token';
 const USER_KEY = 'auth_user';
+const TIEMPO_MAXIMO_PETICION = 10000;
+const MAXIMO_REINTENTOS_GET = 2;
+let siguienteIdPeticion = 0;
 
 export function normalizeCedula(value) {
   return String(value ?? '').replace(/\D/g, '');
@@ -438,6 +445,7 @@ async function syncUserProfile(user) {
 // Configuración de la instancia de Axios
 const apiClient = axios.create({
   baseURL: API_BASE,
+  timeout: TIEMPO_MAXIMO_PETICION,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -471,6 +479,57 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
+  }
+);
+
+apiClient.interceptors.request.use(
+  (configuracion) => {
+    if (!configuracion.__idPeticion) {
+      siguienteIdPeticion += 1;
+      configuracion.__idPeticion = `${Date.now()}-${siguienteIdPeticion}`;
+      configuracion.__intentoConexion = 0;
+    }
+
+    const metodo = String(configuracion.method || 'get').toLowerCase();
+    const puedeReintentar = metodo === 'get';
+    iniciarSeguimientoPeticion(
+      configuracion.__idPeticion,
+      configuracion.__intentoConexion || 0,
+      MAXIMO_REINTENTOS_GET + 1,
+      puedeReintentar
+    );
+    return configuracion;
+  },
+  (errorPeticion) => Promise.reject(errorPeticion)
+);
+
+apiClient.interceptors.response.use(
+  (respuesta) => {
+    finalizarSeguimientoPeticion(respuesta.config.__idPeticion);
+    return respuesta;
+  },
+  async (errorPeticion) => {
+    const configuracion = errorPeticion.config;
+    if (!configuracion?.__idPeticion) return Promise.reject(errorPeticion);
+
+    const metodo = String(configuracion.method || 'get').toLowerCase();
+    const intento = configuracion.__intentoConexion || 0;
+    const esFallaReintentable =
+      errorPeticion.code !== 'ERR_CANCELED' &&
+      (!errorPeticion.response ||
+        errorPeticion.code === 'ECONNABORTED' ||
+        errorPeticion.code === 'ETIMEDOUT' ||
+        errorPeticion.response.status >= 500);
+
+    if (metodo === 'get' && esFallaReintentable && intento < MAXIMO_REINTENTOS_GET) {
+      configuracion.__intentoConexion = intento + 1;
+      const demora = 700 * (2 ** intento);
+      await new Promise((resolver) => setTimeout(resolver, demora));
+      return apiClient.request(configuracion);
+    }
+
+    finalizarSeguimientoPeticion(configuracion.__idPeticion, errorPeticion);
+    return Promise.reject(errorPeticion);
   }
 );
 
