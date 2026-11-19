@@ -1,5 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useRef, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   StyleSheet,
   View,
@@ -15,13 +16,19 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import { useForm, Controller } from 'react-hook-form';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { enviarMensajeAsesor } from '../services/api';
+import AlertModal from '../componentes/ModalAlert';
 
 const MAX_IMAGE_BYTES = 2.8 * 1024 * 1024;
 const MAX_IMAGE_DATA_URL_LENGTH = 4 * 1024 * 1024;
+const CLAVE_LIMITE_INVITADO = 'limite_asesor_invitado';
+const MAXIMO_MENSAJES_INVITADO = 3;
+const DURACION_BLOQUEO_INVITADO = 4 * 60 * 60 * 1000;
 
 const getImageMimeType = (uri) => {
   const extension = uri.split(/[?#]/)[0].split('.').pop()?.toLowerCase();
@@ -37,6 +44,10 @@ const getImageMimeType = (uri) => {
 };
 
 const Asesor = () => {
+  const navigation = useNavigation();
+  const estadoAutenticacion = useSelector((state) => state.auth);
+  const autenticacionCargada = estadoAutenticacion?.status !== 'loading';
+  const sesionActiva = Boolean(estadoAutenticacion?.isLogged && estadoAutenticacion?.token);
   const { control, handleSubmit, reset, watch, setValue } = useForm({
     defaultValues: {
       mensaje: '',
@@ -60,8 +71,49 @@ const Asesor = () => {
   const [imagenModalVisible, setImagenModalVisible] = useState(false);
   const [imagenSeleccionadaModal, setImagenSeleccionadaModal] = useState(null);
   const [infoModalVisible, setInfoModalVisible] = useState(false); // Modal de Info del Asesor
+  const [modalLimiteVisible, setModalLimiteVisible] = useState(false);
+  const [mensajeModalLimite, setMensajeModalLimite] = useState('');
+  const [irAInicioSesionAlCerrar, setIrAInicioSesionAlCerrar] = useState(false);
+  const [limiteInvitadoCargado, setLimiteInvitadoCargado] = useState(false);
+  const [errorLimiteInvitado, setErrorLimiteInvitado] = useState(false);
+  const [usoInvitado, setUsoInvitado] = useState({ mensajesUsados: 0, bloqueadoHasta: 0 });
 
   const scrollViewRef = useRef(null);
+  const envioEnCursoRef = useRef(false);
+
+  useEffect(() => {
+    let componenteActivo = true;
+
+    const cargarUsoInvitado = async () => {
+      try {
+        const valorGuardado = await AsyncStorage.getItem(CLAVE_LIMITE_INVITADO);
+        const datosGuardados = valorGuardado ? JSON.parse(valorGuardado) : {};
+        const bloqueoGuardadoHasta = Number(datosGuardados?.bloqueadoHasta) || 0;
+        const bloqueoExpirado =
+          bloqueoGuardadoHasta > 0 && bloqueoGuardadoHasta <= Date.now();
+        const bloqueadoHasta = bloqueoExpirado ? 0 : bloqueoGuardadoHasta;
+        const mensajesUsados = bloqueoExpirado
+          ? 0
+          : Number(datosGuardados?.mensajesUsados) || 0;
+
+        if (componenteActivo) {
+          setUsoInvitado({ mensajesUsados, bloqueadoHasta });
+        }
+      } catch (error) {
+        console.warn('Error cargando el límite de mensajes del asesor:', error);
+        if (componenteActivo) {
+          setErrorLimiteInvitado(true);
+        }
+      } finally {
+        if (componenteActivo) setLimiteInvitadoCargado(true);
+      }
+    };
+
+    cargarUsoInvitado();
+    return () => {
+      componenteActivo = false;
+    };
+  }, []);
 
   // Animaciones  "escribiendo..."
   const punto1 = useRef(new Animated.Value(0)).current;
@@ -235,7 +287,34 @@ const Asesor = () => {
   // ENVIAR LA PETICION DE CONSULTA
   const onSubmit = async (data) => {
     if (!data.mensaje.trim() && data.imagenes.length === 0) return;
-    if (estaEscribiendo) return;
+    if (estaEscribiendo || envioEnCursoRef.current) return;
+    if (!autenticacionCargada) return;
+
+    if (!sesionActiva) {
+      if (!limiteInvitadoCargado) return;
+      if (errorLimiteInvitado) {
+        setMensajeModalLimite(
+          'No pudimos verificar el límite de mensajes de invitado. Inicia sesión para continuar usando el asesor.'
+        );
+        setIrAInicioSesionAlCerrar(true);
+        setModalLimiteVisible(true);
+        return;
+      }
+
+      if (usoInvitado.bloqueadoHasta > Date.now()) {
+        const horasRestantes = Math.ceil(
+          (usoInvitado.bloqueadoHasta - Date.now()) / (60 * 60 * 1000)
+        );
+        setMensajeModalLimite(
+          `Ya usaste tus ${MAXIMO_MENSAJES_INVITADO} mensajes como invitado. Inicia sesión para seguir conversando sin límite o vuelve en aproximadamente ${horasRestantes} hora(s).`
+        );
+        setIrAInicioSesionAlCerrar(true);
+        setModalLimiteVisible(true);
+        return;
+      }
+    }
+
+    envioEnCursoRef.current = true;
 
     const mensaje = data.mensaje.trim() || 'Recomiéndame según la imagen que envié';
     const nuevoMensajeUsuario = {
@@ -250,6 +329,40 @@ const Asesor = () => {
     EstaEscribiendoState(true);
 
     try {
+      const imagenes = await Promise.all(data.imagenes.map(convertirImagenDataUrl));
+
+      if (!sesionActiva) {
+        const bloqueoExpirado =
+          usoInvitado.bloqueadoHasta > 0 && usoInvitado.bloqueadoHasta <= Date.now();
+        const mensajesPrevios = bloqueoExpirado ? 0 : usoInvitado.mensajesUsados;
+        const mensajesUsados = mensajesPrevios + 1;
+        const bloqueadoHasta =
+          mensajesUsados >= MAXIMO_MENSAJES_INVITADO
+            ? Date.now() + DURACION_BLOQUEO_INVITADO
+            : 0;
+        const nuevoUsoInvitado = { mensajesUsados, bloqueadoHasta };
+
+        try {
+          await AsyncStorage.setItem(
+            CLAVE_LIMITE_INVITADO,
+            JSON.stringify(nuevoUsoInvitado)
+          );
+        } catch (error) {
+          console.warn('Error guardando el límite de mensajes del asesor:', error);
+          setErrorLimiteInvitado(true);
+          setMensajeModalLimite(
+            'No pudimos guardar tu límite de mensajes. Inicia sesión para continuar usando el asesor.'
+          );
+          setIrAInicioSesionAlCerrar(true);
+          setModalLimiteVisible(true);
+          setChatList((prev) => prev.filter((item) => item.id !== nuevoMensajeUsuario.id));
+          reset({ mensaje: data.mensaje, imagenes: data.imagenes });
+          return;
+        }
+
+        setUsoInvitado(nuevoUsoInvitado);
+      }
+
       const historial = chatList
         .filter((item) => item.texto && ['usuario', 'ia'].includes(item.remitente))
         .slice(-12)
@@ -257,7 +370,6 @@ const Asesor = () => {
           role: item.remitente === 'usuario' ? 'user' : 'assistant',
           content: item.texto,
         }));
-      const imagenes = await Promise.all(data.imagenes.map(convertirImagenDataUrl));
       const respuesta = await enviarMensajeAsesor({ mensaje, historial, imagenes });
 
       setChatList((prev) => [...prev, {
@@ -275,6 +387,20 @@ const Asesor = () => {
       setChatList((prev) => [...prev, respuestaError]);
     } finally {
       EstaEscribiendoState(false);
+      envioEnCursoRef.current = false;
+    }
+  };
+
+  const cerrarModalLimite = () => {
+    setModalLimiteVisible(false);
+    if (irAInicioSesionAlCerrar) {
+      setIrAInicioSesionAlCerrar(false);
+      const navegadorPadre = navigation.getParent();
+      if (navegadorPadre) {
+        navegadorPadre.navigate('Login');
+      } else {
+        navigation.navigate('Login');
+      }
     }
   };
 
@@ -286,6 +412,16 @@ const Asesor = () => {
   const translateY1 = punto1.interpolate({ inputRange: [0, 1], outputRange: [0, -5] });
   const translateY2 = punto2.interpolate({ inputRange: [0, 1], outputRange: [0, -5] });
   const translateY3 = punto3.interpolate({ inputRange: [0, 1], outputRange: [0, -5] });
+  const botonEnvioDeshabilitado =
+    estaEscribiendo ||
+    !autenticacionCargada ||
+    (!sesionActiva && !limiteInvitadoCargado);
+  const bloqueoInvitadoActivo = usoInvitado.bloqueadoHasta > Date.now();
+  const mensajesInvitadoRestantes = bloqueoInvitadoActivo
+    ? 0
+    : usoInvitado.bloqueadoHasta > 0
+      ? MAXIMO_MENSAJES_INVITADO
+      : Math.max(0, MAXIMO_MENSAJES_INVITADO - usoInvitado.mensajesUsados);
 
   return (
     <SafeAreaProvider>
@@ -473,6 +609,13 @@ const Asesor = () => {
             </View>
           </Modal>
 
+          <AlertModal
+            visible={modalLimiteVisible}
+            onClose={cerrarModalLimite}
+            message={mensajeModalLimite}
+            success={false}
+          />
+
           {/*  */}
           <View style={styles.inputAreaContainer}>
             
@@ -529,8 +672,13 @@ const Asesor = () => {
 
               {/* Botón enviar */}
               <TouchableOpacity 
-                style={[styles.sendButton, (!textoMensaje.trim() && imagenesSeleccionadas.length === 0) && { opacity: 0.6 }]} 
+                style={[
+                  styles.sendButton,
+                  ((!textoMensaje.trim() && imagenesSeleccionadas.length === 0) ||
+                    botonEnvioDeshabilitado) && { opacity: 0.6 },
+                ]} 
                 onPress={handleSubmit(onSubmit)}
+                disabled={botonEnvioDeshabilitado}
               >
                 <Ionicons name="send" size={18} color="#FFFFFF" />
               </TouchableOpacity>
@@ -540,6 +688,13 @@ const Asesor = () => {
             <Text style={styles.disclaimerText}>
               Las respuestas son basadas en IA, pueden tener errores.
             </Text>
+            {!sesionActiva && limiteInvitadoCargado && !errorLimiteInvitado && (
+              <Text style={styles.disclaimerText}>
+                {bloqueoInvitadoActivo
+                  ? 'Límite de invitado activo. Inicia sesión para continuar.'
+                  : `Te quedan ${mensajesInvitadoRestantes} mensajes como invitado. Inicia sesión para enviar sin límite.`}
+              </Text>
+            )}
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
