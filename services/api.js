@@ -1164,6 +1164,24 @@ export async function registrarPedido(datosPedido) {
   }
 }
 
+export async function enviarMensajeAsesor(payload) {
+  try {
+    const response = await apiClient.post('/chat.php', payload, { timeout: 60000 });
+    const respuesta = response.data?.respuesta;
+    if (typeof respuesta !== 'string' || !respuesta.trim()) {
+      throw new Error(response.data?.detail || 'El asesor devolvió una respuesta vacía.');
+    }
+    return respuesta;
+  } catch (error) {
+    const mensaje =
+      error.response?.data?.detail ||
+      error.response?.data?.error ||
+      error.message ||
+      'No se pudo conectar con el asesor.';
+    throw new Error(mensaje);
+  }
+}
+
 function formatearFechaSolo(fecha) {
   if (!fecha) return '';
 
@@ -1267,6 +1285,7 @@ export default {
   vaciarWishlistRemota,
   fetchCategorias,
   registrarPedido,
+  enviarMensajeAsesor,
   fetchPedidos,
 };
 

@@ -17,6 +17,24 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+import { enviarMensajeAsesor } from '../services/api';
+
+const MAX_IMAGE_BYTES = 2.8 * 1024 * 1024;
+const MAX_IMAGE_DATA_URL_LENGTH = 4 * 1024 * 1024;
+
+const getImageMimeType = (uri) => {
+  const extension = uri.split(/[?#]/)[0].split('.').pop()?.toLowerCase();
+  const mimeTypes = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    gif: 'image/gif',
+    avif: 'image/avif',
+  };
+  return mimeTypes[extension] || 'image/jpeg';
+};
 
 const Asesor = () => {
   const { control, handleSubmit, reset, watch, setValue } = useForm({
@@ -112,22 +130,22 @@ const Asesor = () => {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const MAX_SIZE_MB = 8;
-      const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
-      
       const imagenesValidas = [];
       let imagenesRechazadas = 0;
 
       result.assets.forEach((asset) => {
-        if (asset.fileSize && asset.fileSize > MAX_SIZE_BYTES) {
+        if (asset.fileSize && asset.fileSize > MAX_IMAGE_BYTES) {
           imagenesRechazadas++;
         } else {
-          imagenesValidas.push(asset.uri);
+          imagenesValidas.push({
+            uri: asset.uri,
+            mimeType: asset.mimeType || getImageMimeType(asset.uri),
+          });
         }
       });
 
       if (imagenesRechazadas > 0) {
-        alert(`Alguna de las imágenes seleccionadas supera el límite de ${MAX_SIZE_MB}MB y no fue agregada.`);
+        alert('Alguna imagen supera el límite de 2.8 MB y no fue agregada.');
       }
 
       if (imagenesValidas.length > 0) {
@@ -158,15 +176,16 @@ const Asesor = () => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const asset = result.assets[0];
-      const MAX_SIZE_MB = 8;
-      const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
-      if (asset.fileSize && asset.fileSize > MAX_SIZE_BYTES) {
-        alert(`La foto tomada supera el límite de ${MAX_SIZE_MB}MB y no fue agregada.`);
+      if (asset.fileSize && asset.fileSize > MAX_IMAGE_BYTES) {
+        alert('La foto supera el límite de 2.8 MB y no fue agregada.');
         return;
       }
 
-      const nuevasImagenes = [...imagenesSeleccionadas, asset.uri].slice(0, 3);
+      const nuevasImagenes = [...imagenesSeleccionadas, {
+        uri: asset.uri,
+        mimeType: asset.mimeType || getImageMimeType(asset.uri),
+      }].slice(0, 3);
       setValue('imagenes', nuevasImagenes);
     }
   };
@@ -176,32 +195,87 @@ const Asesor = () => {
     setValue('imagenes', nuevasImagenes);
   };
 
+  const convertirImagenDataUrl = async ({ uri, mimeType }) => {
+    let contenidoBase64;
+    let tipo = mimeType || getImageMimeType(uri);
+
+    if (uri.startsWith('data:')) {
+      const coincidencia = uri.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/);
+      if (!coincidencia) throw new Error('El formato de una imagen no es válido.');
+      tipo = coincidencia[1];
+      contenidoBase64 = uri.slice(uri.indexOf(',') + 1);
+    } else if (Platform.OS === 'web') {
+      const response = await fetch(uri);
+      if (!response.ok) throw new Error('No se pudo leer una imagen seleccionada.');
+      const blob = await response.blob();
+      tipo = blob.type || tipo;
+      contenidoBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+        reader.onerror = () => reject(new Error('No se pudo procesar una imagen seleccionada.'));
+        reader.readAsDataURL(blob);
+      });
+    } else {
+      contenidoBase64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'].includes(tipo)) {
+      throw new Error('El formato de imagen no es compatible.');
+    }
+
+    const dataUrl = `data:${tipo};base64,${contenidoBase64}`;
+    if (dataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
+      throw new Error('Una imagen procesada supera el tamaño máximo permitido.');
+    }
+    return dataUrl;
+  };
+
   // ENVIAR LA PETICION DE CONSULTA
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     if (!data.mensaje.trim() && data.imagenes.length === 0) return;
     if (estaEscribiendo) return;
 
+    const mensaje = data.mensaje.trim() || 'Recomiéndame según la imagen que envié';
     const nuevoMensajeUsuario = {
       id: Date.now(),
       remitente: 'usuario',
-      texto: data.mensaje,
-      imagenes: [...data.imagenes]
+      texto: mensaje,
+      imagenes: data.imagenes.map((imagen) => imagen.uri)
     };
 
     setChatList((prev) => [...prev, nuevoMensajeUsuario]);
-    
     reset({ mensaje: '', imagenes: [] });
     EstaEscribiendoState(true);
 
-    setTimeout(() => {
-      const respuestaIA = {
+    try {
+      const historial = chatList
+        .filter((item) => item.texto && ['usuario', 'ia'].includes(item.remitente))
+        .slice(-12)
+        .map((item) => ({
+          role: item.remitente === 'usuario' ? 'user' : 'assistant',
+          content: item.texto,
+        }));
+      const imagenes = await Promise.all(data.imagenes.map(convertirImagenDataUrl));
+      const respuesta = await enviarMensajeAsesor({ mensaje, historial, imagenes });
+
+      setChatList((prev) => [...prev, {
         id: Date.now() + 1,
         remitente: 'ia',
-        texto: 'No disponible, por los momentos'
+        texto: respuesta,
+      }]);
+    } catch (error) {
+      const detalle = error instanceof Error ? error.message : 'Error inesperado.';
+      const respuestaError = {
+        id: Date.now() + 1,
+        remitente: 'ia',
+        texto: `No pude conectar con Ángel: ${detalle}`,
       };
+      setChatList((prev) => [...prev, respuestaError]);
+    } finally {
       EstaEscribiendoState(false);
-      setChatList((prev) => [...prev, respuestaIA]);
-    }, 2000);
+    }
   };
 
   const abrirPrevisualizacionModal = (uri) => {
@@ -405,9 +479,9 @@ const Asesor = () => {
          
             {imagenesSeleccionadas.length > 0 && (
               <View style={styles.previewContainer}>
-                {imagenesSeleccionadas.map((uri, index) => (
+                {imagenesSeleccionadas.map((imagen, index) => (
                   <View key={index} style={styles.previewThumbnailWrapper}>
-                    <Image source={{ uri }} style={styles.previewThumbnail} />
+                    <Image source={{ uri: imagen.uri }} style={styles.previewThumbnail} />
                     <TouchableOpacity 
                       style={styles.removeImageButton} 
                       onPress={() => removerImagen(index)}
